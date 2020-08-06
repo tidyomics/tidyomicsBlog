@@ -2,7 +2,7 @@ The manifesto, workshops and tutorials of the tidy transcriptomics.
 **All this is very work-in-progress**
 
 # The tidy transcriptomics manifesto
-This document lays down the principles of tidy transcriptomics, of which tidybulk and tidysc are based on. These principles are in line with (the tidy tools manifesto)[https://cran.r-project.org/web/packages/tidyverse/vignettes/manifesto.html].
+This document lays down the principles of tidy transcriptomics, of which tidybulk and tidysc are based on. These principles are in line with [the tidy tools manifesto](https://cran.r-project.org/web/packages/tidyverse/vignettes/manifesto.html).
 
 - **Avoid creation of temporary variables when possible, and variable updating.** The rationale is that when working interactively, data-containing variables is a bug-prone process, especially if multiple assignments are done on the same variable though the workflow. Variable should be created for storing data that is used more than once. Tidyverse allows extremely complex operations on dataframe in a functional way.
 - **Use easy-to-understand, verbose, jargon-free and acronym-free vocabulary.** If the english dictionary is not enough to understand the underlying meaning of a function and variable name, it is a bad sign. Learning is incredibly slown-down by a criptic vocabulary; the cost of saving few characters is usually bigger than you think.
