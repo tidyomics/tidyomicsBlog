@@ -4,9 +4,9 @@ author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
 output: rmarkdown::html_vignette
-bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'tidytranscriptomics.bib')`"
+bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_30_minutes.bib')`"
 vignette: >
-  %\VignetteIndexEntry{tidytranscriptomics}
+  %\VignetteIndexEntry{workshop_30_minutes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -502,7 +502,7 @@ strip_chart <-
 	# extract counts for top differentially expressed genes
 	filter(transcript %in% topgenes_symbols) %>%
 
-	# make stripchart
+	# make strip-chart
 	ggplot(aes(x = dex, y = counts_scaled + 1, fill = dex, label = sample)) +
 	geom_boxplot() +
 	geom_jitter() +
