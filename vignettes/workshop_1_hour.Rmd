@@ -1,0 +1,123 @@
+---
+title: "Producing extensive transcriptomic analysis workflows with tidy principles"
+author:
+  - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
+  - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
+output: rmarkdown::html_vignette
+bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_1_hour.bib')`"
+vignette: >
+  %\VignetteIndexEntry{workshop_1_hour}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Workshop Description
+
+...
+
+The topics presented in this workshop will be
+
+...
+
+### Pre-requisites
+
+* ...
+* ...
+
+Recommended Background Reading
+[Introduction to R for Biologists](https://melbournebioinformatics.github.io/r-intro-biologists/intro_r_biologists.html)
+...
+
+### Workshop Participation
+
+...
+
+### _R_ / _Bioconductor_ packages used
+
+* tidyverse
+* tidybulk
+* tidyHeatmap
+* edgeR
+* ggrepel
+* airway
+
+### Time outline
+
+| Activity                                         | Time |
+|--------------------------------------------------|------|
+| ...                                              | ...  |
+| ...                                              | ...  |
+
+### Workshop goals and objectives
+
+...
+
+#### Learning goals
+
+* To ...
+* To ...
+
+#### Learning objectives
+
+* ...
+* ...
+* ...
+
+### Acknowledgements
+This material is adapted from an R for RNA sequencing workshop first run [here](http://combine-australia.github.io/2016-05-11-RNAseq/).
+
+```{r, echo=FALSE, out.width = "200px"}
+knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
+```
+
+
+## Introduction
+...
+
+### Gate + gene enrichment
+```{r}
+
+cell_type_mu_sigma %>%
+  filter(ancestor=="t_CD8") %>%
+  pivot_wider(names_from = .which, values_from = c(.sd)) %>%
+  tidygate::gate(
+    .element = symbol, 
+    .dim1 = sigma_mu , 
+    .dim2 = sigma_sigma, 
+    .size=0.01, 
+    opacity = 0.1
+  ) %>%
+  symbol_to_entrez(.transcript = symbol, .sample = ancestor) %>%
+  test_gene_overrepresentation(ancestor, entrez, .do_test = gate==1, species = "Homo sapiens")
+
+```
+
+## Key Points
+...
+
+## Exercises
+
+...
+
+Questions:  
+... 
+
+## Contributing
+If you want to suggest improvements for this workshop or ask questions, you can do so as described [here](https://github.com/stemangiola/tidytranscriptomics/blob/master/CONTRIBUTING.md).
+
+## Reproducibility
+Record package and version information with `sessionInfo`
+
+```{r}
+sessionInfo()
+```
+
+## References

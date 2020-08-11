@@ -1,5 +1,5 @@
 ---
-title: "A Tidy Transcriptomics introduction to RNA-Seq analyses"
+title: "Introduction to tidy transcripotimic analyses"
 author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
