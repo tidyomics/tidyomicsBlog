@@ -1,3 +1,9 @@
+<!-- badges: start -->
+[![.github/workflows/basic_checks.yaml](https://github.com/stemangiola/tidytranscriptomics/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/stemangiola/tidytranscriptomics/actions) [![Docker](https://github.com/Bioconductor/BioC2020/raw/master/docs/images/docker_icon.png)](https://hub.docker.com/repository/docker/stemangiola/tidytranscriptomics) 	
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3959148.svg)](https://doi.org/10.5281/zenodo.3959148)
+<!-- badges: end -->
+
+
 The manifesto, workshops and tutorials of the tidy transcriptomics.
 **All this is very work-in-progress**
 
@@ -26,3 +32,15 @@ BioC2020
 - signature creation
 - single cell sudobulk
 - nest functionality
+
+
+### Via GitHub
+
+Alternatively, you could install the workshop using the commands below in R `4.0`.
+
+```
+devtools::install_github("stemangiola/tidybulk")
+devtools::install_github("stemangiola/tidytranscriptomics", build_vignettes = TRUE)
+library(tidytranscriptomics)
+vignette("tidytranscriptomics")
+```
