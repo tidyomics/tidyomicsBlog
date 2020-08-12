@@ -6,7 +6,7 @@ author:
 output: rmarkdown::html_vignette
 bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_1_hour.bib')`"
 vignette: >
-  %\VignetteIndexEntry{Producing extensive transcriptomic analysis workflows with tidy principles - 2 hours}
+  %\VignetteIndexEntry{Producing extensive transcriptomic analysis workflows with tidy principles - 1 hour}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
