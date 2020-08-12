@@ -1,12 +1,12 @@
 ---
-title: "Introduction to tidy transcripotimic analyses"
+title: "Introduction to tidy transcriptomic analyses - 30 minutes"
 author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
 output: rmarkdown::html_vignette
 bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_30_minutes.bib')`"
 vignette: >
-  %\VignetteIndexEntry{workshop_30_minutes}
+  %\VignetteIndexEntry{Introduction to tidy transcriptomic analyses - 30 minutes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
