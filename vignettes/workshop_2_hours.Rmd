@@ -83,7 +83,7 @@ knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
 ...
 
 ### Gate + gene enrichment
-```{r}
+```{r eval=FALSE}
 
 # Setup data frame
 tt <- 
