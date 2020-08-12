@@ -38,7 +38,6 @@ Workshops
 - Import tibble
 - comparison of different differential transcript abundance testing tools
 - Strip-chart comparing all normalisations of top genes
-- the material we took off the first workshop
 - Gene enrichment analyses
 
 ## 2h
