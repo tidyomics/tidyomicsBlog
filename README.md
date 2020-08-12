@@ -19,13 +19,27 @@ Workshops
 
 ## 30 minutes
 
-BioC2020
+- Converion SummarizedExperiment object to tibble
+- Format sample column
+- Get gene symbol
+- Identify abundant transcripts
+- Scale abundance for sequencing depth
+- Visualise abundance distribution
+- Reduce dimensions
+- Draw heatmap
+- Test differential transcript abundance
+- Volcano plot
+- Strip-chart
+- Interactive plots
+
 
 ## 1h
 
+- Import tibble
 - comparison of different differential transcript abundance testing tools
+- Strip-chart comparing all normalisations of top genes
 - the material we took off the first workshop
-- comparing all counts (raw,scaled, adjusted) after differential transcript abundance testing
+- Gene enrichment analyses
 
 ## 2h
 

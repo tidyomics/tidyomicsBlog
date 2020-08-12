@@ -139,7 +139,7 @@ counts_airway <-
 You can use `glimpse` to view the columns with their first few entries.
 
 ```{r}
-glimpse(counts_airway)
+counts_airway
 ```
 
 The `counts_tt` object contains information about genes and samples, the first column has the Ensembl gene identifier, the second column has the sample identifier and the third column has the gene transcription abundance expressed in number of reads aligning to the gene in each experimental sample. The remaining columns include sample-wise information. The dex column tells us whether the samples are treated or untreated and the cell column tells us what cell line they are from.
