@@ -1,12 +1,12 @@
 ---
-title: "Producing extensive transcriptomic analysis workflows with tidy principles"
+title: "Producing extensive transcriptomic analysis workflows with tidy principles - 2 hours"
 author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
 output: rmarkdown::html_vignette
 bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_2_hours.bib')`"
 vignette: >
-  %\VignetteIndexEntry{workshop_2_hours}
+  %\VignetteIndexEntry{Producing extensive transcriptomic analysis workflows with tidy principles - 2 hours}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -83,7 +83,7 @@ knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
 ...
 
 ### Gate + gene enrichment
-```{r}
+```{r eval=FALSE}
 
 # Setup data frame
 tt <- 
