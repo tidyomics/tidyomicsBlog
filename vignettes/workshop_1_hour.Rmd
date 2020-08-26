@@ -1,12 +1,12 @@
 ---
-title: "Producing extensive transcriptomic analysis workflows with tidy principles"
+title: "Producing extensive transcriptomic analysis workflows with tidy principles - 1 hour"
 author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
 output: rmarkdown::html_vignette
 bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_1_hour.bib')`"
 vignette: >
-  %\VignetteIndexEntry{workshop_1_hour}
+  %\VignetteIndexEntry{Producing extensive transcriptomic analysis workflows with tidy principles - 1 hour}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -82,8 +82,22 @@ knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
 ## Introduction
 ...
 
+```{r message=FALSE, warning=FALSE}
+# load libraries
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
+library(ggplot2)
+library(tidyHeatmap)
+library(tidybulk)
+library(ggrepel)
+library(airway)
+```
+
 ### Gate + gene enrichment
-```{r}
+```{r eval=FALSE}
 
 cell_type_mu_sigma %>%
   filter(ancestor=="t_CD8") %>%
@@ -147,7 +161,6 @@ counts_tt %>%
 We can also check how many counts we have for each sample by making a bar plot. This helps us see whether there are any major discrepancies between the samples more easily.
 
 ```{r}
-# make barplot of counts
 ggplot(counts_tt, aes(x=sample, weight=counts, fill=sample)) + 
 	geom_bar() +
 	theme_bw()
