@@ -75,7 +75,7 @@ pasilla_de =
   identify_abundant(factor_of_interest=condition) 
 ```
 
-This is an example for the default method for differential trancriptional testing
+This is an example for the default method for differential transcriptional testing
 ```{r}
 pasilla_de %>%
   
@@ -121,7 +121,7 @@ de_all =
     prefix = "deseq2_"
   ) 
 ```
-
+We can visually compare the estimate difference for all methods. We will notice that the consistency of the estimates is really high
 
 ```{r}
 
@@ -130,7 +130,10 @@ de_all %>%
   pivot_transcript() %>%
   select(edgerQLT_logFC, edgerLR_logFC, voom_logFC, deseq2_log2FoldChange, feature ) %>%
   ggpairs(1:4)
+```
 
+Similarly, we can visually compare the significance for all methods. In this case the difference is larger.
+```{r}
 de_all %>%
   keep_abundant() %>%
   pivot_transcript() %>%
@@ -139,7 +142,23 @@ de_all %>%
 
 ```
 
-We can investigate some of the genes that are less consistent between methods, for example edgeR QLT and DESeq2
+We can investigate some of the genes that are less consistent between methods, for example edgeR QLT and DESeq2. In this case we can use plotly to produce an interactive plot.
+
+```{r}
+# Produce the ggplot
+(
+  de_all %>%
+    keep_abundant() %>%
+    ggplot(aes(edgerQLT_PValue, deseq2_pvalue, label = feature)) + 
+    geom_point()
+) %>% 
+  
+  # Make it interactive
+  ggplotly()
+
+```
+
+We can select some of them for further analysis
 
 ```{r, eval=FALSE}
 de_gate = 
