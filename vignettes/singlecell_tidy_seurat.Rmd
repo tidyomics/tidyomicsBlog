@@ -1,0 +1,282 @@
+---
+title: "Case study - deconvolution"
+author:
+  - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
+  - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Case study - deconvolution}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+# bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_1_hour.bib')`"
+
+```
+
+Recommended Background Reading
+[Introduction to R for Biologists](https://melbournebioinformatics.github.io/r-intro-biologists/intro_r_biologists.html)
+
+```{r, echo=FALSE, out.width = "200px"}
+knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
+```
+
+```{r message=FALSE, warning=FALSE}
+# load additional libraries
+library(Seurat)
+library(tidyverse)
+library(tidyseurat)
+```
+
+```{r echo = FALSE}
+# Use colourblind-friendly colours
+friendly_cols <- dittoSeq::dittoColors()
+
+# Set theme
+custom_theme <-
+  list(
+    scale_fill_manual(values = friendly_cols),
+    scale_color_manual(values = friendly_cols),
+    theme_bw() +
+      theme(
+        panel.border = element_blank(),
+        axis.line = element_line(),
+        panel.grid.major = element_line(size = 0.2),
+        panel.grid.minor = element_line(size = 0.1),
+        text = element_text(size = 6),
+        legend.position = "bottom",
+        #aspect.ratio = 1,
+        strip.background = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 10, r = 10, b = 10, l = 10)),
+        axis.title.y = element_text(margin = margin(t = 10, r = 10, b = 10, l = 10)),
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)
+      )
+  )
+```
+
+
+## Introduction
+
+tidyseurat provides a bridge between the Seurat single-cell package [@butler2018integrating; @stuart2019comprehensive] and the tidyverse [@wickham2019welcome]. It creates an invisible layer that enables viewing the
+Seurat object as a tidyverse tibble, and provides Seurat-compatible *dplyr*, *tidyr*, *ggplot* and *plotly* functions.
+
+
+## Create `tidyseurat`
+
+This is a seurat object but it is evaluated as tibble. So it is fully compatible both with Seurat and tidyverse APIs. 
+
+```{r}
+pbmc_small_tidy <- tidyseurat::pbmc_small %>% tidy()
+```
+
+**It looks like a tibble**
+
+```{r}
+pbmc_small_tidy
+```
+
+**But it is a Seurat object after all**
+
+```{r}
+pbmc_small_tidy@assays
+```
+
+## Exploratory visualisation using tidyverse
+
+We can treat `pbmc_small_tidy` effectively as a normal tibble for plotting. 
+
+Here we plot number of transcripts per cell.
+
+```{r plot1}
+pbmc_small_tidy %>%
+  tidyseurat::ggplot(aes(nFeature_RNA, fill = groups)) +
+  geom_histogram() +
+  custom_theme
+```
+
+Here we plot total transcripts per cell.
+
+```{r plot2}
+pbmc_small_tidy %>%
+  tidyseurat::ggplot(aes(groups, nCount_RNA, fill = groups)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = 0.1) +
+  custom_theme
+```
+
+## Preprocess the dataset
+
+```{r preprocess, warning=FALSE}
+pbmc_small_pca <-
+  pbmc_small_tidy %>%
+  SCTransform(verbose = FALSE) %>%
+  FindVariableFeatures(verbose = FALSE) %>%
+  RunPCA(verbose = FALSE)
+
+pbmc_small_pca
+```
+
+
+
+## Identify clusters 
+
+We proceed with cluster identification with Seurat.
+
+```{r cluster}
+pbmc_small_cluster <-
+  pbmc_small_pca %>%
+  FindNeighbors(verbose = FALSE) %>%
+  FindClusters(method = "igraph", verbose = FALSE)
+
+pbmc_small_cluster
+```
+
+Now we can interrogate the object as if it was a regular tibble data frame.
+
+```{r cluster count}
+pbmc_small_cluster %>%
+  tidyseurat::count(groups, seurat_clusters)
+```
+
+We can identify cluster markers using Seurat.
+
+```{r}
+# Identify top 10 markers per cluster
+markers <-
+  pbmc_small_cluster %>%
+  FindAllMarkers(only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25) %>%
+  group_by(cluster) %>%
+  top_n(10, avg_logFC)
+
+# Plot heatmap
+pbmc_small_cluster %>%
+  DoHeatmap(
+    features = markers$gene,
+    group.colors = friendly_cols
+  )
+```
+
+## Reduce dimensions
+
+We can calculate the first 3 UMAP dimensions using the Seurat framework.
+
+```{r umap}
+pbmc_small_UMAP <-
+  pbmc_small_cluster %>%
+  RunUMAP(reduction = "pca", dims = 1:15, n.components = 3L, )
+```
+
+And we can plot them using 3D plot using plotly.
+
+```{r umap plot, eval=FALSE}
+pbmc_small_UMAP %>%
+  plot_ly(
+    x = ~`UMAP_1`,
+    y = ~`UMAP_2`,
+    z = ~`UMAP_3`,
+    color = ~seurat_clusters,
+    colors = friendly_cols[1:4]
+  )
+```
+
+_This static image is used here to allow docomentation rendering _
+```{r, echo=FALSE}
+knitr::include_graphics("../inst/vignettes/plotly.png")
+```
+
+
+## Cell type classification
+
+We can infer cell type identities using *SingleR* [@aran2019reference] and manipulate the output using tidyverse.
+
+```{r eval=FALSE}
+# Get cell type reference data
+blueprint <- celldex::BlueprintEncodeData()
+
+# Infer cell identities
+cell_type_df <-
+  pbmc_small_UMAP@assays[["SCT"]]@counts %>%
+  log1p() %>%
+  Matrix::Matrix(sparse = TRUE) %>%
+  SingleR::SingleR(
+    ref = blueprint,
+    labels = blueprint$label.main,
+    method = "single"
+  ) %>%
+  as.data.frame() %>%
+  as_tibble(rownames = "cell") %>%
+  select(cell, first.labels)
+```
+
+```{r}
+# Join UMAP and cell type info
+pbmc_small_cell_type <-
+  pbmc_small_UMAP %>%
+  left_join(cell_type_df, by = "cell")
+
+# Reorder columns
+pbmc_small_cell_type %>%
+  tidyseurat::select(cell, first.labels, everything())
+```
+
+We can easily summarise the results. For example, we can see how cell type classification overlaps with cluster classification.
+
+```{r}
+pbmc_small_cell_type %>%
+  count(seurat_clusters, first.labels)
+```
+
+
+##  Nested analyses
+
+A powerful tool we can use with tidyseurat is `nest`. We can easily perform independent analyses on subsets of the dataset. First we classify cell types in lymphoid and myeloid; then, nest based on the new classification
+
+```{r}
+pbmc_small_nested <-
+  pbmc_small_cell_type %>%
+  filter(first.labels != "Erythrocytes") %>%
+  mutate(cell_class = if_else(`first.labels` %in% c("Macrophages", "Monocytes"), "myeloid", "lymphoid")) %>%
+  nest(data = -cell_class)
+
+pbmc_small_nested
+```
+
+Now we can independently for the lymphoid and myeloid subsets (i) find variable features, (ii) reduce dimensions, and (iii) cluster using both tidyverse and SingleCellExperiment seamlessly.
+
+```{r, warning=FALSE}
+pbmc_small_nested_reanalysed <-
+  pbmc_small_nested %>%
+  mutate(data = map(
+    data, ~ .x %>%
+      FindVariableFeatures(verbose = FALSE) %>%
+      RunPCA(npcs = 10, verbose = FALSE) %>%
+      FindNeighbors(verbose = FALSE) %>%
+      FindClusters(method = "igraph", verbose = FALSE) %>%
+      RunUMAP(reduction = "pca", dims = 1:10, n.components = 3L, verbose = FALSE)
+  ))
+
+pbmc_small_nested_reanalysed
+```
+
+## Key Points
+- Some basic steps of a single-cell RNA sequencing analysis are dimensionality reduction, cluster identification and cell type classification
+- `tidyseurat` is an invisible layer that operates on a `Seurat` object and enables us to visualise and manipulate data as if it were a tidy data frame.
+- `tidyseurat` object is a `Seurat object` so it can be used with any `Seurat` compatible method
+
+## Contributing
+If you want to suggest improvements for this workshop or ask questions, you can do so as described [here](https://github.com/stemangiola/tidytranscriptomics/blob/master/CONTRIBUTING.md).
+
+## Reproducibility
+Record package and version information with `sessionInfo`
+
+```{r}
+sessionInfo()
+```
+
+## References
