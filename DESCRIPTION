@@ -26,6 +26,7 @@ Imports:
     ggrepel,
     plotly,
     airway,
+    survival
 Suggests:
     knitr,
     rmarkdown,
