@@ -70,7 +70,11 @@ pasilla_de %>%
   nest(data = -type) %>%
   mutate(
     number_of_differential = map_int(
-      data, ~ .x %>% pivot_transcript() %>% filter(significant) %>% nrow
+      data,
+      ~ .x %>% 
+        pivot_transcript() %>% 
+        filter(FDR< 0.05) %>% 
+        nrow
     ))
 ```
 
@@ -78,7 +82,7 @@ We can easily see which genes overlap, and plot them
 
 ```{r}
 pasilla_de %>%
-  filter(significant) %>%
+  filter(FDR < 0.05) %>%
   nest(data = -feature) %>%
   mutate(occurrencies = map_int(data, ~ .x %>% distinct(type) %>% nrow)) %>%
   

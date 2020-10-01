@@ -20,13 +20,19 @@ Imports:
     dplyr,
     readr,
     tidyr,
+    forcats,
     tidybulk,
     tidyHeatmap,
     edgeR,
     ggrepel,
     plotly,
     airway,
-    survival
+    survival,
+    Seurat,
+    tidyseurat,
+    dittoSeq,
+    GGally,
+    tidygate
 Suggests:
     knitr,
     rmarkdown,

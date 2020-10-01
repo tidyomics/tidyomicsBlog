@@ -28,7 +28,11 @@ knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
 ```
 
 ```{r}
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(purrr)
+library(ggplot2)
 library(tidybulk)
 library(GGally)
 library(tidygate)
@@ -142,21 +146,6 @@ de_all %>%
 
 ```
 
-We can investigate some of the genes that are less consistent between methods, for example edgeR QLT and DESeq2. In this case we can use plotly to produce an interactive plot.
-
-```{r}
-# Produce the ggplot
-(
-  de_all %>%
-    keep_abundant() %>%
-    ggplot(aes(edgerQLT_PValue, deseq2_pvalue, label = feature)) + 
-    geom_point()
-) %>% 
-  
-  # Make it interactive
-  ggplotly()
-
-```
 
 We can select some of them for further analysis
 

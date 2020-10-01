@@ -1,11 +1,11 @@
 ---
-title: "Case study - deconvolution"
+title: "Case study - single cell Seurat"
 author:
   - Maria Doyle, Peter MacCallum Cancer Centre^[maria.doyle@petermac.org]
   - Stefano Mangiola, Walter and Eliza Hall Institute^[mangiola.s@wehi.edu.au]
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Case study - deconvolution}
+  %\VignetteIndexEntry{Case study - single cell Seurat}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -30,8 +30,14 @@ knitr::include_graphics("../inst/vignettes/tidybulk_logo.png")
 ```{r message=FALSE, warning=FALSE}
 # load additional libraries
 library(Seurat)
-library(tidyverse)
+library(dittoSeq)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(purrr)
+library(ggplot2)
 library(tidyseurat)
+
 ```
 
 ```{r echo = FALSE}
