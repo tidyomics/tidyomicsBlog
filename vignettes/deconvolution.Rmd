@@ -36,7 +36,6 @@ library(survival)
 ```{r echo = FALSE}
 # Use colourblind-friendly colours
 friendly_cols <- dittoSeq::dittoColors()
-
 # Set theme
 custom_theme <-
   list(
@@ -48,9 +47,8 @@ custom_theme <-
         axis.line = element_line(),
         panel.grid.major = element_line(size = 0.2),
         panel.grid.minor = element_line(size = 0.1),
-        text = element_text(size = 6),
+        text = element_text(size = 12),
         legend.position = "bottom",
-        #aspect.ratio = 1,
         strip.background = element_blank(),
         axis.title.x = element_text(margin = margin(t = 10, r = 10, b = 10, l = 10)),
         axis.title.y = element_text(margin = margin(t = 10, r = 10, b = 10, l = 10)),
@@ -61,8 +59,10 @@ custom_theme <-
 
 
 ## Introduction
+If we are sequencing tissue samples, we may want to know what cell types are present and if there are differences in expression between them. `tidybulk` has a `deconvolve_cellularity` function that can help us do this.
 
-With `tidybulk` it is easy to infer tissue composition and perform hypothesis testing on cell type proportion; analogously to testing differential abundance.
+For this example we will use a subset of the breast cancer dataset from [The Cancer Genome Atlas (TCGA)](https://www.cancer.gov/tcga). 
+
 
 ### Deconvolution
 
@@ -76,7 +76,7 @@ BRCA_tidy =
 BRCA_tidy
 ```
 
-We can easily infer tissue cellularity across a range of methods (Cibersort, EPIC and ls_fit) with LM22 or custom signature
+With tidybulk, we can easily infer the proportions of cell types within a tissue using one of several published methods (Cibersort [@newman2015robust], EPIC [@racle2017simultaneous] and llsr [@abbas2009deconvolution]). Here we will use Cibersort which provides a default signature called LM22 to define the cell types. LM22 contains 547 genes that identify 22 human immune cell types.
 
 ```{r}
 BRCA_cell_type = 
@@ -106,22 +106,20 @@ BRCA_cell_type_long
 
 Note: Variable creation is functional to education, however is not needed nor recommended in normal circumstances.
 
+We can plot the proportions of immune cell types for each patient.
+
 ```{r out.width = "100%", dpi=300}
 BRCA_cell_type_long %>%
 	
 	# Plot
   ggplot(aes(x=patient, y=proportion, fill=cell_type)) +
   geom_bar(stat = "identity") +
-  custom_theme +
-  theme(
-    legend.key.size = unit(1, "mm"),
-    legend.text = element_text(size = 4)
-  )
+  custom_theme 
   
 
 ```
 
-We can visualise the tissue composition similarity performing a dimensionality reduction on cell type and proportion (rather than on transcript and counts)
+We can visualise the similarity of the tissue composition for the patients by performing a dimensionality reduction on cell type and proportion (rather than on transcript and counts as we did previously).
 
 ```{r out.width = "70%", dpi=300}
 
@@ -148,7 +146,8 @@ BRCA_cell_type_long %>%
 
 ### Hypothesis testing - survival analyses
 
-We can also perform differential tissue composition analyses, similarly to how we performed differential transcript abundance analyses. We can perform our analyses on censored (survival analyses) or known factor of interest.
+We can also perform differential tissue composition analyses, similar to how we performed differential transcript abundance analyses. We use tidybulk's `test_differential_cellularity` and can perform our analyses using a known factor of interest, such as tumour subtype, or using survival data. Here we use survival data available from TCGA [@liu2018integrated].
+
 
 ```{r}
 library(survival)

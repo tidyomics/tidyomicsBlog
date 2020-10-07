@@ -33,10 +33,12 @@ library(tidyr)
 library(forcats)
 library(purrr)
 library(ggplot2)
-library(tidybulk)
+library(forcats)
 library(GGally)
 library(tidygate)
 library(plotly)
+library(tidybulk)
+
 ```
 
 ```{r, echo = FALSE}
@@ -62,24 +64,29 @@ custom_theme =
 ```
 
 ## Introduction
-`tidybulk` integrates several method for differential transcript abundance testing.
+
+*tidybulk* integrates several popular methods for differential transcript abundance testing: the edgeR quasi-likelihood [@chen2016reads] (tidybulk default method), edgeR likelihood ratio [@mccarthy2012differential], limma-voom [@law2014voom] and DESeq2 [@love2014moderated]. A common question researchers have is which method to choose. Mike Love, DESeq2 author has this advice in his [blog](https://mikelove.wordpress.com/2016/09/28/deseq2-or-edger).
 
 ### Comparison of methods
 We can serially perform differential analyses with several methods, which results will be added to the original datasets. 
 
 We first pre-process the data, creating a tibble and identifying abundant genes.
 ```{r}
-pasilla_de = 
-  tidytranscriptomics::pasilla %>% 
+pasilla_de <- 
+  rpharma2020tidytranscriptomics::pasilla %>% 
   
-  # Convert SE object to tibble
-  tidybulk %>%
+  # Convert SummarizedExperiment object to tibble
+  tidybulk() %>%
+    
+  # Add gene symbols
+  mutate(symbol = AnnotationDbi::mapIds(org.Dm.eg.db::org.Dm.eg.db,   keys=as.character(feature), keytype = "FLYBASE", column="SYMBOL", multiVals = "first")) %>%
   
-   # Scale abundance for plotting
-  identify_abundant(factor_of_interest=condition) 
+  # Filter counts
+  keep_abundant(factor_of_interest=condition)
 ```
 
-This is an example for the default method for differential transcriptional testing
+This is an example for the default method for differential abundance testing as we saw previously with the airway dataset. It uses the edgeR quasi-likelihood method.
+
 ```{r}
 pasilla_de %>%
   
@@ -88,81 +95,95 @@ pasilla_de %>%
     ~ condition + type, 
     action="get"
   ) %>%
-  arrange(FDR)
+  
+  # Sort by P value        
+  arrange(PValue)
 ```
 
 Now let's try to perform multiple methods to the same dataset.
 ```{r}
-de_all = 
+de_all <- 
   
   pasilla_de %>%
   
-  # Test differential composition
+  # edgeR QLT
   test_differential_abundance(
     ~ condition + type, 
     method = "edger_quasi_likelihood",
     prefix = "edgerQLT_"
   )  %>%
   
-  # Test differential composition
+  # edgeR LRT
   test_differential_abundance(
     ~ condition + type, 
     method = "edger_likelihood_ratio",
     prefix = "edgerLR_"
   )  %>%
   
-  # Test differential composition
+  # limma-voom
   test_differential_abundance(
     ~ condition + type, 
     method = "limma_voom",
     prefix = "voom_"
   ) %>%
   
-  # Test differential composition
+  # DESeq2
   test_differential_abundance(
     ~ condition + type, 
     method = "deseq2",
     prefix = "deseq2_"
   ) 
+
+# take a look
+de_all
 ```
-We can visually compare the estimate difference for all methods. We will notice that the consistency of the estimates is really high
+***
+
+>Note 
+>You may notice that the methods produce columns with different names for similar outputs. If you wish to make these consistent you can do that with tidyverse `rename`. For example, to rename the p value adjusted columns you could run below.
+>de_all %>% rename(deseq2_FDR = deseq2_padj, voom_FDR = voom_adj.P.Val)
+
+***
+
+We can visually compare the log fold change (logFC) of transcript abundance for the comparison of interest (treated vs untreated) for all methods. We will notice that the consistency of the logFC is really high for the methods.
 
 ```{r}
-
 de_all %>%
-  keep_abundant() %>%
   pivot_transcript() %>%
-  select(edgerQLT_logFC, edgerLR_logFC, voom_logFC, deseq2_log2FoldChange, feature ) %>%
+  select(edgerQLT_logFC, edgerLR_logFC, voom_logFC, deseq2_log2FoldChange, feature) %>%
   ggpairs(1:4)
 ```
 
 Similarly, we can visually compare the significance for all methods. In this case the difference is larger.
+
 ```{r}
 de_all %>%
-  keep_abundant() %>%
   pivot_transcript() %>%
-  select(edgerQLT_PValue, edgerLR_PValue, voom_P.Value, deseq2_pvalue, feature ) %>%
+  select(edgerQLT_PValue, edgerLR_PValue, voom_P.Value, deseq2_pvalue, feature) %>%
   ggpairs(1:4)
-
 ```
 
 
-We can select some of them for further analysis
+We can select some of the transcripts for further analysis using the [*tidygate*](https://github.com/stemangiola/tidygate) package.
+
+With tidygate, we can interactively draw gates to select points we want using `gate`. We specify which columns we want to plot in the scatterplot, and how many gates we want to draw. We can also specify the opacity if we want to make it easier to see overlapping points.
 
 ```{r, eval=FALSE}
-de_gate = 
+de_gate <- 
   de_all %>%
-  
-  keep_abundant() %>%
   
   gate(
     feature,
     edgerQLT_PValue, 
     deseq2_pvalue, 
-    opacity =0.3, 
+    opacity=0.3, 
     how_many_gates = 2 
   )
 ```
+
+We then click to draw gates around the points we want, for example as shown in the screenshot below. That will add a column called gate, specifying which gate the points (transcripts) are in.
+
+
 
 ```{r, echo=FALSE}
 
@@ -185,14 +206,23 @@ de_gate
 knitr::include_graphics("../inst/vignettes/comparison_different_DE_methods_gates.png")
 ```
 
-We can now select the transcript from the two gates (i.e. over significant in DESeq2  and oversignificant in edgeR)
+We can check how many transcripts we've got in each gate.
 
 ```{r}
-
 de_gate %>% 
+    pivot_transcript() %>% 
+    dplyr::count(gate)
+```
+
+We can now select the transcripts from our two gates i.e. more significant in edgeR (gate 1) and more significant in DESeq2 (gate 2).
+
+```{r}
+de_gate %>% 
+    
+  # Generate scaled counts for plotting     
   scale_abundance() %>%
   
-  # Filter only transcripts within the gates
+  # Filter for transcripts within the gates
   filter(gate > 0) %>% 
   
   # Rename for clarity
@@ -202,7 +232,7 @@ de_gate %>%
     TRUE ~ gate
   )) %>%
   
-  # Rearrange order
+  # Order the plots for the transcripts
   mutate(feature = fct_reorder(feature, edgerQLT_PValue, min)) %>%
   
   # Plot
@@ -213,14 +243,13 @@ de_gate %>%
 ```
 
 
-For example DESeq2 performed a more conservative statistics for the transcript `FBgn0052939`
+This enables us to see, for example, that DESeq2 produces a more conservative logFC statistic for the transcript `FBgn0052939` .
 
 ```{r}
 de_gate %>%
   pivot_transcript %>%
   filter(feature == "FBgn0052939")%>%
   select(edgerQLT_logFC, deseq2_log2FoldChange)
-
 ```
 
 
