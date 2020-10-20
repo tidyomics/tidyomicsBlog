@@ -14,49 +14,8 @@ This document lays down the principles of tidy transcriptomics, of which `tidybu
 - **Present/visualise information in its raw form when possible.** Modern visualisation tools (e.g. ggplot) allow to use custom scales to visualise data. For example, for visualising p-values apply the `log10_reverse` scale instead of transforming the p-values in their negative-log form; for visualising (raw, scaled and/or adjusted) transcript abundance (in the form of read counts) use the `log1p` scale instead of transforming the data in its log (or count-per-million) form.
 - **Avoid the creation of temporary variables when possible, and always avoid variable updating.** When working interactively, data-containing variables is a bug-prone process, especially if multiple assignments are done on the same variable though the workflow. The main utility of variables should be to store data that is used more than once. Tidyverse allows extremely complex operations in a functional way.
 
-Website
+## [Introduction + case studies](https://stemangiola.github.io/tidytranscriptomics/)
 
-https://stemangiola.github.io/tidytranscriptomics/
-
-Workshops
-
-## 30 minutes
-
-- Converion SummarizedExperiment object to tibble
-- Format sample column
-- Get gene symbol
-- Identify abundant transcripts
-- Scale abundance for sequencing depth
-- Visualise abundance distribution
-- Reduce dimensions
-- Draw heatmap
-- Test differential transcript abundance
-- Volcano plot
-- Strip-chart
-- Interactive plots
+![Schematics of the roadmap](inst/roadmap.png)
 
 
-## 1h
-
-- Import tibble
-- comparison of different differential transcript abundance testing tools
-- Strip-chart comparing all normalisations of top genes
-- Gene enrichment analyses
-
-## 2h
-
-- signature creation
-- single cell sudobulk
-- nest functionality
-
-
-### Via GitHub
-
-Alternatively, you could install the workshop using the commands below in R `4.0`.
-
-```
-devtools::install_github("stemangiola/tidybulk")
-devtools::install_github("stemangiola/tidytranscriptomics", build_vignettes = TRUE)
-library(tidytranscriptomics)
-vignette("tidytranscriptomics")
-```
