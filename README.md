@@ -18,4 +18,18 @@ This document lays down the principles of tidy transcriptomics, of which `tidybu
 
 ![Schematics of the roadmap](inst/roadmap.png)
 
+## Workshops
 
+Workshops we have given are listed below, most recent is first. None contain exactly the same material as we try to continually improve and adapt for each audience, and we showcase new features in the tidytranscriptomics packages where relevant.
+
+[R-Ladies Tunis 2021](https://stemangiola.github.io/rladiestunis2021_tidytranscriptomics/index.html)
+
+[Euro Bioc 2020](https://stemangiola.github.io/bioceurope2020_tidytranscriptomics/index.html)
+
+[ABACBS 2020](https://stemangiola.github.io/ABACBS2020_tidytranscriptomics/index.html)
+
+[Bioc Asia 2020](https://stemangiola.github.io/biocasia2020_tidytranscriptomics/index.html)
+
+[R/Pharma 2020](https://stemangiola.github.io/rpharma2020_tidytranscriptomics/index.html)
+
+[Bioc 2020](https://stemangiola.github.io/bioc_2020_tidytranscriptomics/index.html)
