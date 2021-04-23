@@ -34,7 +34,6 @@ Imports:
     plotly,
     airway,
     survival,
-    tidyseurat,
     dittoSeq,
     GGally,
     tidygate
