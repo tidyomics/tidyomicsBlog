@@ -37,7 +37,8 @@ Imports:
     dittoSeq,
     GGally,
     tidygate,
-    Seurat
+    Seurat,
+    tidyseurat
 Suggests:
     knitr,
     rmarkdown,
