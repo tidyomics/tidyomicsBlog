@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">tidytranscriptomics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -54,16 +54,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/supplementary.html">Supplementary Material</a>
+      <a href="articles/comparison_differential_transcription.html">Case study - comparison methods</a>
     </li>
     <li>
-      <a href="articles/workshop_1_hour.html">Producing extensive transcriptomic analysis workflows with tidy principles - 1 hour</a>
+      <a href="articles/deconvolution.html">Case study - deconvolution</a>
     </li>
     <li>
-      <a href="articles/workshop_2_hours.html">Producing extensive transcriptomic analysis workflows with tidy principles - 2 hours</a>
+      <a href="articles/nesting.html">Case study - nesting</a>
     </li>
     <li>
-      <a href="articles/workshop_30_minutes.html">Introduction to tidy transcriptomic analyses - 30 minutes</a>
+      <a href="articles/singlecell_tidy_SingleCellExperiment.html">Case study - single cell SingleCellExperiment</a>
+    </li>
+    <li>
+      <a href="articles/singlecell_tidy_seurat.html">Case study - single cell Seurat</a>
     </li>
   </ul>
 </li>
@@ -71,7 +74,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/stemangiola/tidytranscriptomics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -102,52 +105,22 @@
 <li>
 <strong>Avoid the creation of temporary variables when possible, and always avoid variable updating.</strong> When working interactively, data-containing variables is a bug-prone process, especially if multiple assignments are done on the same variable though the workflow. The main utility of variables should be to store data that is used more than once. Tidyverse allows extremely complex operations in a functional way.</li>
 </ul>
-<p>Workshops</p>
-<div id="30-minutes" class="section level2">
+<div id="introduction--case-studies" class="section level2">
 <h2 class="hasAnchor">
-<a href="#30-minutes" class="anchor"></a>30 minutes</h2>
-<ul>
-<li>Converion SummarizedExperiment object to tibble</li>
-<li>Format sample column</li>
-<li>Get gene symbol</li>
-<li>Identify abundant transcripts</li>
-<li>Scale abundance for sequencing depth</li>
-<li>Visualise abundance distribution</li>
-<li>Reduce dimensions</li>
-<li>Draw heatmap</li>
-<li>Test differential transcript abundance</li>
-<li>Volcano plot</li>
-<li>Strip-chart</li>
-<li>Interactive plots</li>
-</ul>
+<a href="#introduction--case-studies" class="anchor"></a><a href="https://stemangiola.github.io/tidytranscriptomics/">Introduction + case studies</a>
+</h2>
+<p><img src="inst/roadmap.png" alt="Schematics of the roadmap"></p>
 </div>
-<div id="1h" class="section level2">
+<div id="workshops" class="section level2">
 <h2 class="hasAnchor">
-<a href="#1h" class="anchor"></a>1h</h2>
-<ul>
-<li>Import tibble</li>
-<li>comparison of different differential transcript abundance testing tools</li>
-<li>Strip-chart comparing all normalisations of top genes</li>
-<li>Gene enrichment analyses</li>
-</ul>
-</div>
-<div id="2h" class="section level2">
-<h2 class="hasAnchor">
-<a href="#2h" class="anchor"></a>2h</h2>
-<ul>
-<li>signature creation</li>
-<li>single cell sudobulk</li>
-<li>nest functionality</li>
-</ul>
-<div id="via-github" class="section level3">
-<h3 class="hasAnchor">
-<a href="#via-github" class="anchor"></a>Via GitHub</h3>
-<p>Alternatively, you could install the workshop using the commands below in R <code>4.0</code>.</p>
-<pre><code><a href="https://devtools.r-lib.org//reference/remote-reexports.html">devtools::install_github("stemangiola/tidybulk")
-devtools::install_github("stemangiola/tidytranscriptomics", build_vignettes = TRUE)
-library(tidytranscriptomics)
-vignette("tidytranscriptomics")</a></code></pre>
-</div>
+<a href="#workshops" class="anchor"></a>Workshops</h2>
+<p>Workshops we have given are listed below, most recent is first. None contain exactly the same material as we try to continually improve and adapt for each audience, and we showcase new features in the tidytranscriptomics packages where relevant.</p>
+<p><a href="https://stemangiola.github.io/rladiestunis2021_tidytranscriptomics/index.html">R-Ladies Tunis 2021</a></p>
+<p><a href="https://stemangiola.github.io/bioceurope2020_tidytranscriptomics/index.html">Euro Bioc 2020</a></p>
+<p><a href="https://stemangiola.github.io/ABACBS2020_tidytranscriptomics/index.html">ABACBS 2020</a></p>
+<p><a href="https://stemangiola.github.io/biocasia2020_tidytranscriptomics/index.html">Bioc Asia 2020</a></p>
+<p><a href="https://stemangiola.github.io/rpharma2020_tidytranscriptomics/index.html">R/Pharma 2020</a></p>
+<p><a href="https://stemangiola.github.io/bioc_2020_tidytranscriptomics/index.html">Bioc 2020</a></p>
 </div>
 </div>
 
@@ -180,8 +153,8 @@ vignette("tidytranscriptomics")</a></code></pre>
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>Maria Doyle <br><small class="roles"> Maintainer </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li>Maria Doyle <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-4847-8436" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Stefano Mangiola <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0001-7474-836X" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 
@@ -198,11 +171,11 @@ vignette("tidytranscriptomics")</a></code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Maria Doyle.</p>
+  <p>Developed by Maria Doyle, Stefano Mangiola.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
