@@ -36,7 +36,8 @@ Imports:
     survival,
     dittoSeq,
     GGally,
-    tidygate
+    tidygate,
+    Seurat
 Suggests:
     knitr,
     rmarkdown,
