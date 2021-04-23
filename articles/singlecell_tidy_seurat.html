@@ -127,7 +127,7 @@
 </h2>
 <p>This is a seurat object but it is evaluated as tibble. So it is fully compatible both with Seurat and tidyverse APIs.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">pbmc_small_tidy</span> <span class="op">&lt;-</span> <span class="fu">tidyseurat</span><span class="fu">::</span><span class="va">pbmc_small</span> <span class="op">%&gt;%</span> <span class="fu">tidy</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">pbmc_small_tidy</span> <span class="op">&lt;-</span> <span class="fu">tidyseurat</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/tidyseurat/man/pbmc_small.html">pbmc_small</a></span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/tidyseurat/man/tidy.html">tidy</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p><strong>It looks like a tibble</strong></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pbmc_small_tidy</span></code></pre></div>
@@ -172,7 +172,7 @@
 <p>And we can plot them using 3D plot using plotly.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pbmc_small_UMAP</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://docs.ropensci.org/plotly/reference/plot_ly.html">plot_ly</a></span><span class="op">(</span>
+  <span class="fu"><a href="https://rdrr.io/pkg/tidyseurat/man/plot_ly.html">plot_ly</a></span><span class="op">(</span>
     x <span class="op">=</span> <span class="op">~</span><span class="va">`UMAP_1`</span>,
     y <span class="op">=</span> <span class="op">~</span><span class="va">`UMAP_2`</span>,
     z <span class="op">=</span> <span class="op">~</span><span class="va">`UMAP_3`</span>,
