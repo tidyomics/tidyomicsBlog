@@ -32,3 +32,9 @@
 #' @format  A tidy data frame.
 #' @usage data(BRCA)
 "BRCA"
+
+
+#' pbmc_small
+#'
+#' @usage data(pbmc_small)
+"pbmc_small"
