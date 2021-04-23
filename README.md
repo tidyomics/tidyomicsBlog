@@ -1,6 +1,5 @@
 <!-- badges: start -->
-[![.github/workflows/basic_checks.yaml](https://github.com/stemangiola/tidytranscriptomics/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/stemangiola/tidytranscriptomics/actions) [![Docker](https://github.com/Bioconductor/BioC2020/raw/master/docs/images/docker_icon.png)](https://hub.docker.com/repository/docker/stemangiola/tidytranscriptomics) 	
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3959148.svg)](https://doi.org/10.5281/zenodo.3959148)
+[![.github/workflows/basic_checks.yaml](https://github.com/stemangiola/tidytranscriptomics/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/stemangiola/tidytranscriptomics/actions)
 <!-- badges: end -->
 
 
