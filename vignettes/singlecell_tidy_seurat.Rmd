@@ -13,7 +13,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval=FALSE # temporarily not evaluating until get website to update and sort out what datasets to use
 )
 
 # bibliography: "`r file.path(system.file(package='tidytranscriptomics', 'vignettes'), 'workshop_1_hour.bib')`"
