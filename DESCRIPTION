@@ -37,6 +37,8 @@ Suggests:
     knitr,
     rmarkdown,
     pkgdown
+Remotes:
+    stemangiola/tidygate
 Biarch: true
 biocViews: RNASeq, DifferentialExpression, GeneExpression, Normalization, Clustering, QualityControl, Sequencing, Transcription, Transcriptomics
 URL: https://stemangiola.github.io/tidytranscriptomics/
