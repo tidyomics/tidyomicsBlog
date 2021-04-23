@@ -118,7 +118,7 @@
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">SingleCellExperiment</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">scater</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">scran</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">igraph</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://igraph.org">igraph</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">SingleR</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://www.r-project.org">tidyHeatmap</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">tidySCE</span><span class="op">)</span></code></pre></div>
@@ -231,7 +231,7 @@
 <span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/colLabels.html">colLabels</a></span><span class="op">(</span><span class="va">pbmc_small_cluster</span><span class="op">)</span> <span class="op">&lt;-</span>                                          <span class="co"># from SingleCellExperiment</span>
     <span class="va">pbmc_small_pca</span> <span class="op">%&gt;%</span>
     <span class="fu">buildSNNGraph</span><span class="op">(</span>use.dimred<span class="op">=</span><span class="st">"PCA"</span><span class="op">)</span> <span class="op">%&gt;%</span>                                   <span class="co"># from scran - shared nearest neighbor</span>
-    <span class="fu">cluster_walktrap</span><span class="op">(</span><span class="op">)</span> <span class="op">%$%</span>                                                <span class="co"># from igraph</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/igraph/man/cluster_walktrap.html">cluster_walktrap</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%$%</span>                                                <span class="co"># from igraph</span>
     <span class="va">membership</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="https://rdrr.io/r/base/factor.html">as.factor</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co"># Reorder columns</span>
