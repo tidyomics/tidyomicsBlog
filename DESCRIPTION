@@ -18,6 +18,12 @@ RoxygenNote: 7.1.1
 Depends:
     R (>= 4.0.0)
 Imports:
+    tidybulk,
+    tidyseurat
+Suggests:
+    knitr,
+    rmarkdown,
+    pkgdown,
     stats,
     utils,
     tibble,
@@ -27,7 +33,6 @@ Imports:
     readr,
     tidyr,
     forcats,
-    tidybulk,
     tidyHeatmap,
     edgeR,
     ggrepel,
@@ -37,12 +42,7 @@ Imports:
     dittoSeq,
     GGally,
     tidygate,
-    Seurat,
-    tidyseurat
-Suggests:
-    knitr,
-    rmarkdown,
-    pkgdown
+    Seurat
 Remotes:
     stemangiola/tidygate
 Biarch: true
