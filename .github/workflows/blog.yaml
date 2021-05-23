@@ -53,6 +53,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./blog/public
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: docs # Folder the action should deploy
