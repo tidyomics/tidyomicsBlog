@@ -45,12 +45,14 @@ jobs:
           # extended: true
 
       - name: Build
-        run: hugo --minify
+        run: |
+          cd blog
+          hugo --minify
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./blog/public
+          publish_dir: ./public
           BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: docs # The folder the action should deploy
+          FOLDER: docs # Folder the action should deploy
