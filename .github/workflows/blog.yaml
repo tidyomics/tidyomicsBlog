@@ -55,4 +55,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ../blog/public
           BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: root # Folder the action should deploy
+          FOLDER: docs # Folder the action should deploy
