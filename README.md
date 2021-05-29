@@ -32,3 +32,5 @@ Workshops we have given are listed below, most recent is first. None contain exa
 [R/Pharma 2020](https://stemangiola.github.io/rpharma2020_tidytranscriptomics/index.html)
 
 [Bioc 2020](https://stemangiola.github.io/bioc_2020_tidytranscriptomics/index.html)
+
+## [The blog](https://stemangiola.github.io/tidytranscriptomics/)
