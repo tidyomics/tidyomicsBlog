@@ -58,7 +58,7 @@ params:
   customJS: []
   dateFormatToUse: '2006-01-02'
   debug: no
-  description: Blog about my research.
+  description: The blog about tidy transcriptomics.
   fancybox: yes
   flowchartDiagrams:
     enable: no
@@ -82,7 +82,7 @@ params:
     - even
   linkToMarkDown: no
   livereUID: ''
-  logoTitle: Research blog
+  logoTitle: The blog about tidy transcriptomics
   mathjax: no
   mathjaxEnableAutoNumber: no
   mathjaxEnableSingleDollar: no
