@@ -1,7 +1,7 @@
-baseURL: http://localhost:1313/
+baseURL: https://stemangiola.github.io/tidytranscriptomics/
 languageCode: en
 defaultContentLanguage: en
-title: Even - A super concise theme for Hugo
+title: Tidy transcriptomics
 preserveTaxonomyNames: yes
 enableRobotsTXT: yes
 enableEmoji: yes
@@ -17,7 +17,7 @@ disqusShortname: ''
 googleAnalytics: ''
 copyright: ''
 author:
-  name: Stefano Mangiola
+  name: Stefano Mangiola, Maria Doyle
 sitemap:
   changefreq: weekly
   filename: sitemap.xml
