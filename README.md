@@ -21,9 +21,16 @@ This document lays down the principles of tidy transcriptomics, of which `tidybu
 
 Workshops we have given are listed below, most recent is first. None contain exactly the same material as we try to continually improve and adapt for each audience, and we showcase new features in the tidytranscriptomics packages where relevant.
 
+### 2021
+
+[Bioc 2021](https://stemangiola.github.io/bioc2021_tidytranscriptomics/index.html)
+
 [ISMB/ECCB 2021](https://tidytranscriptomics-workshops.github.io/ismb2021_tidytranscriptomics/index.html)
 
 [R-Ladies Tunis 2021](https://stemangiola.github.io/rladiestunis2021_tidytranscriptomics/index.html)
+
+
+### 2020
 
 [Euro Bioc 2020](https://stemangiola.github.io/bioceurope2020_tidytranscriptomics/index.html)
 
@@ -35,4 +42,7 @@ Workshops we have given are listed below, most recent is first. None contain exa
 
 [Bioc 2020](https://stemangiola.github.io/bioc_2020_tidytranscriptomics/index.html)
 
-## [The blog](https://stemangiola.github.io/tidytranscriptomics/)
+
+## Blog
+
+[The blog](https://stemangiola.github.io/tidytranscriptomics/)
