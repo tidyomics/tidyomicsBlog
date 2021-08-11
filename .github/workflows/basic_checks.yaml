@@ -6,28 +6,41 @@ env:
   GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  get-bioc-version:
+  define-docker-info:
     runs-on: ubuntu-latest
     container: bioconductor/bioconductor_docker:devel
     outputs:
-      biocrelease: ${{ steps.findinfo.outputs.biocrelease }}
+      imagename: ${{ steps.findinfo.outputs.imagename }}
     steps:
       - id: findinfo
-        name: Find Bioc release version
+        name: Find Bioc release version to select Docker
         run: |
           ## Define the Bioconductor release version RELEASE_x_y
           biocrelease=$(Rscript -e "info <- BiocManager:::.version_map_get_online('https://bioconductor.org/config.yaml'); res <- subset(info, BiocStatus == 'release')[, 'Bioc']; res <- gsub('.', '_', res, fixed=TRUE); res <- gsub('^', 'RELEASE_', res); cat(as.character(res))")
           ## Print the results
           echo $biocrelease
           
+          ## Define the image name and print the information
+          imagename="bioconductor/bioconductor_docker:${biocrelease}"
+          echo $imagename
+          
           ## Save the info for the next job
-          echo "::set-output name=biocrelease::${biocrelease}"
+          echo "::set-output name=imagename::${imagename}"
+          
         shell:
           bash {0}
       
   install-packages:
     runs-on: ubuntu-latest
-    container: bioconductor/bioconductor_docker:${biocrelease}
+    needs: define-docker-info
+    
+    ## The docker container to use. Note that we link a directory on the GHA
+    ## runner to a docker directory, such that we can then cache the linked
+    ## directory. This directory will contain the R packages used.
+    container: 
+      image: ${{ needs.define-docker-info.outputs.imagename }}
+      volumes:
+        - /home/runner/work/_temp/Library:/usr/local/lib/R/host-site-library
     steps:
       - uses: actions/checkout@v2
         with:
