@@ -9,3 +9,5 @@ _pkgdown.yml
 ^data-raw$
 dev$
 CONTRIBUTING.md
+blog$
+^\.github$
