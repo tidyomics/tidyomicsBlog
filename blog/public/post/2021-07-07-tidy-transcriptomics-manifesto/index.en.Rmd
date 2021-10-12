@@ -35,7 +35,7 @@ sequenceDiagrams:
 <!--more-->
 
 ```{r, echo=FALSE, messages=FALSE, warnings=FALSE}
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 ```
 
 <img src="images/logo.png" alt="tidytranscriptomics_logo" width="100px" height="100px"/>
@@ -155,7 +155,7 @@ airway %>%
 ## SingleCellExperiment and tidySingleCellExperiment
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(tidySingleCellExperiment)
+suppressPackageStartupMessages(library(tidySingleCellExperiment))
 
 ```
 
@@ -239,7 +239,7 @@ Calculating a transcriptional signature.
 **Base**
 
 ```{r}
-library(Seurat)
+suppressPackageStartupMessages(library(Seurat))
 
 # Load data
 pbmc_Seurat = tidySingleCellExperiment::pbmc_small %>% as.Seurat() %>% NormalizeData()
@@ -264,7 +264,7 @@ signature_score_1 - signature_score_2
 It is the same as for `tidySingleCellExperiment`
 
 ```{r}
-library(tidyseurat)
+suppressPackageStartupMessages(library(tidyseurat))
 
 pbmc_Seurat %>%
   join_features(c("CD79A", "CD79B", "CD3D", "CCR7"), shape = "wide") %>%
@@ -334,7 +334,7 @@ Mangiola, S., Molania, R., Dong, R. et al. tidybulk: an R tidy framework for mod
 
 ### tidyseurat
 
-Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021;, btab404, <https://doi.org/10.1093/bioinformatics/btab404>
+Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021, <https://doi.org/10.1093/bioinformatics/btab404>
 
 ### tidySummarizedExperiment and tidySingleCellEXeperiment
 
