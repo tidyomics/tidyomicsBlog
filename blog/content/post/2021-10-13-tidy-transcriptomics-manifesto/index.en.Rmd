@@ -1,16 +1,15 @@
 ---
 title: Tidy-transcriptomics manifesto
-author: Stefano & Maria
-date: '2021-10-07'
-slug: []
+author: Stefano Mangiola & Mria Doyle
+date: '2021-10-13'
+slug: tidy-transcriptomics manifesto
 categories:
-  - all platforms
+  - tidytrancriptomics
 tags:
-  - tidytranscriptomics
-  - manifesto
-  - transcriptomics
+  - RNAseq
   - tidyverse
-lastmod: '2021-10-07T14:16:36+10:00'
+  - manifesto
+lastmod: '2021-10-13T10:33:15+11:00'
 keywords: []
 description: ''
 comment: no
@@ -33,7 +32,6 @@ sequenceDiagrams:
 ---
 
 <!--more-->
-
 ```{r, echo=FALSE, messages=FALSE, warnings=FALSE}
 suppressPackageStartupMessages(library(tidyverse))
 ```

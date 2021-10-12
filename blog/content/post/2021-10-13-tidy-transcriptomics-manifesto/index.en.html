@@ -1,212 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Tidy-transcriptomics manifesto - Tidy transcriptomics</title>
-  <meta name="renderer" content="webkit" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+---
+title: Tidy-transcriptomics manifesto
+author: Stefano Mangiola & Mria Doyle
+date: '2021-10-13'
+slug: tidy-transcriptomics manifesto
+categories:
+  - tidytrancriptomics
+tags:
+  - RNAseq
+  - tidyverse
+  - manifesto
+lastmod: '2021-10-13T10:33:15+11:00'
+keywords: []
+description: ''
+comment: no
+toc: no
+autoCollapseToc: no
+postMetaInFooter: no
+hiddenFromHomePage: no
+contentCopyright: no
+reward: no
+mathjax: no
+mathjaxEnableSingleDollar: no
+mathjaxEnableAutoNumber: no
+hideHeaderAndFooter: no
+flowchartDiagrams:
+  enable: no
+  options: ''
+sequenceDiagrams:
+  enable: no
+  options: ''
+---
 
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
+<script src="{{< blogdown/postref >}}index.en_files/header-attrs/header-attrs.js"></script>
 
-<meta name="theme-color" content="#f8f5ec" />
-<meta name="msapplication-navbutton-color" content="#f8f5ec">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+<div id="TOC">
 
-
-<meta name="author" content="Stefano & Maria" /><meta name="description" content=" }}index.en_files/header-attrs/header-attrs.js&#34;  " /><meta name="keywords" content="Hugo, theme, even" />
-
-
-
-
-
-
-<meta name="generator" content="Hugo 0.85.0 with theme even" />
-
-
-<link rel="canonical" href="https://stemangiola.github.io/tidytranscriptomics/post/2021-07-07-tidy-transcriptomics-manifesto/" />
-<link rel="apple-touch-icon" sizes="180x180" href="/tidytranscriptomics/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/tidytranscriptomics/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/tidytranscriptomics/favicon-16x16.png">
-<link rel="manifest" href="/tidytranscriptomics/manifest.json">
-<link rel="mask-icon" href="/tidytranscriptomics/safari-pinned-tab.svg" color="#5bbad5">
-
-
-
-<link href="/tidytranscriptomics/sass/main.min.7063e6a5193600da37b11a3f96b28adfb25747a97881e5f3aa057b41563749a4.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
-
-
-<meta property="og:title" content="Tidy-transcriptomics manifesto" />
-<meta property="og:description" content="
-
-
-
-
-
-
-" />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://stemangiola.github.io/tidytranscriptomics/post/2021-07-07-tidy-transcriptomics-manifesto/" /><meta property="article:section" content="post" />
-<meta property="article:published_time" content="2021-07-07T00:00:00+00:00" />
-<meta property="article:modified_time" content="2021-07-07T14:16:36+10:00" />
-
-<meta itemprop="name" content="Tidy-transcriptomics manifesto">
-<meta itemprop="description" content="
-
-
-
-
-
-
-"><meta itemprop="datePublished" content="2021-07-07T00:00:00+00:00" />
-<meta itemprop="dateModified" content="2021-07-07T14:16:36+10:00" />
-<meta itemprop="wordCount" content="2913">
-<meta itemprop="keywords" content="tidytranscriptomics,manifesto,transcriptomics,tidyverse," /><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Tidy-transcriptomics manifesto"/>
-<meta name="twitter:description" content="
-
-
-
-
-
-
-"/>
-
-<!--[if lte IE 9]>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
-<![endif]-->
-
-<!--[if lt IE 9]>
-  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
-<![endif]-->
-
-</head>
-<body>
-  <div id="mobile-navbar" class="mobile-navbar">
-  <div class="mobile-header-logo">
-    <a href="/tidytranscriptomics/" class="logo">The blog about tidy transcriptomics</a>
-  </div>
-  <div class="mobile-navbar-icon">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-</div>
-<nav id="mobile-menu" class="mobile-menu slideout-menu">
-  <ul class="mobile-menu-list">
-    <a href="/tidytranscriptomics/">
-        <li class="mobile-menu-item">Home</li>
-      </a><a href="/tidytranscriptomics/post/">
-        <li class="mobile-menu-item">Archives</li>
-      </a><a href="/tidytranscriptomics/tags/">
-        <li class="mobile-menu-item">Tags</li>
-      </a><a href="/tidytranscriptomics/categories/">
-        <li class="mobile-menu-item">Categories</li>
-      </a><a href="/tidytranscriptomics/about/">
-        <li class="mobile-menu-item">About</li>
-      </a>
-  </ul>
-
-  
-
-
-</nav>
-
-  <div class="container" id="mobile-panel">
-    <header id="header" class="header">
-        <div class="logo-wrapper">
-  <a href="/tidytranscriptomics/" class="logo">The blog about tidy transcriptomics</a>
 </div>
 
-
-
-
-
-<nav class="site-navbar">
-  <ul id="menu" class="menu">
-    <li class="menu-item">
-        <a class="menu-item-link" href="/tidytranscriptomics/">Home</a>
-      </li><li class="menu-item">
-        <a class="menu-item-link" href="/tidytranscriptomics/post/">Archives</a>
-      </li><li class="menu-item">
-        <a class="menu-item-link" href="/tidytranscriptomics/tags/">Tags</a>
-      </li><li class="menu-item">
-        <a class="menu-item-link" href="/tidytranscriptomics/categories/">Categories</a>
-      </li><li class="menu-item">
-        <a class="menu-item-link" href="/tidytranscriptomics/about/">About</a>
-      </li>
-  </ul>
-</nav>
-
-    </header>
-
-    <main id="main" class="main">
-      <div class="content-wrapper">
-        <div id="content" class="content">
-          <article class="post">
-    
-    <header class="post-header">
-      <h1 class="post-title">Tidy-transcriptomics manifesto</h1>
-
-      <div class="post-meta">
-        <span class="post-time"> 2021-07-07 </span>
-        <div class="post-category">
-            <a href="/tidytranscriptomics/categories/all-platforms/"> all platforms </a>
-            </div>
-        
-      </div>
-    </header>
-
-    
-    <div class="post-content">
-      <pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
-<pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
-## ✓ tibble  3.1.2     ✓ dplyr   1.0.7
-## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
-## ✓ readr   1.4.0     ✓ forcats 0.5.1</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
+<!--more-->
 <p><img src="images/logo.png" alt="tidytranscriptomics_logo" width="100px" height="100px"/></p>
-<p>In this first post, we want to introduce the concept of tidy transcriptomics and its principles is moved by.</p>
+<p>In this first post, we want to introduce the concept of tidy transcriptomics and its principles.</p>
 <div id="what-is-tidy-transcriptomics" class="section level1">
-<h1>What is tidy transcriptomics</h1>
-<p>Tidy transcriptomics is a specific approach to transcriptomic data analysis in R, that uses the “tidy” principles proposed by <a href="https://joss.theoj.org/papers/10.21105/joss.01686.pdf">Wickham et al.</a>. Tidy transcriptomics introduces both a tidy data representation and manipulation (for single-cell and bulk) with the packages <code>tidySummarizedExperiment</code>, <code>tidySingleCellExperiment</code>, and <code>tidyseurat</code> and a tidy analysis workflow (for bulk data) with the package <code>tidybulk</code>.</p>
+<h1>What is tidy transcriptomics?</h1>
+<p>Tidy transcriptomics is a specific approach to transcriptomic data analysis in R that uses the “tidy” principles proposed by <a href="https://joss.theoj.org/papers/10.21105/joss.01686.pdf">Wickham et al.</a>. Tidy transcriptomics introduces both a tidy data representation and manipulation (for single-cell and bulk) with the packages <code>tidySummarizedExperiment</code>, <code>tidySingleCellExperiment</code>, and <code>tidyseurat</code> and a tidy analysis workflow (for bulk data) with the package <code>tidybulk</code>.</p>
 </div>
 <div id="the-tidy-transcriptomics-manifesto" class="section level1">
 <h1>The tidy transcriptomics manifesto</h1>
 <p>This manifesto lays down the principles of tidy transcriptomics that <code>tidybulk</code> and <code>tidySummarizedExperiment</code>, <code>tidySingleCellExperiment</code>, and <code>tidyseurat</code> are based on. These principles are in line with <a href="https://cran.r-project.org/web/packages/tidyverse/vignettes/manifesto.html">the tidy tools manifesto</a>.</p>
 <ul>
-<li><strong>Use easy-to-understand, verbose, jargon- and acronym-free vocabulary.</strong> If the English dictionary is not enough to understand the underlying meaning of a function or a variable name, it is a bad sign. _<a href="https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_" class="uri">https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_</a>; and the cost of saving a few characters may be bigger than we think.</li>
-<li><strong>Present/visualise information in its raw form when possible.</strong> Modern visualisation tools (e.g. ggplot2) allow the use of custom scales to visualise data. For example, for visualising p-values apply the <code>log10_reverse</code> scale instead of transforming the p-values in their negative-log form; for visualising (raw, scaled and/or adjusted) transcript abundance (in the form of read counts) use the <code>log1p</code> scale instead of transforming the data in its log (or log count-per-million) form.</li>
-<li><strong>Avoid the creation of temporary variables when possible.</strong> When working interactively, creating variables to store data is a bug-prone process, especially if multiple assignments are done on the same variable through the workflow. The main utility of variables should be to store data that is used more than once. Tidyverse allows complex operations to be combined in a simple way, reducing the need to create temporary variables.</li>
+<li><strong>Use easy-to-understand, verbose, jargon- and acronym-free vocabulary.</strong> It is a bad sign if the English dictionary is not enough to understand the underlying meaning of a function or a variable name. _<a href="https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_" class="uri">https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_</a>; and the cost of saving a few characters may be bigger than we think.</li>
+<li><strong>Present/visualise information in its raw form when possible.</strong> Modern visualisation tools (e.g. ggplot2) allow the use of custom scales to visualise data. For example, for visualising p-values apply the <code>log10_reverse</code> scale instead of transforming the p-values in their negative-log form; for visualising (raw, scaled and/or adjusted) transcript abundance (in the form of read counts), use the <code>log1p</code> scale instead of transforming the data in its log (or log count-per-million) form.</li>
+<li><strong>Avoid the creation of temporary variables when possible.</strong> Creating variables to store data is a bug-prone process when working interactively, especially if multiple assignments are done on the same variable through the workflow. The main utility of variables should be to store data that is used more than once. Tidyverse allows complex operations to be combined in a simple way, reducing the need to create temporary variables.</li>
 </ul>
 </div>
 <div id="integration-map" class="section level1">
 <h1>Integration map</h1>
-<p>All packages are under active development, and are in a <a href="https://lifecycle.r-lib.org/articles/stages.html">maturing</a> lifecycle.</p>
+<p>All packages are under active development and are in a <a href="https://lifecycle.r-lib.org/articles/stages.html">maturing</a> lifecycle.</p>
 <p><img src="images/roadmap_integration.png" alt="roadmap" width="90%"/></p>
-<p>There are two parts in the tidy transcriptomics ecosystem: data and analysis framework. So far, for bulk RNA sequencing both data (tidySummarizedExperiment) and analysis (tidybulk) frameworks are available. In contrast,for single cell only data frameworks are available (tidySingleCellExperiment and tidyseurat).</p>
+<p>There are two parts to the tidy transcriptomics ecosystem: data and analysis framework. So far, for bulk RNA sequencing, both data (tidySummarizedExperiment) and analysis (tidybulk) frameworks are available. In contrast, for single-cell, only data frameworks are available (tidySingleCellExperiment and tidyseurat).</p>
 <div id="what-data-frameworks-are-and-what-they-are-not" class="section level2">
 <h2>What data frameworks are and what they are not</h2>
-<p>Data frameworks are not data containers. Data frameworks are data-abstraction that display and manipulate your existing containers (i.e. <code>SummarizedExperiment</code>, <code>SingleCellExperiment</code> and <code>Seurat</code> object) in a tidy manner. Therefore there is not such a thing as <code>tidy*</code> object. This has the advantage of allowing you to use tidyverse on transcriptomics data without compromising your existing pipelines. That is, if a method works for <code>SummarizedExperiment</code> it works for its tidy representation.</p>
-<p>Therefore, the question “can we go from <code>tidySummarizedExperiment</code> to <code>SummarizedExperiment</code> and viceversa” is not relevant, as we never leave <code>SummarizedExperiment</code> in the first place.</p>
+<p>Data frameworks are not data containers. Data frameworks are data abstractions that display and manipulate your existing containers (i.e. <code>SummarizedExperiment</code>, <code>SingleCellExperiment</code> and <code>Seurat</code> object) in a tidy manner. Therefore there is not such a thing as a <code>tidy*</code> object. This has the advantage of allowing you to use tidyverse on transcriptomics data without compromising your existing pipelines. That is if a method works for <code>SummarizedExperiment</code> it works for its tidy representation.</p>
+<p>Therefore, the question “can we go from <code>tidySummarizedExperiment</code> to <code>SummarizedExperiment</code> and vice versa” is not relevant, as we never leave <code>SummarizedExperiment</code> in the first place.</p>
 </div>
 <div id="giving-a-consistent-interface-despite-different-data-containers" class="section level2">
 <h2>Giving a consistent interface despite different data containers</h2>
-<p>With tidy transcriptomics, we differentiate the data container from the user interface. As an analogy, if we want to see picture of cats, we don’t care that a Unix and Windows machines store information in the hard drive differently. Similarly, if we want to display, manipulate and visualise transcriptomic data, we might not care how the data is stored.</p>
+<p>With tidy transcriptomics, we differentiate the data container (tibble, S4 objects) from the user interface (tidy). When we display, manipulate and visualise transcriptomic data, we might not care how the data is stored (tibble or hierarchical-rectangular structures) as long as the interface is consistent.</p>
 </div>
 <div id="which-analysis-framework-can-interface-with-which-data-framework" class="section level2">
 <h2>Which analysis framework can interface with which data framework</h2>
 <p><strong>Bulk RNA sequencing data</strong></p>
 <ul>
 <li><p><code>SummarizedExperiment</code> can interface with <code>Bioconductor</code> and <code>tidybulk</code></p></li>
-<li><p><code>tibble</code> can interface with tidyverse and <code>tidybulk</code></p></li>
-<li><p><code>tidySummarizedExperiment</code> can interface with all three: <code>Bioconductor</code>, tidyverse and <code>tidybulk</code></p></li>
+<li><p><code>tibble</code> can interface with <code>tidyverse</code> and <code>tidybulk</code></p></li>
+<li><p><code>tidySummarizedExperiment</code> can interface with all three: <code>Bioconductor</code>, <code>tidyverse</code> and <code>tidybulk</code></p></li>
 </ul>
 <p><strong>Single-cell RNA sequencing data</strong></p>
 <ul>
@@ -217,24 +84,13 @@
 </ul>
 </div>
 </div>
-<div id="differences-between-tidy-and-base-transcriptomics-sinthax" class="section level1">
-<h1>Differences between tidy and base transcriptomics sinthax</h1>
-<p>Here we provide few examples of the differences in programming transcriptomics analyses with tidy transcriptomics and the base R alternative. An important aspect is that tidy transcriptomics is complementary with standard workflows. Everything that works with <code>SummarizedExperiment</code>, <code>SingleCellExperiment</code> and <code>Seurat</code> works with their tidy representations.</p>
+<div id="differences-between-tidy-and-base-transcriptomics-syntax" class="section level1">
+<h1>Differences between tidy and base transcriptomics syntax</h1>
+<p>Here we provide few examples of the differences in programming transcriptomics analyses with tidy transcriptomics and the base R alternative. An important aspect is that tidy transcriptomics is complementary to standard workflows. Everything that works with <code>SummarizedExperiment</code>, <code>SingleCellExperiment</code> and <code>Seurat</code> works with their tidy representations.</p>
 <div id="tidybulk-and-tidysummarizedexperiment" class="section level2">
 <h2>Tidybulk and tidySummarizedExperiment</h2>
 <p>This example is taken from the workshop (BioC2021)[<a href="https://stemangiola.github.io/bioc2021_tidytranscriptomics/articles/tidytranscriptomics.html" class="uri">https://stemangiola.github.io/bioc2021_tidytranscriptomics/articles/tidytranscriptomics.html</a>].</p>
 <p>As tidybulk smoothly integrates with ggplot2 and other tidyverse packages it can save on typing and make plots easier to generate. Compare the code for creating density plots with tidybulk versus standard base R below (standard code adapted from (Law et al. 2016)).</p>
-<p><strong>tidybulk</strong></p>
-<pre class="r"><code># tidybulk
-airway %&gt;%
-  keep_abundant(factor_of_interest = dex) %&gt;%
-  scale_abundance() %&gt;%
-  pivot_longer(cols = c(&quot;counts&quot;, &quot;counts_scaled&quot;), names_to = &quot;source&quot;, values_to = &quot;abundance&quot;) %&gt;%
-  ggplot(aes(x = abundance + 1, color = sample)) +
-  geom_density() +
-  facet_wrap(~source) +
-  scale_x_log10() +
-  custom_theme</code></pre>
 <p><strong>base R using edgeR</strong></p>
 <pre class="r"><code># Example code, no need to run
 # Prepare data set
@@ -266,6 +122,17 @@ for (i in 2:nsamples) {
   lines(den$x, den$y, col = col[i], lwd = 2)
 }
 legend(&quot;topright&quot;, legend = dgList_norm$samples$Run, text.col = col, bty = &quot;n&quot;)</code></pre>
+<p><strong>tidybulk</strong></p>
+<pre class="r"><code># tidybulk
+airway %&gt;%
+  keep_abundant(factor_of_interest = dex) %&gt;%
+  scale_abundance() %&gt;%
+  pivot_longer(cols = c(&quot;counts&quot;, &quot;counts_scaled&quot;), names_to = &quot;source&quot;, values_to = &quot;abundance&quot;) %&gt;%
+  ggplot(aes(x = abundance + 1, color = sample)) +
+  geom_density() +
+  facet_wrap(~source) +
+  scale_x_log10() +
+  custom_theme</code></pre>
 </div>
 <div id="singlecellexperiment-and-tidysinglecellexperiment" class="section level2">
 <h2>SingleCellExperiment and tidySingleCellExperiment</h2>
@@ -367,16 +234,16 @@ pbmc_SCE[, cell_subset]</code></pre>
 ## [90m# Features=230 | Assays=counts, logcounts[39m
 ##    cell  orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
 ##    &lt;chr&gt; &lt;fct&gt;           &lt;dbl&gt;        &lt;int&gt; &lt;fct&gt;           &lt;fct&gt;         &lt;chr&gt; 
-##  1 ATTA… SeuratPro…        463           77 1               B             g1    
-##  2 CTAA… SeuratPro…        246           59 0               A             g1    
-##  3 TAGG… SeuratPro…        156           60 0               A             g1    
-##  4 ATAG… SeuratPro…        406           74 1               B             g1    
-##  5 AATG… SeuratPro…        100           41 0               A             g1    
-##  6 GGCA… SeuratPro…        172           29 0               A             g1    
-##  7 TACT… SeuratPro…        156           48 0               A             g1    
-##  8 CTTG… SeuratPro…        233           76 1               B             g1    
-##  9 GATA… SeuratPro…        328           72 1               B             g1    
-## 10 ACAG… SeuratPro…        151           59 0               A             g1    
+##  1 GCAG… SeuratPro…         72           45 0               A             g1    
+##  2 CTAA… SeuratPro…        189           53 0               A             g1    
+##  3 AGAG… SeuratPro…        191           61 0               A             g1    
+##  4 CTAA… SeuratPro…        168           44 0               A             g1    
+##  5 GATA… SeuratPro…         52           36 0               A             g1    
+##  6 GATA… SeuratPro…        115           51 0               A             g1    
+##  7 AATG… SeuratPro…        389           73 1               B             g1    
+##  8 CTAG… SeuratPro…        324           76 1               B             g1    
+##  9 CATC… SeuratPro…        353           80 1               B             g1    
+## 10 TACT… SeuratPro…        156           48 0               A             g1    
 ## # … with 62 more rows, and 10 more variables: RNA_snn_res.1 &lt;fct&gt;, file &lt;chr&gt;,
 ## #   ident &lt;fct&gt;, PC_1 &lt;dbl&gt;, PC_2 &lt;dbl&gt;, PC_3 &lt;dbl&gt;, PC_4 &lt;dbl&gt;, PC_5 &lt;dbl&gt;,
 ## #   tSNE_1 &lt;dbl&gt;, tSNE_2 &lt;dbl&gt;</code></pre>
@@ -392,16 +259,16 @@ pbmc_SCE[, cell_subset]</code></pre>
 ## # Groups:   file [2]
 ##    cell  orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
 ##    &lt;chr&gt; &lt;fct&gt;           &lt;dbl&gt;        &lt;int&gt; &lt;fct&gt;           &lt;fct&gt;         &lt;chr&gt; 
-##  1 TTGA… SeuratPro…        787           88 0               A             g1    
-##  2 CTAA… SeuratPro…        189           53 0               A             g1    
-##  3 TGGT… SeuratPro…         64           36 0               A             g1    
-##  4 ATTA… SeuratPro…        463           77 1               B             g1    
-##  5 GGCA… SeuratPro…        172           29 0               A             g1    
-##  6 TTGG… SeuratPro…        135           45 0               A             g1    
-##  7 GCAG… SeuratPro…         72           45 0               A             g1    
-##  8 CTGC… SeuratPro…        146           47 0               A             g1    
-##  9 CTTG… SeuratPro…        233           76 1               B             g1    
-## 10 ACCA… SeuratPro…        417           75 0               A             g1    
+##  1 ATTA… SeuratPro…        463           77 1               B             g1    
+##  2 TTAC… SeuratPro…        298           65 1               B             g1    
+##  3 AGAG… SeuratPro…        191           61 0               A             g1    
+##  4 TACT… SeuratPro…        156           48 0               A             g1    
+##  5 GGCA… SeuratPro…        126           53 0               A             g1    
+##  6 TAGG… SeuratPro…        156           60 0               A             g1    
+##  7 AAGC… SeuratPro…        443           77 1               B             g1    
+##  8 CTAA… SeuratPro…        246           59 0               A             g1    
+##  9 CTAA… SeuratPro…        168           44 0               A             g1    
+## 10 CATC… SeuratPro…         79           43 0               A             g1    
 ## # … with 62 more rows, and 26 more variables: RNA_snn_res.1 &lt;fct&gt;, file &lt;chr&gt;,
 ## #   ident &lt;fct&gt;, tot_cells &lt;int&gt;, min_cells &lt;int&gt;, PC_1 &lt;dbl&gt;, PC_2 &lt;dbl&gt;,
 ## #   PC_3 &lt;dbl&gt;, PC_4 &lt;dbl&gt;, PC_5 &lt;dbl&gt;, PC_6 &lt;dbl&gt;, PC_7 &lt;dbl&gt;, PC_8 &lt;dbl&gt;,
@@ -413,17 +280,9 @@ pbmc_SCE[, cell_subset]</code></pre>
 <h2>tidyseurat</h2>
 <p>Calculating a transcriptional signature.</p>
 <p><strong>Base</strong></p>
-<pre class="r"><code>library(Seurat)</code></pre>
-<pre><code>## Registered S3 method overwritten by &#39;spatstat.geom&#39;:
-##   method     from
-##   print.boxx cli</code></pre>
-<pre><code>## Attaching SeuratObject</code></pre>
-<pre><code>## 
-## Attaching package: &#39;Seurat&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:SummarizedExperiment&#39;:
-## 
-##     Assays</code></pre>
-<pre class="r"><code># Load data
+<pre class="r"><code>suppressPackageStartupMessages(library(Seurat))
+
+# Load data
 pbmc_Seurat = tidySingleCellExperiment::pbmc_small %&gt;% as.Seurat() %&gt;% NormalizeData()
 
 signature_score_1 =
@@ -473,36 +332,9 @@ signature_score_1 - signature_score_2</code></pre>
 ##      0.0000000      0.0000000      0.0000000      0.0000000      0.0000000</code></pre>
 <p><strong>tidyseurat</strong></p>
 <p>It is the same as for <code>tidySingleCellExperiment</code></p>
-<pre class="r"><code>library(tidyseurat)</code></pre>
-<pre><code>## ========================================
-## tidyseurat version 0.2.3
-## If you use TIDYSEURAT in published research, please cite:
-## 
-## Mangiola et al. Interfacing Seurat with the R tidy universe. Bioinformatics 2021.
-## 
-## This message can be suppressed by:
-##   suppressPackageStartupMessages(library(tidyseurat))
-##   
-## To restore the Seurat default display use options(&quot;restore_Seurat_show&quot; = TRUE) 
-## ========================================</code></pre>
-<pre><code>## 
-## Attaching package: &#39;tidyseurat&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:IRanges&#39;:
-## 
-##     slice</code></pre>
-<pre><code>## The following object is masked from &#39;package:S4Vectors&#39;:
-## 
-##     rename</code></pre>
-<pre><code>## The following object is masked from &#39;package:matrixStats&#39;:
-## 
-##     count</code></pre>
-<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     add_count, bind_cols, bind_rows, count</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre class="r"><code>pbmc_Seurat %&gt;%
+<pre class="r"><code>suppressPackageStartupMessages(library(tidyseurat))
+
+pbmc_Seurat %&gt;%
   join_features(c(&quot;CD79A&quot;, &quot;CD79B&quot;, &quot;CD3D&quot;, &quot;CCR7&quot;), shape = &quot;wide&quot;) %&gt;%
   mutate(signature_score = 
            scales::rescale(CD79A + CD79B, to = c(0,1)) - 
@@ -593,7 +425,7 @@ pbmc_Seurat[, cell_subset]</code></pre>
 </div>
 <div id="learning-material" class="section level1">
 <h1>Learning material</h1>
-<p>We delivered a series of workshops on tidy transcriptomics, which track the progress of the ecosystem.</p>
+<p>We delivered a series of workshops on tidy transcriptomics, which tracks the progress of the ecosystem.</p>
 <p><a href="https://stemangiola.github.io/bioc2021_tidytranscriptomics/index.html">Bioc 2021</a></p>
 <p><a href="https://tidytranscriptomics-workshops.github.io/ismb2021_tidytranscriptomics/index.html">ISMB/ECCB 2021</a></p>
 <p><a href="https://stemangiola.github.io/rladiestunis2021_tidytranscriptomics/index.html">R-Ladies Tunis 2021</a></p>
@@ -611,84 +443,18 @@ pbmc_Seurat[, cell_subset]</code></pre>
 </div>
 <div id="tidyseurat-1" class="section level3">
 <h3>tidyseurat</h3>
-<p>Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021;, btab404, <a href="https://doi.org/10.1093/bioinformatics/btab404" class="uri">https://doi.org/10.1093/bioinformatics/btab404</a></p>
+<p>Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021, <a href="https://doi.org/10.1093/bioinformatics/btab404" class="uri">https://doi.org/10.1093/bioinformatics/btab404</a></p>
 </div>
 <div id="tidysummarizedexperiment-and-tidysinglecellexeperiment" class="section level3">
 <h3>tidySummarizedExperiment and tidySingleCellEXeperiment</h3>
 <p>You can use <code>tidyseurat</code> citation as introduces the concepts of data abstraction.</p>
+<script src="https://utteranc.es/client.js"
+        repo="stemangiola/tidytranscriptomics"
+        issue-term="title"
+        label="Comment_blog"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
 </div>
 </div>
-
-    </div>
-
-    
-<footer class="post-footer">
-      <div class="post-tags">
-          <a href="/tidytranscriptomics/tags/tidytranscriptomics/">tidytranscriptomics</a>
-          <a href="/tidytranscriptomics/tags/manifesto/">manifesto</a>
-          <a href="/tidytranscriptomics/tags/transcriptomics/">transcriptomics</a>
-          <a href="/tidytranscriptomics/tags/tidyverse/">tidyverse</a>
-          </div>
-      <nav class="post-nav">
-        
-        
-      </nav>
-    </footer>
-  </article>
-        </div>
-        
-
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="social-links">
-      <a href="mailto:mangiolastefano@gmail.com" class="iconfont icon-email" title="email"></a>
-      <a href="https://github.com/stemangiola" class="iconfont icon-github" title="github"></a>
-      <a href="https://twitter.com/steman_research" class="iconfont icon-twitter" title="twitter"></a>
-  <a href="https://stemangiola.github.io/tidytranscriptomics/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
-</div>
-
-<div class="copyright">
-  <span class="power-by">
-    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
-  </span>
-  <span class="division">|</span>
-  <span class="theme-info">
-    Theme - 
-    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
-  </span>
-
-  
-
-  <span class="copyright-year">
-    &copy; 
-    2017 - 
-    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>Stefano Mangiola, Maria Doyle</span>
-  </span>
-</div>
-
-    </footer>
-
-    <div class="back-to-top" id="back-to-top">
-      <i class="iconfont icon-up"></i>
-    </div>
-  </div>
-  
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
-
-
-
-<script type="text/javascript" src="/tidytranscriptomics/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
-
-
-
-
-
-
-
-
-</body>
-</html>
