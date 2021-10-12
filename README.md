@@ -2,11 +2,13 @@
 [![.github/workflows/basic_checks.yaml](https://github.com/stemangiola/tidytranscriptomics/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/stemangiola/tidytranscriptomics/actions)
 <!-- badges: end -->
 
-## [The blog](https://stemangiola.github.io/tidytranscriptomics/)
+## The blog
 
-## [Manifesto](https://stemangiola.github.io/tidytranscriptomics/post/2021-07-07-tidy-transcriptomics-manifesto/)
+[stemangiola.github.io/tidytranscriptomics](https://stemangiola.github.io/tidytranscriptomics/)
 
-![Schematics of the roadmap](inst/roadmap.png)
+## Manifesto
+
+[2021-07-07-tidy-transcriptomics-manifesto](https://stemangiola.github.io/tidytranscriptomics/post/2021-07-07-tidy-transcriptomics-manifesto/)
 
 ## Workshops
 
