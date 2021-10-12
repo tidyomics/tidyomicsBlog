@@ -70,7 +70,7 @@ Therefore, the question "can we go from `tidySummarizedExperiment` to `Summarize
 
 ## Giving a consistent interface despite different data containers
 
-With tidy transcriptomics, we differentiate the data container from the user interface. When we display, manipulate and visualise transcriptomic data, we might not care how the data is stored (tibble or hierarchical-rectangular structures) as long as the interface is consistent.
+With tidy transcriptomics, we differentiate the data container (tibble, S4 objects) from the user interface (tidy). When we display, manipulate and visualise transcriptomic data, we might not care how the data is stored (tibble or hierarchical-rectangular structures) as long as the interface is consistent.
 
 ## Which analysis framework can interface with which data framework
 
@@ -101,21 +101,6 @@ Here we provide few examples of the differences in programming transcriptomics a
 This example is taken from the workshop (BioC2021)[<https://stemangiola.github.io/bioc2021_tidytranscriptomics/articles/tidytranscriptomics.html>].
 
 As tidybulk smoothly integrates with ggplot2 and other tidyverse packages it can save on typing and make plots easier to generate. Compare the code for creating density plots with tidybulk versus standard base R below (standard code adapted from (Law et al. 2016)).
-
-**tidybulk**
-
-```{r eval=FALSE}
-# tidybulk
-airway %>%
-  keep_abundant(factor_of_interest = dex) %>%
-  scale_abundance() %>%
-  pivot_longer(cols = c("counts", "counts_scaled"), names_to = "source", values_to = "abundance") %>%
-  ggplot(aes(x = abundance + 1, color = sample)) +
-  geom_density() +
-  facet_wrap(~source) +
-  scale_x_log10() +
-  custom_theme
-```
 
 **base R using edgeR**
 
@@ -150,6 +135,21 @@ for (i in 2:nsamples) {
   lines(den$x, den$y, col = col[i], lwd = 2)
 }
 legend("topright", legend = dgList_norm$samples$Run, text.col = col, bty = "n")
+```
+
+**tidybulk**
+
+```{r eval=FALSE}
+# tidybulk
+airway %>%
+  keep_abundant(factor_of_interest = dex) %>%
+  scale_abundance() %>%
+  pivot_longer(cols = c("counts", "counts_scaled"), names_to = "source", values_to = "abundance") %>%
+  ggplot(aes(x = abundance + 1, color = sample)) +
+  geom_density() +
+  facet_wrap(~source) +
+  scale_x_log10() +
+  custom_theme
 ```
 
 ## SingleCellExperiment and tidySingleCellExperiment
