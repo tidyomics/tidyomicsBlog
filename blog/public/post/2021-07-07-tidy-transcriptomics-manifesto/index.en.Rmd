@@ -334,7 +334,7 @@ Mangiola, S., Molania, R., Dong, R. et al. tidybulk: an R tidy framework for mod
 
 ### tidyseurat
 
-Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021;, btab404, <https://doi.org/10.1093/bioinformatics/btab404>
+Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021, <https://doi.org/10.1093/bioinformatics/btab404>
 
 ### tidySummarizedExperiment and tidySingleCellEXeperiment
 
