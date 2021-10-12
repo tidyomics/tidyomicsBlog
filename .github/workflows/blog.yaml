@@ -1,4 +1,7 @@
-on: [pull]
+on:
+  push:
+    branches:
+      - master
 
 env:
   cache-version: v1
