@@ -342,9 +342,8 @@ You can use `tidyseurat` citation as introduces the concepts of data abstraction
 
 ```{=html}
 <script src="https://utteranc.es/client.js"
-        repo="stemangiola/tidytranscriptomics"
-        issue-term="title"
-        label="Comment_blog"
+        repo="stemangiola/stemangiola.github.io"
+        issue-term="pathname"
         theme="github-light"
         crossorigin="anonymous"
         async>
