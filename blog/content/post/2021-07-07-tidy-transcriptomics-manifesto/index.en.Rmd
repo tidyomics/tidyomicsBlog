@@ -1,7 +1,7 @@
 ---
 title: Tidy-transcriptomics manifesto
 author: Stefano & Maria
-date: '2021-07-07'
+date: '2021-10-07'
 slug: []
 categories:
   - all platforms
@@ -10,7 +10,7 @@ tags:
   - manifesto
   - transcriptomics
   - tidyverse
-lastmod: '2021-07-07T14:16:36+10:00'
+lastmod: '2021-10-07T14:16:36+10:00'
 keywords: []
 description: ''
 comment: no
