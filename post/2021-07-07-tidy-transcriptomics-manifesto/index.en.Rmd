@@ -40,7 +40,7 @@ library(tidyverse)
 
 <img src="images/logo.png" alt="tidytranscriptomics_logo" width="100px" height="100px"/>
 
-In this first post, we want to introduce the concept of tidy transcriptomics and its principles is moved by.
+In this first post, we want to introduce the concept of tidy transcriptomics and its principles.
 
 # What is tidy transcriptomics?
 
