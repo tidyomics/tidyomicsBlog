@@ -35,7 +35,7 @@ sequenceDiagrams:
 <!--more-->
 
 ```{r, echo=FALSE, messages=FALSE, warnings=FALSE}
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 ```
 
 <img src="images/logo.png" alt="tidytranscriptomics_logo" width="100px" height="100px"/>
