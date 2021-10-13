@@ -10,18 +10,63 @@
   
   <url>
     <loc>https://stemangiola.github.io/tidytranscriptomics/categories/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/manifesto/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/post/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/rnaseq/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://stemangiola.github.io/tidytranscriptomics/tags/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://stemangiola.github.io/tidytranscriptomics/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/post/tidy-transcriptomics-manifesto/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/categories/tidytrancriptomics/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/tidyverse/</loc>
+    <lastmod>2021-10-13T10:33:15+11:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
