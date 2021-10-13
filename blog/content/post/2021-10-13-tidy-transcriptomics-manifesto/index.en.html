@@ -50,8 +50,7 @@ sequenceDiagrams:
 <ul>
 <li><p><strong>Use easy-to-understand, verbose, jargon- and acronym-free vocabulary.</strong> The use of an easy-to-understand vocabulary for variables and functions benefits users. The cost of saving a few characters may be bigger than we think.</p></li>
 <li><p><strong>Present/visualise information in its raw form when possible.</strong> Presenting non-transformed variables helps transparent communication. Modern visualisation tools (e.g. ggplot2) allow the use of custom scales to visualise data. For example, for visualising p-values apply the <code>log10_reverse</code> scale instead of transforming the p-values in their negative-log form.</p></li>
-<li><p><strong>Compose streamlined workflows, embracing functional programming</strong></p>
-<p>All <code>tidytranscriptomics</code> tools allow you to analyse and manipulate data using pipes (<code>%&gt;%</code>, <code>|&gt;</code>). This allows a clear execution, reproducibility and presentation of your workflow without getting lost in programming details. These tools also allow using the <code>nest</code>-<code>map</code> functional paradigm on your data, decreasing the need for temporary variables, and increasing code robustness.</p></li>
+<li><p><strong>Compose streamlined workflows, embracing functional programming</strong> All <code>tidytranscriptomics</code> tools allow you to analyse and manipulate data using pipes (<code>%&gt;%</code>, <code>|&gt;</code>). This allows a clear execution, reproducibility and presentation of your workflow without getting lost in programming details. These tools also allow using the <code>nest</code>-<code>map</code> functional paradigm on your data, decreasing the need for temporary variables, and increasing code robustness.</p></li>
 </ul>
 </div>
 <div id="integration-map" class="section level1">
@@ -235,16 +234,16 @@ pbmc_SCE[, cell_subset]</code></pre>
 ## [90m# Features=230 | Assays=counts, logcounts[39m
 ##    cell  orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
 ##    &lt;chr&gt; &lt;fct&gt;           &lt;dbl&gt;        &lt;int&gt; &lt;fct&gt;           &lt;fct&gt;         &lt;chr&gt; 
-##  1 TTGG… SeuratPro…        135           45 0               A             g1    
-##  2 CATC… SeuratPro…         79           43 0               A             g1    
-##  3 TCTG… SeuratPro…         70           48 0               A             g1    
-##  4 TTAC… SeuratPro…        298           65 1               B             g1    
-##  5 AATG… SeuratPro…        389           73 1               B             g1    
-##  6 CATG… SeuratPro…         85           52 0               A             g1    
-##  7 TTGA… SeuratPro…        787           88 0               A             g1    
+##  1 AGTC… SeuratPro…        157           29 0               A             g1    
+##  2 GAGT… SeuratPro…        527           47 0               A             g1    
+##  3 ATAC… SeuratPro…        612           69 1               B             g1    
+##  4 CATG… SeuratPro…         85           52 0               A             g1    
+##  5 CTTG… SeuratPro…        233           76 1               B             g1    
+##  6 TGGT… SeuratPro…         64           36 0               A             g1    
+##  7 ATAG… SeuratPro…        406           74 1               B             g1    
 ##  8 AAGC… SeuratPro…        126           48 0               A             g1    
-##  9 TGGT… SeuratPro…         64           36 0               A             g1    
-## 10 CTGC… SeuratPro…        146           47 0               A             g1    
+##  9 TTGG… SeuratPro…        135           45 0               A             g1    
+## 10 TAGG… SeuratPro…        156           60 0               A             g1    
 ## # … with 62 more rows, and 10 more variables: RNA_snn_res.1 &lt;fct&gt;, file &lt;chr&gt;,
 ## #   ident &lt;fct&gt;, PC_1 &lt;dbl&gt;, PC_2 &lt;dbl&gt;, PC_3 &lt;dbl&gt;, PC_4 &lt;dbl&gt;, PC_5 &lt;dbl&gt;,
 ## #   tSNE_1 &lt;dbl&gt;, tSNE_2 &lt;dbl&gt;</code></pre>
@@ -260,16 +259,16 @@ pbmc_SCE[, cell_subset]</code></pre>
 ## # Groups:   file [2]
 ##    cell  orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
 ##    &lt;chr&gt; &lt;fct&gt;           &lt;dbl&gt;        &lt;int&gt; &lt;fct&gt;           &lt;fct&gt;         &lt;chr&gt; 
-##  1 CTTG… SeuratPro…        233           76 1               B             g1    
-##  2 TTAC… SeuratPro…        298           65 1               B             g1    
-##  3 CTGC… SeuratPro…        146           47 0               A             g1    
-##  4 ATTA… SeuratPro…        463           77 1               B             g1    
-##  5 GATA… SeuratPro…        115           51 0               A             g1    
-##  6 ACCA… SeuratPro…        417           75 0               A             g1    
-##  7 GCGT… SeuratPro…        754           83 0               A             g1    
-##  8 GGTG… SeuratPro…        204           52 0               A             g1    
-##  9 GGCA… SeuratPro…        126           53 0               A             g1    
-## 10 ATTG… SeuratPro…        502           81 1               B             g1    
+##  1 GACA… SeuratPro…        872           96 1               B             g1    
+##  2 CGTA… SeuratPro…        371           75 1               B             g1    
+##  3 ATTA… SeuratPro…        463           77 1               B             g1    
+##  4 GGCA… SeuratPro…        172           29 0               A             g1    
+##  5 CATG… SeuratPro…        443           81 0               A             g1    
+##  6 CTGC… SeuratPro…        146           47 0               A             g1    
+##  7 TAGG… SeuratPro…        156           60 0               A             g1    
+##  8 GATA… SeuratPro…        115           51 0               A             g1    
+##  9 TCTG… SeuratPro…         70           48 0               A             g1    
+## 10 ACAG… SeuratPro…        151           59 0               A             g1    
 ## # … with 62 more rows, and 26 more variables: RNA_snn_res.1 &lt;fct&gt;, file &lt;chr&gt;,
 ## #   ident &lt;fct&gt;, tot_cells &lt;int&gt;, min_cells &lt;int&gt;, PC_1 &lt;dbl&gt;, PC_2 &lt;dbl&gt;,
 ## #   PC_3 &lt;dbl&gt;, PC_4 &lt;dbl&gt;, PC_5 &lt;dbl&gt;, PC_6 &lt;dbl&gt;, PC_7 &lt;dbl&gt;, PC_8 &lt;dbl&gt;,
