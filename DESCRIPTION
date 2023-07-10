@@ -47,7 +47,7 @@ Remotes:
     stemangiola/tidygate
 Biarch: true
 biocViews: RNASeq, DifferentialExpression, GeneExpression, Normalization, Clustering, QualityControl, Sequencing, Transcription, Transcriptomics
-URL: https:// tidybiology.github.io/ tidyomicsBlog/
+URL: https://tidybiology.github.io/tidyomicsBlog/
 BugReports: https://github.com/tidybiology/tidyomicsBlog/issues/new/choose
 VignetteBuilder: knitr
 DockerImage: tidybiology/tidyomicsBlog:latest

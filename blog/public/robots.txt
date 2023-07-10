@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: https:// tidybiology.github.io/ tidyomicsBlog/sitemap.xml
+Sitemap: https://tidybiology.github.io/tidyomicsBlog/sitemap.xml

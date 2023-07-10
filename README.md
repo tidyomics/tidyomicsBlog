@@ -4,11 +4,11 @@
 
 ## The blog
 
-[stemangiola.github.io/tidybiology/tidyomicsBlog](https:// tidybiology.github.io/ tidyomicsBlog/)
+[stemangiola.github.io/tidybiology/tidyomicsBlog](https://tidybiology.github.io/tidyomicsBlog/)
 
 ## Manifesto
 
-[2021-07-07-tidy-transcriptomics-manifesto](https:// tidybiology.github.io/ tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/)
+[2021-07-07-tidy-transcriptomics-manifesto](https://tidybiology.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/)
 
 ## Workshops
 
