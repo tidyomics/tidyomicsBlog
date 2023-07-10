@@ -1,78 +1,78 @@
-<?xml-stylesheet type="text/xsl" href="https://stemangiola.github.io/tidytranscriptomics/sitemap.xsl"?>
+<?xml-stylesheet type="text/xsl" href="https:// tidybiology.github.io/ tidyomicsBlog/sitemap.xsl"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/about/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/about/</loc>
     <lastmod>2017-08-28T21:41:52+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/categories/all-platforms/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/categories/all-platforms/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/categories/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/categories/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/manifesto/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/tags/manifesto/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/post/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/post/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/tags/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/post/2021-07-07-tidy-transcriptomics-manifesto/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/tidytranscriptomics/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/tags/tidybiology/tidyomicsBlog/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/tidyverse/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/tags/tidyverse/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://stemangiola.github.io/tidytranscriptomics/tags/transcriptomics/</loc>
+    <loc>https:// tidybiology.github.io/ tidyomicsBlog/tags/transcriptomics/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

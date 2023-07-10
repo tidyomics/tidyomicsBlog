@@ -1,4 +1,4 @@
-Package: tidytranscriptomics
+Package: tidybiology/tidyomicsBlog
 Title: A Tidy Transcriptomics introduction to RNA-Seq analyses
 Version: 1.1.0
 Authors@R: c(
@@ -47,7 +47,7 @@ Remotes:
     stemangiola/tidygate
 Biarch: true
 biocViews: RNASeq, DifferentialExpression, GeneExpression, Normalization, Clustering, QualityControl, Sequencing, Transcription, Transcriptomics
-URL: https://stemangiola.github.io/tidytranscriptomics/
-BugReports: https://github.com/stemangiola/tidytranscriptomics/issues/new/choose
+URL: https:// tidybiology.github.io/ tidyomicsBlog/
+BugReports: https://github.com/tidybiology/tidyomicsBlog/issues/new/choose
 VignetteBuilder: knitr
-DockerImage: stemangiola/tidytranscriptomics:latest
+DockerImage: tidybiology/tidyomicsBlog:latest
