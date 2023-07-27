@@ -1,7 +1,7 @@
 baseURL: https://tidybiology.github.io/tidyomicsBlog/
 languageCode: en
 defaultContentLanguage: en
-title: Tidy transcriptomics
+title: The Tidyomics Blog
 preserveTaxonomyNames: yes
 enableRobotsTXT: yes
 enableEmoji: yes
@@ -58,7 +58,7 @@ params:
   customJS: []
   dateFormatToUse: '2006-01-02'
   debug: no
-  description: The blog about tidy transcriptomics.
+  description: The Tidyomics Blog
   fancybox: yes
   flowchartDiagrams:
     enable: no
@@ -82,7 +82,7 @@ params:
     - even
   linkToMarkDown: no
   livereUID: ''
-  logoTitle: The blog about tidy transcriptomics
+  logoTitle: The Tidyomics Blog
   mathjax: no
   mathjaxEnableAutoNumber: no
   mathjaxEnableSingleDollar: no
