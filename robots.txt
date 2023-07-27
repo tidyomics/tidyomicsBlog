@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: https://stemangiola.github.io/tidytranscriptomics/sitemap.xml
+Sitemap: https://tidybiology.github.io/tidyomicsBlog/sitemap.xml
