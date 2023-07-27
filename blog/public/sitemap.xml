@@ -58,13 +58,6 @@
   </url>
   
   <url>
-    <loc>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsBlog/</loc>
-    <lastmod>2021-07-07T14:16:36+10:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://tidybiology.github.io/tidyomicsBlog/tags/tidyverse/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -74,6 +67,12 @@
   <url>
     <loc>https://tidybiology.github.io/tidyomicsBlog/tags/transcriptomics/</loc>
     <lastmod>2021-07-07T14:16:36+10:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsblog/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

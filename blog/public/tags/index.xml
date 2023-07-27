@@ -17,15 +17,6 @@
     </item>
     
     <item>
-      <title>tidybiology/tidyomicsBlog</title>
-      <link>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsBlog/</link>
-      <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
-      
-      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsBlog/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>tidyverse</title>
       <link>https://tidybiology.github.io/tidyomicsBlog/tags/tidyverse/</link>
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
@@ -40,6 +31,15 @@
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
       
       <guid>https://tidybiology.github.io/tidyomicsBlog/tags/transcriptomics/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>tidybiology/tidyomicsBlog</title>
+      <link>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsblog/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsblog/</guid>
       <description></description>
     </item>
     
