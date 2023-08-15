@@ -2,44 +2,44 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on The Tidyomics Blog</title>
-    <link>https://tidybiology.github.io/tidyomicsBlog/tags/</link>
+    <link>https://tidyomics.github.io/tidyomicsBlog/tags/</link>
     <description>Recent content in Tags on The Tidyomics Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 07 Jul 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://tidybiology.github.io/tidyomicsBlog/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 07 Jul 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://tidyomics.github.io/tidyomicsBlog/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>manifesto</title>
-      <link>https://tidybiology.github.io/tidyomicsBlog/tags/manifesto/</link>
+      <link>https://tidyomics.github.io/tidyomicsBlog/tags/manifesto/</link>
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/manifesto/</guid>
+      <guid>https://tidyomics.github.io/tidyomicsBlog/tags/manifesto/</guid>
       <description></description>
     </item>
     
     <item>
       <title>tidyverse</title>
-      <link>https://tidybiology.github.io/tidyomicsBlog/tags/tidyverse/</link>
+      <link>https://tidyomics.github.io/tidyomicsBlog/tags/tidyverse/</link>
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/tidyverse/</guid>
+      <guid>https://tidyomics.github.io/tidyomicsBlog/tags/tidyverse/</guid>
       <description></description>
     </item>
     
     <item>
       <title>transcriptomics</title>
-      <link>https://tidybiology.github.io/tidyomicsBlog/tags/transcriptomics/</link>
+      <link>https://tidyomics.github.io/tidyomicsBlog/tags/transcriptomics/</link>
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/transcriptomics/</guid>
+      <guid>https://tidyomics.github.io/tidyomicsBlog/tags/transcriptomics/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>tidybiology/tidyomicsBlog</title>
-      <link>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsblog/</link>
+      <title>tidyomics/tidyomicsBlog</title>
+      <link>https://tidyomics.github.io/tidyomicsBlog/tags/tidyomics/tidyomicsblog/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://tidybiology.github.io/tidyomicsBlog/tags/tidybiology/tidyomicsblog/</guid>
+      <guid>https://tidyomics.github.io/tidyomicsBlog/tags/tidyomics/tidyomicsblog/</guid>
       <description></description>
     </item>
     

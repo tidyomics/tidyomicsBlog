@@ -1,18 +1,18 @@
 <!-- badges: start -->
-[![.github/workflows/basic_checks.yaml](https://github.com/tidybiology/tidyomicsBlog/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/tidybiology/tidyomicsBlog/actions)
+[![.github/workflows/basic_checks.yaml](https://github.com/tidyomics/tidyomicsBlog/workflows/.github/workflows/basic_checks.yaml/badge.svg)](https://github.com/tidyomics/tidyomicsBlog/actions)
 <!-- badges: end -->
 
 ## The blog
 
-[tidybiology.github.io/tidyomicsBlog](https://tidybiology.github.io/tidyomicsBlog/)
+[tidyomics.github.io/tidyomicsBlog](https://tidyomics.github.io/tidyomicsBlog/)
 
 ## Manifesto
 
-[2021-07-07-tidy-transcriptomics-manifesto](https://tidybiology.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/)
+[2021-07-07-tidy-transcriptomics-manifesto](https://tidyomics.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/)
 
 ## Workshops
 
-Workshops we have given are listed below, most recent is first. None contain exactly the same material as we try to continually improve and adapt for each audience, and we showcase new features in the tidybiology/tidyomicsBlog packages where relevant.
+Workshops we have given are listed below, most recent is first. None contain exactly the same material as we try to continually improve and adapt for each audience, and we showcase new features in the tidyomics/tidyomicsBlog packages where relevant.
 
 ### 2021
 

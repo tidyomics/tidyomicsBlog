@@ -6,7 +6,7 @@ slug: []
 categories:
   - all platforms
 tags:
-  - tidybiology/tidyomicsBlog
+  - tidyomics/tidyomicsBlog
   - manifesto
   - transcriptomics
   - tidyverse
@@ -38,7 +38,7 @@ sequenceDiagrams:
 suppressPackageStartupMessages(library(tidyverse))
 ```
 
-<img src="images/logo.png" alt="tidybiology/tidyomicsBlog_logo" width="100px" height="100px"/>
+<img src="images/logo.png" alt="tidyomics/tidyomicsBlog_logo" width="100px" height="100px"/>
 
 In this first post, we want to introduce the concept of tidy transcriptomics and its principles.
 
@@ -64,7 +64,7 @@ There are two parts to the tidy transcriptomics ecosystem: data and analysis fra
 
 ## What data frameworks are and what they are not
 
-Data frameworks are not data containers. Data frameworks are data abstractions that display and manipulate your existing containers (i.e. `SummarizedExperiment`, `SingleCellExperiment` and `Seurat` object) in a tidy manner. Therefore there is not such a thing as a `tidy*` object. This has the advantage of allowing you to use tidyverse on transcriptomics data without compromising your existing pipelines. That is if a method works for `SummarizedExperiment` it works for its tidy representation.
+Data frameworks are not data containers. Data frameworks are data abstractions that display and manipulate your existing containers (i.e. `SummarizedExperiment`, `SingleCellExperiment` and `Seurat` object) in a tidy manner. Therefore there is no such thing as a `tidy*` object. This has the advantage of allowing you to use tidyverse on transcriptomics data without compromising your existing pipelines. That is if a method works for `SummarizedExperiment` it works for its tidy representation.
 
 Therefore, the question "can we go from `tidySummarizedExperiment` to `SummarizedExperiment` and vice versa" is not relevant, as we never leave `SummarizedExperiment` in the first place.
 
@@ -98,7 +98,7 @@ Here we provide few examples of the differences in programming transcriptomics a
 
 ## Tidybulk and tidySummarizedExperiment
 
-This example is taken from the workshop (BioC2021)[<https://stemangiola.github.io/bioc2021_tidybiology/tidyomicsBlog/articles/tidybiology/tidyomicsBlog.html>].
+This example is taken from the workshop [BioC2021](https://stemangiola.github.io/bioc2021_tidyomics/tidyomicsBlog/articles/tidyomics/tidyomicsBlog.html).
 
 As tidybulk smoothly integrates with ggplot2 and other tidyverse packages it can save on typing and make plots easier to generate. Compare the code for creating density plots with tidybulk versus standard base R below (standard code adapted from (Law et al. 2016)).
 
@@ -159,7 +159,7 @@ suppressPackageStartupMessages(library(tidySingleCellExperiment))
 
 ```
 
-These examples are taken from the article (Interfacing Seurat with the R tidy universe)[<https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btab404/6283576>].
+These examples are taken from the article [Interfacing Seurat with the R tidy universe](https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btab404/6283576).
 
 Calculating a transcriptional signature.
 
@@ -275,7 +275,7 @@ pbmc_Seurat %>%
   select(signature_score, everything())
 ```
 
-Cell subsampling for mulisample balanced UMAP representation
+Cell subsampling for multisample balanced UMAP representation
 
 **Base**
 
@@ -310,21 +310,21 @@ pbmc_Seurat %>%
 
 We delivered a series of workshops on tidy transcriptomics, which tracks the progress of the ecosystem.
 
-[Bioc 2021](https://stemangiola.github.io/bioc2021_tidybiology/tidyomicsBlog/index.html)
+[Bioc 2021](https://stemangiola.github.io/bioc2021_tidyomics/tidyomicsBlog/index.html)
 
-[ISMB/ECCB 2021](https://tidybiology/tidyomicsBlog-workshops.github.io/ismb2021_tidybiology/tidyomicsBlog/index.html)
+[ISMB/ECCB 2021](https://tidyomics/tidyomicsBlog-workshops.github.io/ismb2021_tidyomics/tidyomicsBlog/index.html)
 
-[R-Ladies Tunis 2021](https://stemangiola.github.io/rladiestunis2021_tidybiology/tidyomicsBlog/index.html)
+[R-Ladies Tunis 2021](https://stemangiola.github.io/rladiestunis2021_tidyomics/tidyomicsBlog/index.html)
 
-[Euro Bioc 2020](https://stemangiola.github.io/bioceurope2020_tidybiology/tidyomicsBlog/index.html)
+[Euro Bioc 2020](https://stemangiola.github.io/bioceurope2020_tidyomics/tidyomicsBlog/index.html)
 
-[ABACBS 2020](https://stemangiola.github.io/ABACBS2020_tidybiology/tidyomicsBlog/index.html)
+[ABACBS 2020](https://stemangiola.github.io/ABACBS2020_tidyomics/tidyomicsBlog/index.html)
 
-[Bioc Asia 2020](https://stemangiola.github.io/biocasia2020_tidybiology/tidyomicsBlog/index.html)
+[Bioc Asia 2020](https://stemangiola.github.io/biocasia2020_tidyomics/tidyomicsBlog/index.html)
 
-[R/Pharma 2020](https://stemangiola.github.io/rpharma2020_tidybiology/tidyomicsBlog/index.html)
+[R/Pharma 2020](https://stemangiola.github.io/rpharma2020_tidyomics/tidyomicsBlog/index.html)
 
-[Bioc 2020](https://stemangiola.github.io/bioc_2020_tidybiology/tidyomicsBlog/index.html)
+[Bioc 2020](https://stemangiola.github.io/bioc_2020_tidyomics/tidyomicsBlog/index.html)
 
 # How to cite tidy transcriptomics
 
@@ -336,7 +336,7 @@ Mangiola, S., Molania, R., Dong, R. et al. tidybulk: an R tidy framework for mod
 
 Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021, <https://doi.org/10.1093/bioinformatics/btab404>
 
-### tidySummarizedExperiment and tidySingleCellEXeperiment
+### tidySummarizedExperiment and tidySingleCellExperiment
 
 You can use `tidyseurat` citation as introduces the concepts of data abstraction.
 
