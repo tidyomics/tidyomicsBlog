@@ -1,0 +1,100 @@
+---
+title: "BatchEffects"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Batch Effect Visualization
+
+One important step in single-cell RNA-Seq data analysis is batch correction. Its importance lies in the
+fact that batch effects occur when the variation in data is caused by technical factors instead of biological factors. Technical factors can result from using different sequencing platforms, capturing times, reagents, laboratories, and in general from experimental designs and handling. They occur in batches because they affect a group of samples that are processed differently in contrast to other samples or data. Moreover, batch effects can be highly nonlinear, which makes it difficult to align the datasets and keep biological variations.These batch effects can lead to erroneous conclusions. But, how do we detect batch effects? 
+
+There are various methods to detect them, however two simple ways are dissecting PCA and clusters. Here we will detect batch effects with clusters. To do so, we will run clustering analysis and compare UMAP plots before and after batch correction. If there is batch effect in data, we will see in the first plot that cells from different batches will cluster together. After we perform batch correction we shouldn’t see that fragmentation.
+
+Various algorithms are being used to perform batch correction, three of the most commonly used are Mutual
+Nearest Neighbor (MNN), canonical correlation analysis (CCA), and Harmony. Here we will perform CCA
+with Seurat which reduces data dimensionality and captures the most correlated data features to align the
+data batches. We will continue using the data from the `PCs_SingleCell` tutorial. Head over to that blog post if you haven't to download it since we will perform batch detection in the results obtained from that analysis.
+
+
+To start, lets plot the data again with the DimPlot function and group the cells by their origin identity to
+identify the cells from each repeat.
+
+```{r library calls, results = FALSE}
+library(Seurat)
+library(tidyverse)
+```
+
+```{r}
+DimPlot(MergedNML, reduction = 'umap', group.by = 'orig.ident')
+```
+
+In the plot we can see that the cells were not well integrated into each other with the analysis performed
+previously. Therefore, we need to perform integrated analysis to correct the batch effect.
+
+To perform data integration we need to create an object list of three repeats. We will do that with the `SplitObject` function, we provide the seurat object and split it by origin identity, because we detected batch effect from the origin. 
+```{r}
+MergedNML.list <- SplitObject(MergedNML, split.by = 'orig.ident')
+```
+
+Next, we need to perform data normalization to each of the objects in the list, so we will do that with `lapply` function, it will return a list of the same lenght as 'X'. Here we are defining X as the object list that we created previously *MergedNML.list*. Then we will find the variable features for each dataset with the `FindVariableFeature` function, here *selection.method= "vst", nfeatures=2000* are the default values. 
+```{r}
+MergedNML.list <- lapply(X= MergedNML.list, FUN = function(x) {
+  x <- NormalizeData(x)
+  x <- FindVariableFeatures(x, selection.method= "vst", nfeatures=2000)
+  })
+```
+
+Now, we will select the integration features that are repeatedly variable across datasets for integration. For this we will use the `SelectIntegrationFeatures` function and provide our object list. 
+```{r}
+features <- SelectIntegrationFeatures(object.list = MergedNML.list)
+```
+
+Next, we will find the integration Anchors with the Canonical Correlation Analysis (CCA) method, for that we will use the `FindIntegrationAnchors` function, we provide our object list, and the features that we selected previously. 
+```{r}
+MergedNML.anchors <- FindIntegrationAnchors(object.list = MergedNML.list, anchor.features = features)
+```
+
+The we will use these anchors to perform integration data, in order to create an 'integrated' data assay. We will do that with `IntegrateData` function and providing the anchors we obtained. 
+```{r}
+MergedNML.integrated <- IntegrateData(anchorset= MergedNML.anchors)
+```
+
+## Integrated analysis
+We need to do this to specify that we will do downstream analysis on the on the integrated data. For that we will use the `DefaultAssay` function. 
+```{r}
+DefaultAssay(MergedNML.integrated) 
+```
+
+Now, we need to run again the workflow for visualization and clustering, the same workflow that we performed in the PCs tutorial.
+```{r}
+MergedNML.integrated <- MergedNML.integrated %>%   
+  ScaleData(verbose = FALSE) %>% 
+  RunPCA(ncps=50, verbose= FALSE) %>% 
+  FindNeighbors(reduction = "pca", dims = 1:20) %>% 
+  FindClusters(resolution = 0.1) %>% 
+  RunUMAP(reduction = "pca", dims = 1:20)
+```
+
+## Visualization
+Now we can visualize the data with a Dimplot. Here we will see that using the same parameters as before for the workflow, we have now clusters. 
+```{r}
+DimPlot(MergedNML.integrated, reduction = "umap", label = TRUE)
+```
+
+Finally, lets compare the results from the previous workflow and the results after data integration. For that we will plot the two UMAPs with the `DimPlot` function. 
+Here we can see that on the left plot that cells were not well integrated, we can clearly see that they are separated from each other. In comparison with the plot on the right, cells look well integrated to each other.
+```{r}
+plot1 <- DimPlot(MergedNML, reduction = "umap", group.by = 'orig.ident')
+plot2 <- DimPlot(MergedNML.integrated, reduction = "umap", group.by = 'orig.ident')
+plot1+plot2
+```
+## References
+- Tran, H.T.N., Ang, K.S., Chevrier, M. et al. A benchmark of batch-effect correction methods for single-cell RNA sequencing data. Genome Biol 21, 12 (2020). https://doi.org/10.1186/s13059-019-1850-9
+- Batch effect corrections, (2023), 10X Genomics, Source: <https://www.10xgenomics.com/resources/analysis-guides/introduction-batch-effect-correction>
+- Hoffman p. Introduction to scRNA-seq integration, (2023), Source: <https://satijalab.org/seurat/articles/integration_introduction.html>
+
