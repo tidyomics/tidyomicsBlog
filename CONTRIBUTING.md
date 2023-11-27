@@ -35,9 +35,10 @@ In brief, the process to add a post is:
 1. Create a fork of the `tidyomicsBlog` repository.
 2. Create a new directory for your post in the format of YYYY-MM-DD-post-name, within the `tidyomicsBlog/blog/content/post` directory. 
 3. Write your blog post as an Rmd file and add it to the directory you created.
+4. Change your working directory to `tidyomicsBlog/blog`.
 4. Call the function `blogdown::build_site(build_rmd = 'newfile')` to create a html file from your Rmd file.
-5. Call the function `blogdown::server_site()` to locally render the website and inspect your work.
-6. And you're done! If it all looks good, create a pull request to integrate your new post into the blog.
+5. Call the function `blogdown::serve_site()` to locally render the website and inspect your work.
+6. And you're done! If it all looks good, commit your changes and create a pull request to integrate your new post into the blog.
 
 # How is the training material maintained?
 
