@@ -24,7 +24,7 @@ Cobra Viper J Walter Weatherman Cast Learn more and contribute on GitHub.</descr
       <pubDate>Thu, 07 Dec 2023 00:00:00 +0000</pubDate>
       
       <guid>https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/</guid>
-      <description>Logo We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&amp;gt;.
+      <description>We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&amp;gt;.
 Function Description - Estimation: sccomp_stimate() which is usually run once in the analysis (per model). - Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).</description>
     </item>
     

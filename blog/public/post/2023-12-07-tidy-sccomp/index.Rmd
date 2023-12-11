@@ -14,15 +14,10 @@ vignette: >
 
 <!-- badges: start -->
 
-[![Lifecycle:maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing) [![R build status](https://github.com/stemangiola/tidyseurat/workflows/R-CMD-check/badge.svg)](https://github.com/stemangiola/tidyseurat/actions/)
+[![Lifecycle:maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing) [![R build status](https://github.com/stemangiola/sccomp/actions/workflows/rworkflows.yml/badge.svg)](https://github.com/stemangiola/tidyseurat/actions/)
 
 <!-- badges: end -->
-![Logo](https://github.com/stemangiola/sccomp/blob/master/inst/logo-01.png)
-
-![Logo]("content/post/2023-12-07-tidy-sccomp/images/logo-01.png")
-![Logo]("images/logo-01.png")
-
-<img src="post/2023-12-07-tidy-sccomp/images/logo-01.png" height="139px" width="120px"/>
+![](https://raw.githubusercontent.com/stemangiola/sccomp/master/inst/logo-01.png){width=120px}
 
 We announce the new tidy and modular interface for a `sccomp`, which improves modularity, and clarity. The main change is the modularisation of `sccomp` in functions which can be linked with the pipe operator `|>`.
 
