@@ -6,15 +6,14 @@
     <description>Recent content in Categories on The Tidyomics Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 07 Jul 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://tidyomics.github.io/tidyomicsBlog/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 07 Jul 2021 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://tidyomics.github.io/tidyomicsBlog/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>all platforms</title>
       <link>https://tidyomics.github.io/tidyomicsBlog/categories/all-platforms/</link>
       <pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate>
-      
       <guid>https://tidyomics.github.io/tidyomicsBlog/categories/all-platforms/</guid>
       <description></description>
     </item>
-    
   </channel>
 </rss>

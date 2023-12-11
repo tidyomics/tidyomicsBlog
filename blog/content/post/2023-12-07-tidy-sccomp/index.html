@@ -1,5 +1,5 @@
 ---
-title: "Overview of the sccomp package"
+title: "The new tidy sccomp interface"
 author: "Stefano Mangiola"
 date: "2023-12-07"
 package: sccomp
@@ -20,46 +20,70 @@ vignette: >
 <p><img src="https://raw.githubusercontent.com/stemangiola/sccomp/master/inst/logo-01.png" width="120" /></p>
 <p>We announce the new tidy and modular interface for a <code>sccomp</code>, which improves modularity, and clarity. The main change is the modularisation of <code>sccomp</code> in functions which can be linked with the pipe operator <code>|&gt;</code>.</p>
 <table>
-<colgroup>
-<col width="48%" />
-<col width="51%" />
-</colgroup>
 <thead>
-<tr class="header">
-<th>Function</th>
-<th>Description</th>
+<tr>
+<th style="text-align:left;">
+Function
+</th>
+<th style="text-align:left;">
+Description
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td>- Estimation: <code>sccomp_stimate()</code></td>
-<td>which is usually run once in the analysis (per model).</td>
+<tr>
+<td style="text-align:left;">
+Estimation: <code>sccomp_stimate()</code>
+</td>
+<td style="text-align:left;">
+which is usually run once in the analysis (per model).
+</td>
 </tr>
-<tr class="even">
-<td>- Testing: <code>sccomp_test()</code></td>
-<td>which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).</td>
+<tr>
+<td style="text-align:left;">
+Testing: <code>sccomp_test()</code>
+</td>
+<td style="text-align:left;">
+which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).
+</td>
 </tr>
-<tr class="odd">
-<td>- Outlier removal: <code>sccomp_remove_outliers()</code></td>
-<td>which is usually run once after <code>sccomp_estimate()</code> in case you want to produce estimates not influenced by outlier data points.</td>
+<tr>
+<td style="text-align:left;">
+Outlier removal: <code>sccomp_remove_outliers()</code>
+</td>
+<td style="text-align:left;">
+which is usually run once after <code>sccomp_estimate()</code> in case you want to produce estimates not influenced by outlier data points.
+</td>
 </tr>
-<tr class="even">
-<td>- Unwanted variation removal: <code>sccomp_remove_unwanted_variation()</code></td>
-<td>which is run after <code>sccomp_estimate()</code> and produces a dataset that just preserve the variability of your factor of interest.</td>
+<tr>
+<td style="text-align:left;">
+Unwanted variation removal: <code>sccomp_remove_unwanted_variation()</code>
+</td>
+<td style="text-align:left;">
+which is run after <code>sccomp_estimate()</code> and produces a dataset that just preserve the variability of your factor of interest.
+</td>
 </tr>
-<tr class="odd">
-<td>- Data replication: <code>sccomp_replicate()</code></td>
-<td>which is run after <code>sccomp_estimate()</code> and produces a dataset representing the theoretical data distribution according to the model (from the posterior distribution).</td>
+<tr>
+<td style="text-align:left;">
+Data replication: <code>sccomp_replicate()</code>
+</td>
+<td style="text-align:left;">
+which is run after <code>sccomp_estimate()</code> and produces a dataset representing the theoretical data distribution according to the model (from the posterior distribution).
+</td>
 </tr>
-<tr class="even">
-<td>- Plotting: <code>plot()</code></td>
-<td>which is run after <code>sccomp_test</code> and outputs a series of summary plots.</td>
+<tr>
+<td style="text-align:left;">
+Plotting: <code>plot()</code>
+</td>
+<td style="text-align:left;">
+which is run after <code>sccomp_test</code> and outputs a series of summary plots.
+</td>
 </tr>
 </tbody>
 </table>
 <div id="a-reminder-what-is-sccomp" class="section level1">
 <h1>A reminder: what is <code>sccomp</code></h1>
-<p><code>sccomp</code> is a statistical model developed for differential variability analysis in compositional data, primarily used in cellular omics fields like single-cell genomics, proteomics, and microbiomics (Mangiola et al. 2023). It addresses limitations of existing methods in differential abundance analysis by incorporating several advanced features. <code>sccomp</code> effectively models compositional count data properties, which were previously not adequately addressed, and tackles cell-group-specific differential variability. This model uses a constrained Beta-binomial distribution to enable more precise analyses. Key capabilities of <code>sccomp</code> include improved differential abundance analyses through cross-sample information borrowing, outlier identification and exclusion, realistic data simulation, and facilitating cross-study knowledge transfer. By incorporating these features, <code>sccomp</code> provides a more comprehensive and accurate framework for analyzing cellular omics data, identifying crucial biological drivers such as disease progression markers in cancer and pathogen infection.</p>
+<p><code>sccomp</code><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> is a statistical model developed for differential variability analysis in compositional data, primarily used in cellular omics fields like single-cell genomics, proteomics, and microbiomics (Mangiola et al. 2023). It addresses limitations of existing methods in differential abundance analysis by incorporating several advanced features. <code>sccomp</code> effectively models compositional count data properties, which were previously not adequately addressed, and tackles cell-group-specific differential variability. This model uses a constrained Beta-binomial distribution to enable more precise analyses. Key capabilities of <code>sccomp</code> include improved differential abundance analyses through cross-sample information borrowing, outlier identification and exclusion, realistic data simulation, and facilitating cross-study knowledge transfer. By incorporating these features, <code>sccomp</code> provides a more comprehensive and accurate framework for analyzing cellular omics data, identifying crucial biological drivers such as disease progression markers in cancer and pathogen infection.</p>
 </div>
 <div id="installation" class="section level1">
 <h1>Installation</h1>
@@ -152,96 +176,26 @@ outlier_free_estimate |&gt;
   plot()</code></pre>
 <pre><code>## $boxplot
 ## $boxplot[[1]]</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 <pre><code>## 
 ## 
 ## $credible_intervals_1D</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-2.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
 <p>Now plotting the test against the continuous covariate</p>
 <pre class="r"><code>outlier_free_estimate |&gt;
   sccomp_test(contrasts = &quot;continuous_covariate&quot;) |&gt; 
   plot()</code></pre>
 <pre><code>## $boxplot
 ## $boxplot[[1]]</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <pre><code>## 
 ## 
 ## $credible_intervals_1D</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
-<pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.3.1 (2023-06-16)
-## Platform: x86_64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.5
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## time zone: Australia/Melbourne
-## tzcode source: internal
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-## [1] sccomp_1.7.2
-## 
-## loaded via a namespace (and not attached):
-##   [1] bitops_1.0-7                gridExtra_2.3              
-##   [3] inline_0.3.19               rlang_1.1.2                
-##   [5] magrittr_2.0.3              matrixStats_1.1.0          
-##   [7] compiler_4.3.1              mgcv_1.9-0                 
-##   [9] loo_2.6.0                   callr_3.7.3                
-##  [11] vctrs_0.6.4                 stringr_1.5.1              
-##  [13] pkgconfig_2.0.3             crayon_1.5.2               
-##  [15] fastmap_1.1.1               XVector_0.42.0             
-##  [17] labeling_0.4.3              utf8_1.2.4                 
-##  [19] rmarkdown_2.25              tzdb_0.4.0                 
-##  [21] ps_1.7.5                    purrr_1.0.2                
-##  [23] xfun_0.41                   zlibbioc_1.48.0            
-##  [25] cachem_1.0.8                GenomeInfoDb_1.38.1        
-##  [27] jsonlite_1.8.7              highr_0.10                 
-##  [29] DelayedArray_0.28.0         parallel_4.3.1             
-##  [31] prettyunits_1.2.0           R6_2.5.1                   
-##  [33] RColorBrewer_1.1-3          bslib_0.6.0                
-##  [35] stringi_1.8.2               StanHeaders_2.26.28        
-##  [37] parallelly_1.36.0           boot_1.3-28.1              
-##  [39] GenomicRanges_1.54.1        jquerylib_0.1.4            
-##  [41] Rcpp_1.0.11                 bookdown_0.36              
-##  [43] rstan_2.32.3                SummarizedExperiment_1.32.0
-##  [45] knitr_1.45                  future.apply_1.11.0        
-##  [47] readr_2.1.4                 IRanges_2.36.0             
-##  [49] splines_4.3.1               Matrix_1.6-3               
-##  [51] tidyselect_1.2.0            rstudioapi_0.15.0          
-##  [53] abind_1.4-5                 yaml_2.3.7                 
-##  [55] codetools_0.2-19            blogdown_1.18              
-##  [57] processx_3.8.2              listenv_0.9.0              
-##  [59] pkgbuild_1.4.2              lattice_0.22-5             
-##  [61] tibble_3.2.1                Biobase_2.62.0             
-##  [63] withr_2.5.2                 evaluate_0.23              
-##  [65] future_1.33.0               RcppParallel_5.1.7         
-##  [67] pillar_1.9.0                MatrixGenerics_1.14.0      
-##  [69] stats4_4.3.1                generics_0.1.3             
-##  [71] sp_2.1-2                    RCurl_1.98-1.13            
-##  [73] S4Vectors_0.40.2            hms_1.1.3                  
-##  [75] ggplot2_3.4.4               rstantools_2.3.1.1         
-##  [77] munsell_0.5.0               scales_1.2.1               
-##  [79] globals_0.16.2              glue_1.6.2                 
-##  [81] tools_4.3.1                 forcats_1.0.0              
-##  [83] dotCall64_1.1-0             grid_4.3.1                 
-##  [85] tidyr_1.3.0                 QuickJSR_1.0.8             
-##  [87] colorspace_2.1-0            SingleCellExperiment_1.24.0
-##  [89] nlme_3.1-163                GenomeInfoDbData_1.2.11    
-##  [91] patchwork_1.1.3             cli_3.6.1                  
-##  [93] spam_2.10-0                 fansi_1.0.5                
-##  [95] S4Arrays_1.2.0              dplyr_1.1.4                
-##  [97] gtable_0.3.4                sass_0.4.7                 
-##  [99] digest_0.6.33               progressr_0.14.0           
-## [101] BiocGenerics_0.48.1         SparseArray_1.2.2          
-## [103] ggrepel_0.9.4               SeuratObject_5.0.1         
-## [105] farver_2.1.1                htmltools_0.5.7            
-## [107] lifecycle_1.0.4</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p><a href="https://doi.org/10.1073/pnas.2203828120">Mangiola, Stefano, et al. “sccomp: Robust differential composition and variability analysis for single-cell data.” Proceedings of the National Academy of Sciences 120.33 (2023): e2203828120.</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
