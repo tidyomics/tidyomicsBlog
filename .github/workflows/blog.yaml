@@ -1,62 +1,35 @@
+name: GitHub Pages
+
 on:
   push:
     branches:
-      - master
-
-env:
-  cache-version: v1
-  repo-name: tidyomics/tidyomicsBlog
-  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      - master # Set a branch to deploy
+  pull_request:
 
 jobs:
-  job1:
-    runs-on: ubuntu-latest
-    container: bioconductor/bioconductor_docker:devel
+  deploy:
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true  # Fetch Hugo themes (true OR recursive)
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
 
-      - name: Query dependencies and update old packages
-        run: |
-          BiocManager::install(ask=FALSE)
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-        shell: Rscript {0}
-        
-      - name: Cache R packages
-        if: runner.os != 'Windows'
-        uses: actions/cache@v1
-        with:
-          path: /usr/local/lib/R/site-library
-          key: ${{ env.cache-version }}-${{ runner.os }}-r-${{ hashFiles('.github/depends.Rds') }} 
-          restore-keys: ${{ env.cache-version }}-${{ runner.os }}-r-
-          
-       # This lets us augment with additional dependencies	
-      - name: Install system dependencies	
-        if: runner.os == 'Linux'	
-        env:	
-          RHUB_PLATFORM: linux-x86_64-ubuntu-gcc	
-        run: |	
-          sysreqs=$(Rscript -e 'cat("apt-get update -y && apt-get install -y", paste(gsub("apt-get install -y ", "", remotes::system_requirements("ubuntu", "20.04")), collapse = " "))')
-          echo $sysreqs
-          sudo -s eval "$sysreqs"
-         
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.79.1'
+          hugo-version: '0.119.0'
           # extended: true
 
       - name: Build
-        run: |
-          cd blog
-          hugo --minify
+        run: hugo --minify
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/master'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./blog/public
           BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: docs # Folder the action should deploy
