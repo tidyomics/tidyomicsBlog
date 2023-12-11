@@ -1,4 +1,4 @@
-Contributing to tidyomics/tidyomicsBlog Workshop
+Contributing to tidyomics
 ===
 
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
@@ -14,7 +14,7 @@ The following is a set of guidelines for contributing to this training material 
 
 # What should I know before I get started?
 
-This repository contains the files for the tidyomics/tidyomicsBlog workshop.
+This repository contains the files for the tidyomicsBlog.
 
 By contributing, you agree that we may redistribute your work under [this repository's license](LICENSE.md).
 
