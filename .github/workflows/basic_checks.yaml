@@ -1,3 +1,5 @@
+name: Basic checks
+
 on: [push]
 
 env:
