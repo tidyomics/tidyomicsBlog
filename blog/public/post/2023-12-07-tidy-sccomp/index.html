@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Overview of the sccomp package - The Tidyomics Blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Stefano Mangiola" /><meta name="description" content="Logo We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&amp;gt;.
+Function Description - Estimation: sccomp_stimate() which is usually run once in the analysis (per model). - Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)." /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.115.4 with theme even" />
+
+
+<link rel="canonical" href="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/tidyomicsBlog/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/tidyomicsBlog/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/tidyomicsBlog/favicon-16x16.png">
+<link rel="manifest" href="/tidyomicsBlog/manifest.json">
+<link rel="mask-icon" href="/tidyomicsBlog/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/tidyomicsBlog/sass/main.min.7063e6a5193600da37b11a3f96b28adfb25747a97881e5f3aa057b41563749a4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Overview of the sccomp package" />
+<meta property="og:description" content="Logo We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&gt;.
+Function Description - Estimation: sccomp_stimate() which is usually run once in the analysis (per model). - Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-12-07T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-12-07T00:00:00+00:00" />
+<meta itemprop="name" content="Overview of the sccomp package">
+<meta itemprop="description" content="Logo We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&gt;.
+Function Description - Estimation: sccomp_stimate() which is usually run once in the analysis (per model). - Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)."><meta itemprop="datePublished" content="2023-12-07T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2023-12-07T00:00:00+00:00" />
+<meta itemprop="wordCount" content="1145">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Overview of the sccomp package"/>
+<meta name="twitter:description" content="Logo We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&gt;.
+Function Description - Estimation: sccomp_stimate() which is usually run once in the analysis (per model). - Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">The Tidyomics Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/tidyomicsBlog/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/tidyomicsBlog/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tidyomicsBlog/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/tidyomicsBlog/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/tidyomicsBlog/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">The Tidyomics Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/tidyomicsBlog/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tidyomicsBlog/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tidyomicsBlog/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tidyomicsBlog/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tidyomicsBlog/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Overview of the sccomp package</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-12-07 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    
+  </div>
+</div>
+    <div class="post-content">
+      
+
+
+<!-- badges: start -->
+<p><a href="https://www.tidyverse.org/lifecycle/#maturing"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle:maturing" /></a> <a href="https://github.com/stemangiola/tidyseurat/actions/"><img src="https://github.com/stemangiola/tidyseurat/workflows/R-CMD-check/badge.svg" alt="R build status" /></a></p>
+<!-- badges: end -->
+<div class="float">
+<img src="https://github.com/stemangiola/sccomp/blob/master/inst/logo-01.png" alt="Logo" />
+<div class="figcaption">Logo</div>
+</div>
+<p><img src="%22content/post/2023-12-07-tidy-sccomp/images/logo-01.png%22" alt="Logo" />
+<img src="%22images/logo-01.png%22" alt="Logo" /></p>
+<p><img src="post/2023-12-07-tidy-sccomp/images/logo-01.png" height="139px" width="120px"/></p>
+<p>We announce the new tidy and modular interface for a <code>sccomp</code>, which improves modularity, and clarity. The main change is the modularisation of <code>sccomp</code> in functions which can be linked with the pipe operator <code>|&gt;</code>.</p>
+<table>
+<colgroup>
+<col width="48%" />
+<col width="51%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>- Estimation: <code>sccomp_stimate()</code></td>
+<td>which is usually run once in the analysis (per model).</td>
+</tr>
+<tr class="even">
+<td>- Testing: <code>sccomp_test()</code></td>
+<td>which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).</td>
+</tr>
+<tr class="odd">
+<td>- Outlier removal: <code>sccomp_remove_outliers()</code></td>
+<td>which is usually run once after <code>sccomp_estimate()</code> in case you want to produce estimates not influenced by outlier data points.</td>
+</tr>
+<tr class="even">
+<td>- Unwanted variation removal: <code>sccomp_remove_unwanted_variation()</code></td>
+<td>which is run after <code>sccomp_estimate()</code> and produces a dataset that just preserve the variability of your factor of interest.</td>
+</tr>
+<tr class="odd">
+<td>- Data replication: <code>sccomp_replicate()</code></td>
+<td>which is run after <code>sccomp_estimate()</code> and produces a dataset representing the theoretical data distribution according to the model (from the posterior distribution).</td>
+</tr>
+<tr class="even">
+<td>- Plotting: <code>plot()</code></td>
+<td>which is run after <code>sccomp_test</code> and outputs a series of summary plots.</td>
+</tr>
+</tbody>
+</table>
+<div id="a-reminder-what-is-sccomp" class="section level1">
+<h1>A reminder: what is <code>sccomp</code></h1>
+<p><code>sccomp</code> is a statistical model developed for differential variability analysis in compositional data, primarily used in cellular omics fields like single-cell genomics, proteomics, and microbiomics (Mangiola et al. 2023). It addresses limitations of existing methods in differential abundance analysis by incorporating several advanced features. <code>sccomp</code> effectively models compositional count data properties, which were previously not adequately addressed, and tackles cell-group-specific differential variability. This model uses a constrained Beta-binomial distribution to enable more precise analyses. Key capabilities of <code>sccomp</code> include improved differential abundance analyses through cross-sample information borrowing, outlier identification and exclusion, realistic data simulation, and facilitating cross-study knowledge transfer. By incorporating these features, <code>sccomp</code> provides a more comprehensive and accurate framework for analyzing cellular omics data, identifying crucial biological drivers such as disease progression markers in cancer and pathogen infection.</p>
+</div>
+<div id="installation" class="section level1">
+<h1>Installation</h1>
+<p><strong>Bioconductor</strong></p>
+<pre class="r"><code>if (!requireNamespace(&quot;BiocManager&quot;)) install.packages(&quot;BiocManager&quot;)
+BiocManager::install(&quot;sccomp&quot;)</code></pre>
+<p><strong>Github</strong></p>
+<pre class="r"><code>devtools::install_github(&quot;stemangiola/sccomp&quot;)</code></pre>
+</div>
+<div id="deprecation-of-the-function-sccomp_glm" class="section level1">
+<h1>Deprecation of the function <code>sccomp_glm()</code></h1>
+<p>The new framework</p>
+<pre class="r"><code>outlier_free_estimate = 
+  seurat_obj |&gt;
+  
+  # Estimate
+  sccomp_estimate( 
+    formula_composition = ~ type + continuous_covariate, 
+    .sample =  sample, 
+    .cell_group = cell_group
+  ) |&gt;
+  
+  # Remove outliers
+  sccomp_remove_outliers() 
+
+  
+# Test
+outlier_free_estimate |&gt;
+  sccomp_test(contrasts = &quot;typehealthy&quot;) </code></pre>
+<pre><code>## # A tibble: 30 × 18
+##    cell_group  parameter factor c_lower c_effect c_upper   c_pH0   c_FDR c_n_eff
+##    &lt;chr&gt;       &lt;chr&gt;     &lt;chr&gt;    &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+##  1 B immature  typeheal… type     0.926    1.41   1.89   0       0         5110.
+##  2 B mem       typeheal… type     1.09     1.72   2.36   0       0         3857.
+##  3 CD4 cm S10… typeheal… type     0.606    0.991  1.43   0       0         5290.
+##  4 CD4 cm hig… typeheal… type    -3.13    -1.99  -1.01   0       0         3682.
+##  5 CD4 cm rib… typeheal… type    -1.77    -1.06  -0.370  5.76e-3 9.18e-4   3749.
+##  6 CD4 em hig… typeheal… type    -2.24    -1.39  -0.603  2.50e-4 4.17e-5   3870.
+##  7 CD4 naive   typeheal… type     0.195    0.820  1.42   2.58e-2 5.72e-3   4786.
+##  8 CD4 riboso… typeheal… type     1.53     2.04   2.53   0       0         4536.
+##  9 CD8 em 1    typeheal… type    -0.563    0.118  0.729  6.10e-1 1.24e-1   4336.
+## 10 CD8 em 2    typeheal… type    -2.12    -0.975  0.0289 6.28e-2 1.65e-2   5363.
+## # ℹ 20 more rows
+## # ℹ 9 more variables: c_R_k_hat &lt;dbl&gt;, v_lower &lt;dbl&gt;, v_effect &lt;dbl&gt;,
+## #   v_upper &lt;dbl&gt;, v_pH0 &lt;dbl&gt;, v_FDR &lt;dbl&gt;, v_n_eff &lt;dbl&gt;, v_R_k_hat &lt;dbl&gt;,
+## #   count_data &lt;list&gt;</code></pre>
+<p>Replaces the old framework (that now will receive a deprecation warning)</p>
+<pre class="r"><code>  seurat_obj |&gt;
+  
+  # Estimate
+  sccomp_glm( 
+    formula_composition = ~ type + continuous_covariate, 
+    .sample =  sample, 
+    .cell_group = cell_group, 
+    check_outliers = TRUE,
+    contrasts = &quot;typehealthy&quot;
+  ) </code></pre>
+</div>
+<div id="new-functionalities" class="section level1">
+<h1>New functionalities</h1>
+<div id="removal-of-unwanted-variation." class="section level2">
+<h2>Removal of unwanted variation.</h2>
+<p>For <strong>visualisation</strong> purposes, we can select factor of interest we would like to preserve the effect for, end exclude all the rest. For example, if we want to produce a dataset with just the <code>type</code> effect, we can execute</p>
+<pre class="r"><code>outlier_free_estimate |&gt;
+  sccomp_remove_unwanted_variation(~ type)</code></pre>
+<pre><code>## sccomp says: calculating residuals</code></pre>
+<pre><code>## sccomp says: regressing out unwanted factors</code></pre>
+<pre><code>## # A tibble: 600 × 5
+##    sample       cell_group adjusted_proportion adjusted_counts logit_residuals
+##    &lt;chr&gt;        &lt;chr&gt;                    &lt;dbl&gt;           &lt;dbl&gt;           &lt;dbl&gt;
+##  1 10x_6K       B immature              0.0545           255.          -0.761 
+##  2 10x_8K       B immature              0.142           1069.           0.313 
+##  3 GSE115189    B immature              0.112            262.           0.0162
+##  4 SCP345_580   B immature              0.0890           513.          -0.213 
+##  5 SCP345_860   B immature              0.149            958.           0.369 
+##  6 SCP424_pbmc1 B immature              0.111            297.          -0.0372
+##  7 SCP424_pbmc2 B immature              0.199            595.           0.705 
+##  8 SCP591       B immature              0.0244            13.9         -1.58  
+##  9 SI-GA-E5     B immature              0.0234            97.9         -0.737 
+## 10 SI-GA-E7     B immature              0.0956           702.           0.750 
+## # ℹ 590 more rows</code></pre>
+</div>
+</div>
+<div id="plotting" class="section level1">
+<h1>Plotting</h1>
+<p>The bloating functionalities have been improved. Now, both discrete and continuous variables can be visualised overlaying the to reticle data distribution from the model. This helps the user understanding whether the model is descriptively adequate to the data.</p>
+<p>For example, if the theoretical data distribution from the <code>sccomp</code> does not overlap with the observed data distribution, this is an indication that the probability distribution used by <code>sccomp</code> is not suitable for the data or a different model (design matrix) should be used.</p>
+<pre class="r"><code>outlier_free_estimate |&gt;
+  sccomp_test(contrasts = &quot;typehealthy&quot;) |&gt; 
+  plot()</code></pre>
+<pre><code>## $boxplot
+## $boxplot[[1]]</code></pre>
+<p><img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre><code>## 
+## 
+## $credible_intervals_1D</code></pre>
+<p><img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-6-2.png" width="672" /></p>
+<p>Now plotting the test against the continuous covariate</p>
+<pre class="r"><code>outlier_free_estimate |&gt;
+  sccomp_test(contrasts = &quot;continuous_covariate&quot;) |&gt; 
+  plot()</code></pre>
+<pre><code>## $boxplot
+## $boxplot[[1]]</code></pre>
+<p><img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre><code>## 
+## 
+## $credible_intervals_1D</code></pre>
+<p><img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.3.1 (2023-06-16)
+## Platform: x86_64-apple-darwin20 (64-bit)
+## Running under: macOS Ventura 13.5
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: Australia/Melbourne
+## tzcode source: internal
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] sccomp_1.7.2
+## 
+## loaded via a namespace (and not attached):
+##   [1] bitops_1.0-7                gridExtra_2.3              
+##   [3] inline_0.3.19               rlang_1.1.2                
+##   [5] magrittr_2.0.3              matrixStats_1.1.0          
+##   [7] compiler_4.3.1              mgcv_1.9-0                 
+##   [9] loo_2.6.0                   callr_3.7.3                
+##  [11] vctrs_0.6.4                 stringr_1.5.1              
+##  [13] pkgconfig_2.0.3             crayon_1.5.2               
+##  [15] fastmap_1.1.1               XVector_0.42.0             
+##  [17] labeling_0.4.3              utf8_1.2.4                 
+##  [19] rmarkdown_2.25              tzdb_0.4.0                 
+##  [21] ps_1.7.5                    purrr_1.0.2                
+##  [23] xfun_0.41                   zlibbioc_1.48.0            
+##  [25] cachem_1.0.8                GenomeInfoDb_1.38.1        
+##  [27] jsonlite_1.8.7              highr_0.10                 
+##  [29] DelayedArray_0.28.0         parallel_4.3.1             
+##  [31] prettyunits_1.2.0           R6_2.5.1                   
+##  [33] RColorBrewer_1.1-3          bslib_0.6.0                
+##  [35] stringi_1.8.2               StanHeaders_2.26.28        
+##  [37] parallelly_1.36.0           boot_1.3-28.1              
+##  [39] GenomicRanges_1.54.1        jquerylib_0.1.4            
+##  [41] Rcpp_1.0.11                 bookdown_0.36              
+##  [43] rstan_2.32.3                SummarizedExperiment_1.32.0
+##  [45] knitr_1.45                  future.apply_1.11.0        
+##  [47] readr_2.1.4                 IRanges_2.36.0             
+##  [49] splines_4.3.1               Matrix_1.6-3               
+##  [51] tidyselect_1.2.0            rstudioapi_0.15.0          
+##  [53] abind_1.4-5                 yaml_2.3.7                 
+##  [55] codetools_0.2-19            blogdown_1.18              
+##  [57] processx_3.8.2              listenv_0.9.0              
+##  [59] pkgbuild_1.4.2              lattice_0.22-5             
+##  [61] tibble_3.2.1                Biobase_2.62.0             
+##  [63] withr_2.5.2                 evaluate_0.23              
+##  [65] future_1.33.0               RcppParallel_5.1.7         
+##  [67] pillar_1.9.0                MatrixGenerics_1.14.0      
+##  [69] stats4_4.3.1                generics_0.1.3             
+##  [71] sp_2.1-2                    RCurl_1.98-1.13            
+##  [73] S4Vectors_0.40.2            hms_1.1.3                  
+##  [75] ggplot2_3.4.4               rstantools_2.3.1.1         
+##  [77] munsell_0.5.0               scales_1.2.1               
+##  [79] globals_0.16.2              glue_1.6.2                 
+##  [81] tools_4.3.1                 forcats_1.0.0              
+##  [83] dotCall64_1.1-0             grid_4.3.1                 
+##  [85] tidyr_1.3.0                 QuickJSR_1.0.8             
+##  [87] colorspace_2.1-0            SingleCellExperiment_1.24.0
+##  [89] nlme_3.1-163                GenomeInfoDbData_1.2.11    
+##  [91] patchwork_1.1.3             cli_3.6.1                  
+##  [93] spam_2.10-0                 fansi_1.0.5                
+##  [95] S4Arrays_1.2.0              dplyr_1.1.4                
+##  [97] gtable_0.3.4                sass_0.4.7                 
+##  [99] digest_0.6.33               progressr_0.14.0           
+## [101] BiocGenerics_0.48.1         SparseArray_1.2.2          
+## [103] ggrepel_0.9.4               SeuratObject_5.0.1         
+## [105] farver_2.1.1                htmltools_0.5.7            
+## [107] lifecycle_1.0.4</code></pre>
+</div>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">Stefano Mangiola</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2023-12-07
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/">
+            <span class="next-text nav-default">Tidy-transcriptomics manifesto</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:mangiolastefano@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/stemangiola" class="iconfont icon-github" title="github"></a>
+      <a href="https://twitter.com/steman_research" class="iconfont icon-twitter" title="twitter"></a>
+  <a href="https://tidyomics.github.io/tidyomicsBlog/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>Stefano Mangiola, Maria Doyle</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/tidyomicsBlog/js/main.min.4ae89da218555efa0e7093a20b92017d2e1202b66fff9fc2edf4cb8d44b44c6e.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
