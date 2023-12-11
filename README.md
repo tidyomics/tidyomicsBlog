@@ -1,5 +1,5 @@
 <!-- badges: start -->
-![](https://github.com/tidyomics/tidyomicsBlog/actions/workflows/basic_checks.yaml/badge.svg)(https://github.com/tidyomics/tidyomicsBlog/actions/workflows/basic_checks.yaml) ![](https://github.com/tidyomics/tidyomicsBlog/actions/workflows/blog.yaml/badge.svg)(https://github.com/tidyomics/tidyomicsBlog/actions/workflows/blog.yaml)
+![](https://github.com/tidyomics/tidyomicsBlog/actions/workflows/basic_checks.yaml/badge.svg) ![](https://github.com/tidyomics/tidyomicsBlog/actions/workflows/blog.yaml/badge.svg)
 <!-- badges: end -->
 
 ## The blog
