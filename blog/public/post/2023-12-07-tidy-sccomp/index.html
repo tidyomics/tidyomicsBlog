@@ -24,7 +24,7 @@ Function Description Estimation: sccomp_stimate() which is usually run once in t
 
 
 
-<meta name="generator" content="Hugo 0.121.1 with theme even" />
+<meta name="generator" content="Hugo 0.115.4 with theme even" />
 
 
 <link rel="canonical" href="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/" />
@@ -47,13 +47,13 @@ Function Description Estimation: sccomp_stimate() which is usually run once in t
 <meta property="og:url" content="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/" /><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2023-12-07T00:00:00+00:00" />
 <meta property="article:modified_time" content="2023-12-07T00:00:00+00:00" />
-
 <meta itemprop="name" content="The new tidy sccomp interface">
 <meta itemprop="description" content="We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&gt;.
 Function Description Estimation: sccomp_stimate() which is usually run once in the analysis (per model). Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)."><meta itemprop="datePublished" content="2023-12-07T00:00:00+00:00" />
 <meta itemprop="dateModified" content="2023-12-07T00:00:00+00:00" />
-<meta itemprop="wordCount" content="1156">
-<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="The new tidy sccomp interface"/>
+<meta itemprop="wordCount" content="871">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="The new tidy sccomp interface"/>
 <meta name="twitter:description" content="We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&gt;.
 Function Description Estimation: sccomp_stimate() which is usually run once in the analysis (per model). Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated)."/>
 
@@ -101,7 +101,7 @@ Function Description Estimation: sccomp_stimate() which is usually run once in t
   <div class="container" id="mobile-panel">
     <header id="header" class="header">
         <div class="logo-wrapper">
-  <a href="/" class="logo">The Tidyomics Blog</a>
+  <a href=/tidyomicsBlog/ class="logo">The Tidyomics Blog</a>
 </div>
 
 
@@ -151,11 +151,11 @@ Function Description Estimation: sccomp_stimate() which is usually run once in t
       
 
 
-<p>We announce the new tidy and modular interface for a <code>sccomp</code>, which improves modularity, and clarity. The main change is the modularisation of <code>sccomp</code> in functions which can be linked with the pipe operator <code>|&gt;</code>.</p>
 <!-- badges: start -->
 <p><a href="https://www.tidyverse.org/lifecycle/#maturing"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle:maturing" /></a> <a href="https://github.com/stemangiola/tidyseurat/actions/"><img src="https://github.com/stemangiola/sccomp/actions/workflows/rworkflows.yml/badge.svg" alt="R build status" /></a></p>
 <!-- badges: end -->
 <p><img src="https://raw.githubusercontent.com/stemangiola/sccomp/master/inst/logo-01.png" width="120" /></p>
+<p>We announce the new tidy and modular interface for a <code>sccomp</code>, which improves modularity, and clarity. The main change is the modularisation of <code>sccomp</code> in functions which can be linked with the pipe operator <code>|&gt;</code>.</p>
 <table>
 <thead>
 <tr>
@@ -329,80 +329,6 @@ outlier_free_estimate |&gt;
 ## 
 ## $credible_intervals_1D</code></pre>
 <p><img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
-<pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 4.3.1 (2023-06-16)
-## Platform: x86_64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.5
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## time zone: Australia/Melbourne
-## tzcode source: internal
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-## [1] sccomp_1.7.2 knitr_1.45  
-## 
-## loaded via a namespace (and not attached):
-##   [1] bitops_1.0-7                gridExtra_2.3              
-##   [3] inline_0.3.19               rlang_1.1.2                
-##   [5] magrittr_2.0.3              matrixStats_1.1.0          
-##   [7] compiler_4.3.1              mgcv_1.8-42                
-##   [9] loo_2.6.0                   vctrs_0.6.5                
-##  [11] stringr_1.5.1               pkgconfig_2.0.3            
-##  [13] crayon_1.5.2                fastmap_1.1.1              
-##  [15] XVector_0.42.0              labeling_0.4.3             
-##  [17] utf8_1.2.4                  rmarkdown_2.25             
-##  [19] tzdb_0.4.0                  purrr_1.0.2                
-##  [21] xfun_0.41                   zlibbioc_1.48.0            
-##  [23] cachem_1.0.8                GenomeInfoDb_1.38.1        
-##  [25] jsonlite_1.8.8              highr_0.10                 
-##  [27] DelayedArray_0.28.0         parallel_4.3.1             
-##  [29] R6_2.5.1                    bslib_0.6.1                
-##  [31] stringi_1.8.2               RColorBrewer_1.1-3         
-##  [33] StanHeaders_2.26.28         parallelly_1.36.0          
-##  [35] boot_1.3-28.1               GenomicRanges_1.54.1       
-##  [37] jquerylib_0.1.4             Rcpp_1.0.11                
-##  [39] bookdown_0.37               rstan_2.32.3               
-##  [41] SummarizedExperiment_1.32.0 future.apply_1.11.0        
-##  [43] readr_2.1.4                 IRanges_2.36.0             
-##  [45] splines_4.3.1               Matrix_1.6-4               
-##  [47] tidyselect_1.2.0            rstudioapi_0.15.0          
-##  [49] abind_1.4-5                 yaml_2.3.7                 
-##  [51] codetools_0.2-19            blogdown_1.18              
-##  [53] curl_5.2.0                  listenv_0.9.0              
-##  [55] pkgbuild_1.4.3              lattice_0.21-8             
-##  [57] tibble_3.2.1                Biobase_2.62.0             
-##  [59] withr_2.5.2                 evaluate_0.23              
-##  [61] future_1.33.0               RcppParallel_5.1.7         
-##  [63] pillar_1.9.0                MatrixGenerics_1.14.0      
-##  [65] stats4_4.3.1                generics_0.1.3             
-##  [67] sp_2.1-2                    RCurl_1.98-1.13            
-##  [69] S4Vectors_0.40.2            hms_1.1.3                  
-##  [71] ggplot2_3.4.4               rstantools_2.3.1.1         
-##  [73] munsell_0.5.0               scales_1.3.0               
-##  [75] globals_0.16.2              glue_1.6.2                 
-##  [77] tools_4.3.1                 forcats_1.0.0              
-##  [79] dotCall64_1.1-1             grid_4.3.1                 
-##  [81] tidyr_1.3.0                 QuickJSR_1.0.8             
-##  [83] colorspace_2.1-0            SingleCellExperiment_1.24.0
-##  [85] nlme_3.1-162                GenomeInfoDbData_1.2.11    
-##  [87] patchwork_1.1.3             cli_3.6.1                  
-##  [89] spam_2.10-0                 fansi_1.0.6                
-##  [91] S4Arrays_1.2.0              dplyr_1.1.4                
-##  [93] V8_4.4.1                    gtable_0.3.4               
-##  [95] sass_0.4.8                  digest_0.6.33              
-##  [97] progressr_0.14.0            BiocGenerics_0.48.1        
-##  [99] SparseArray_1.2.2           ggrepel_0.9.4              
-## [101] SeuratObject_5.0.1          farver_2.1.1               
-## [103] htmltools_0.5.7             lifecycle_1.0.4</code></pre>
 </div>
 <div class="footnotes footnotes-end-of-document">
 <hr />
@@ -473,7 +399,7 @@ outlier_free_estimate |&gt;
   <span class="copyright-year">
     &copy; 
     2017 - 
-    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>Stefano Mangiola, Maria Doyle</span>
+    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>Stefano Mangiola, Maria Doyle</span>
   </span>
 </div>
 
