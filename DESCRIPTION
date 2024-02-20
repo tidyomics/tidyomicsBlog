@@ -1,6 +1,6 @@
 Package: tidyomicsBlog
 Title: The tidyomics blog
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: c(
     person("Stefano", "Mangiola", email="mangiola.s@wehi.edu.au",
     role = c("aut","cre"),

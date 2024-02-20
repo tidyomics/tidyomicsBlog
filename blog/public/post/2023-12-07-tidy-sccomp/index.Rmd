@@ -12,8 +12,6 @@ vignette: >
   %\usepackage[UTF-8]{inputenc}
 ---
 
-We announce the new tidy and modular interface for a `sccomp`, which improves modularity, and clarity. The main change is the modularisation of `sccomp` in functions which can be linked with the pipe operator `|>`.
-
 <!-- badges: start -->
 
 [![Lifecycle:maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing) [![R build status](https://github.com/stemangiola/sccomp/actions/workflows/rworkflows.yml/badge.svg)](https://github.com/stemangiola/tidyseurat/actions/)
@@ -22,6 +20,7 @@ We announce the new tidy and modular interface for a `sccomp`, which improves mo
 
 ![](https://raw.githubusercontent.com/stemangiola/sccomp/master/inst/logo-01.png){width="120px"}
 
+We announce the new tidy and modular interface for a `sccomp`, which improves modularity, and clarity. The main change is the modularisation of `sccomp` in functions which can be linked with the pipe operator `|>`.
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -146,6 +145,4 @@ outlier_free_estimate |>
 
 ```
 
-```{r}
-sessionInfo()
-```
+
