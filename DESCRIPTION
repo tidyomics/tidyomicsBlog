@@ -1,15 +1,19 @@
-Package: tidyomics/tidyomicsBlog
-Title: A Tidy Transcriptomics introduction to RNA-Seq analyses
-Version: 1.1.0
+Package: tidyomicsBlog
+Title: The tidyomics blog
+Version: 1.2.1
 Authors@R: c(
-    person("Maria", "Doyle", email="maria.doyle@petermac.org",
-    role = c("aut"),
-    comment = c(ORCID = "0000-0003-4847-8436")),
     person("Stefano", "Mangiola", email="mangiola.s@wehi.edu.au",
     role = c("aut","cre"),
-    comment = c(ORCID = "0000-0001-7474-836X")))
-Maintainer: Maria Doyle <maria.doyle@petermac.org>, Stefano Mangiola <mangiola.s@wehi.edu.au>
-Description: This workshop will present how to perform analysis of RNA sequencing data following the tidy data paradigm, using      the tidybulk, tidyHeatmap and tidyverse packages.
+    comment = c(ORCID = "0000-0001-7474-836X")),
+    person("William", "Hutchison", email="hutchison.w@wehi.edu.au",
+    role = c("aut"),
+    comment = c(ORCID = "0009-0001-6242-4269")),
+    person("Maria", "Doyle", email="maria.doyle@petermac.org",
+    role = c("aut"),
+    comment = c(ORCID = "0000-0003-4847-8436"))
+    )
+Maintainer: Stefano Mangiola <mangiola.s@wehi.edu.au>, William Hutchison <hutchison.w@wehi.edu.au>, Maria Doyle <maria.doyle@petermac.org>
+Description: This blog serves as a platform to showcase new tidyomics techniques and analysis.
 License: CC BY-SA 4.0 + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -19,7 +23,8 @@ Depends:
     R (>= 4.0.0)
 Imports:
     tidybulk,
-    tidyseurat
+    tidyseurat,
+    sccomp
 Suggests:
     knitr,
     rmarkdown,
