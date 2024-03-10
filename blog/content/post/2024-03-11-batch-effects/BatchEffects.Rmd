@@ -1,11 +1,12 @@
 ---
-title: "BatchEffects"
+title: "Batch Effect Visualization"
+author: "Pau Paiz"
+date: "2024-03-11"
 output: html_document
-date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
 ```
 
 ```{r library calls, results = FALSE}
@@ -18,8 +19,6 @@ library(ggplot2)
 # set seed for reproducibility
 set.seed(1234)
 ```
-
-#Batch Effect Visualization
 
 One important step in single-cell RNA-Seq data analysis is batch correction. Its importance lies in the fact that batch effects occur when the variation in data is caused by technical factors instead of biological factors. Technical factors can result from using different sequencing platforms, capturing times, reagents, laboratories, and in general from experimental designs and handling. They occur in batches because they affect a group of samples that are processed differently in contrast to other samples or data. Moreover, batch effects can be highly nonlinear, which makes it difficult to align the datasets and keep biological variations.These batch effects can lead to erroneous conclusions. But, how do we detect batch effects? 
 

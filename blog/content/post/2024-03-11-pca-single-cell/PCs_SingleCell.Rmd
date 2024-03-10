@@ -1,14 +1,13 @@
 ---
-title: "PCs_SingleCell"
+title: "Interpreting PCs in relation to clusters in single cell analysis"
+author: "Pau Paiz"
+date: "2024-03-11"
 output: html_document
-date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
 ```
-
-# Interpreting PCs in relation to clusters in single cell analysis
 
 Single-cell RNA sequential analysis is implemented for cell types identification both existing and novel, tumor types classification, investigation of heterogeneity in different cells, and cell fate prediction and depiction. In this context, an unsupervised learning method such as single-cell clustering represents an important approach to help execute these applications, since it is a key component of cell identification and characterization of gene expression patterns. The upstream data processing includes quality control (QC), normalization and dimension reduction. There are several dimension reduction methods, but here we will focus on principal components analysis (PCA) due to its simplicity and efficiency. The dimension reduction step is important because it reduces the computational work in further steps of clustering, reduces noise and enables more efficient data plotting.
 
@@ -77,14 +76,12 @@ pbmc
 ## Data normalization
 Now we need to do data normalization in order to be able to compare gene expression across different cells. The function `NormalizeData` does this procedure, and here *normalization.method = "LogNormalize"*, and *scale.factor = 10000* are the default values.
 ```{r}
-pbmc <- NormalizeData(pbmc,
-                           normalization.method = "LogNormalize", scale.factor = 10000)
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
 ```
 
 Next, we are going to select the features that show high cell to cell variation, so we will perform feature selection with the `FindVariableFeatures` function. *Selection.method = "vst", nfeatures = 2000* are the default values.
 ```{r}
-pbmc <- FindVariableFeatures(pbmc,
-                                  selection.method = "vst", nfeatures = 2000)
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
 ```
 
 We can visualize this top features with the `VariableFeaturePlot` function.
