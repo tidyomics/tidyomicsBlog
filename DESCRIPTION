@@ -52,7 +52,7 @@ Suggests:
     tidygate
 Remotes:
     stemangiola/tidygate,
-    satijalab/SeuratData
+    satijalab/seurat-data
 Biarch: true
 biocViews: RNASeq, DifferentialExpression, GeneExpression, Normalization, Clustering, QualityControl, Sequencing, Transcription, Transcriptomics
 URL: https://tidyomics.github.io/tidyomicsBlog/
