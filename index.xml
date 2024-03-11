@@ -1,7 +1,624 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>The Tidyomics Blog</title><link>https://tidyomics.github.io/tidyomicsBlog/</link><description>Recent content on The Tidyomics Blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Thu, 07 Dec 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://tidyomics.github.io/tidyomicsBlog/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://tidyomics.github.io/tidyomicsBlog/about/</link><pubDate>Sun, 20 Aug 2017 21:38:52 +0800</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/about/</guid><description>Hugo is a static site engine written in Go.
-It makes use of a variety of open source projects including:
-Cobra Viper J Walter Weatherman Cast Learn more and contribute on GitHub.</description></item><item><title>The new tidy sccomp interface</title><link>https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/</link><pubDate>Thu, 07 Dec 2023 00:00:00 +0000</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/</guid><description>We announce the new tidy and modular interface for a sccomp, which improves modularity, and clarity. The main change is the modularisation of sccomp in functions which can be linked with the pipe operator |&amp;gt;.
-Function Description Estimation: sccomp_stimate() which is usually run once in the analysis (per model). Testing: sccomp_test() which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).</description></item><item><title>Tidy-transcriptomics manifesto</title><link>https://tidyomics.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/</link><pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/</guid><description>
-&lt;script src="{{&lt; blogdown/postref >}}index.en_files/header-attrs/header-attrs.js">&lt;/script>
-&lt;div id="TOC">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>The Tidyomics Blog</title><link>https://tidyomics.github.io/tidyomicsBlog/</link><description>Recent content on The Tidyomics Blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Thu, 07 Dec 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://tidyomics.github.io/tidyomicsBlog/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://tidyomics.github.io/tidyomicsBlog/about/</link><pubDate>Sun, 20 Aug 2017 21:38:52 +0800</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/about/</guid><description>&lt;p>This is the blog of the tidyomics ecosystem. In it, we hope to share exciting updates on the development and use of our ecosystem.&lt;/p>
+&lt;p>You can find out more at our &lt;a href="https://github.com/tidyomics">homepage&lt;/a>.&lt;/p>
+&lt;p>This blog is part of &lt;a href="https://www.r-bloggers.com">R-Bloggers&lt;/a>.&lt;/p></description></item><item><title>The new tidy sccomp interface</title><link>https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/</link><pubDate>Thu, 07 Dec 2023 00:00:00 +0000</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/</guid><description>
+&lt;!-- badges: start -->
+&lt;p>&lt;a href="https://www.tidyverse.org/lifecycle/#maturing">&lt;img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle:maturing" />&lt;/a> &lt;a href="https://github.com/stemangiola/tidyseurat/actions/">&lt;img src="https://github.com/stemangiola/sccomp/actions/workflows/rworkflows.yml/badge.svg" alt="R build status" />&lt;/a>&lt;/p>
+&lt;!-- badges: end -->
+&lt;p>&lt;img src="https://raw.githubusercontent.com/stemangiola/sccomp/master/inst/logo-01.png" width="120" />&lt;/p>
+&lt;p>We announce the new tidy and modular interface for a &lt;code>sccomp&lt;/code>, which improves modularity, and clarity. The main change is the modularisation of &lt;code>sccomp&lt;/code> in functions which can be linked with the pipe operator &lt;code>|&amp;gt;&lt;/code>.&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left;">
+Function
+&lt;/th>
+&lt;th style="text-align:left;">
+Description
+&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left;">
+Estimation: &lt;code>sccomp_stimate()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which is usually run once in the analysis (per model).
+&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left;">
+Testing: &lt;code>sccomp_test()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which candy run multiple times, depending on how many contrasts you want to test (e.g. age, untreated vs treated).
+&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left;">
+Outlier removal: &lt;code>sccomp_remove_outliers()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which is usually run once after &lt;code>sccomp_estimate()&lt;/code> in case you want to produce estimates not influenced by outlier data points.
+&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left;">
+Unwanted variation removal: &lt;code>sccomp_remove_unwanted_variation()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which is run after &lt;code>sccomp_estimate()&lt;/code> and produces a dataset that just preserve the variability of your factor of interest.
+&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left;">
+Data replication: &lt;code>sccomp_replicate()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which is run after &lt;code>sccomp_estimate()&lt;/code> and produces a dataset representing the theoretical data distribution according to the model (from the posterior distribution).
+&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left;">
+Plotting: &lt;code>plot()&lt;/code>
+&lt;/td>
+&lt;td style="text-align:left;">
+which is run after &lt;code>sccomp_test&lt;/code> and outputs a series of summary plots.
+&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;div id="a-reminder-what-is-sccomp" class="section level1">
+&lt;h1>A reminder: what is &lt;code>sccomp&lt;/code>&lt;/h1>
+&lt;p>&lt;code>sccomp&lt;/code>&lt;a href="#fn1" class="footnote-ref" id="fnref1">&lt;sup>1&lt;/sup>&lt;/a> is a statistical model developed for differential variability analysis in compositional data, primarily used in cellular omics fields like single-cell genomics, proteomics, and microbiomics (Mangiola et al. 2023). It addresses limitations of existing methods in differential abundance analysis by incorporating several advanced features. &lt;code>sccomp&lt;/code> effectively models compositional count data properties, which were previously not adequately addressed, and tackles cell-group-specific differential variability. This model uses a constrained Beta-binomial distribution to enable more precise analyses. Key capabilities of &lt;code>sccomp&lt;/code> include improved differential abundance analyses through cross-sample information borrowing, outlier identification and exclusion, realistic data simulation, and facilitating cross-study knowledge transfer. By incorporating these features, &lt;code>sccomp&lt;/code> provides a more comprehensive and accurate framework for analyzing cellular omics data, identifying crucial biological drivers such as disease progression markers in cancer and pathogen infection.&lt;/p>
+&lt;/div>
+&lt;div id="installation" class="section level1">
+&lt;h1>Installation&lt;/h1>
+&lt;p>&lt;strong>Bioconductor&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>if (!requireNamespace(&amp;quot;BiocManager&amp;quot;)) install.packages(&amp;quot;BiocManager&amp;quot;)
+BiocManager::install(&amp;quot;sccomp&amp;quot;)&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>Github&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>devtools::install_github(&amp;quot;stemangiola/sccomp&amp;quot;)&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;div id="deprecation-of-the-function-sccomp_glm" class="section level1">
+&lt;h1>Deprecation of the function &lt;code>sccomp_glm()&lt;/code>&lt;/h1>
+&lt;p>The new framework&lt;/p>
+&lt;pre class="r">&lt;code>outlier_free_estimate =
+seurat_obj |&amp;gt;
+# Estimate
+sccomp_estimate(
+formula_composition = ~ type + continuous_covariate,
+.sample = sample,
+.cell_group = cell_group
+) |&amp;gt;
+# Remove outliers
+sccomp_remove_outliers()
+# Test
+outlier_free_estimate |&amp;gt;
+sccomp_test(contrasts = &amp;quot;typehealthy&amp;quot;) &lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A tibble: 30 × 18
+## cell_group parameter factor c_lower c_effect c_upper c_pH0 c_FDR c_n_eff
+## &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 B immature typeheal… type 0.926 1.41 1.89 0 0 5110.
+## 2 B mem typeheal… type 1.09 1.72 2.36 0 0 3857.
+## 3 CD4 cm S10… typeheal… type 0.606 0.991 1.43 0 0 5290.
+## 4 CD4 cm hig… typeheal… type -3.13 -1.99 -1.01 0 0 3682.
+## 5 CD4 cm rib… typeheal… type -1.77 -1.06 -0.370 5.76e-3 9.18e-4 3749.
+## 6 CD4 em hig… typeheal… type -2.24 -1.39 -0.603 2.50e-4 4.17e-5 3870.
+## 7 CD4 naive typeheal… type 0.195 0.820 1.42 2.58e-2 5.72e-3 4786.
+## 8 CD4 riboso… typeheal… type 1.53 2.04 2.53 0 0 4536.
+## 9 CD8 em 1 typeheal… type -0.563 0.118 0.729 6.10e-1 1.24e-1 4336.
+## 10 CD8 em 2 typeheal… type -2.12 -0.975 0.0289 6.28e-2 1.65e-2 5363.
+## # ℹ 20 more rows
+## # ℹ 9 more variables: c_R_k_hat &amp;lt;dbl&amp;gt;, v_lower &amp;lt;dbl&amp;gt;, v_effect &amp;lt;dbl&amp;gt;,
+## # v_upper &amp;lt;dbl&amp;gt;, v_pH0 &amp;lt;dbl&amp;gt;, v_FDR &amp;lt;dbl&amp;gt;, v_n_eff &amp;lt;dbl&amp;gt;, v_R_k_hat &amp;lt;dbl&amp;gt;,
+## # count_data &amp;lt;list&amp;gt;&lt;/code>&lt;/pre>
+&lt;p>Replaces the old framework (that now will receive a deprecation warning)&lt;/p>
+&lt;pre class="r">&lt;code> seurat_obj |&amp;gt;
+# Estimate
+sccomp_glm(
+formula_composition = ~ type + continuous_covariate,
+.sample = sample,
+.cell_group = cell_group,
+check_outliers = TRUE,
+contrasts = &amp;quot;typehealthy&amp;quot;
+) &lt;/code>&lt;/pre>
+&lt;/div>
+&lt;div id="new-functionalities" class="section level1">
+&lt;h1>New functionalities&lt;/h1>
+&lt;div id="removal-of-unwanted-variation." class="section level2">
+&lt;h2>Removal of unwanted variation.&lt;/h2>
+&lt;p>For &lt;strong>visualisation&lt;/strong> purposes, we can select factor of interest we would like to preserve the effect for, end exclude all the rest. For example, if we want to produce a dataset with just the &lt;code>type&lt;/code> effect, we can execute&lt;/p>
+&lt;pre class="r">&lt;code>outlier_free_estimate |&amp;gt;
+sccomp_remove_unwanted_variation(~ type)&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## sccomp says: calculating residuals&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## sccomp says: regressing out unwanted factors&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A tibble: 600 × 5
+## sample cell_group adjusted_proportion adjusted_counts logit_residuals
+## &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 10x_6K B immature 0.0545 255. -0.761
+## 2 10x_8K B immature 0.142 1069. 0.313
+## 3 GSE115189 B immature 0.112 262. 0.0162
+## 4 SCP345_580 B immature 0.0890 513. -0.213
+## 5 SCP345_860 B immature 0.149 958. 0.369
+## 6 SCP424_pbmc1 B immature 0.111 297. -0.0372
+## 7 SCP424_pbmc2 B immature 0.199 595. 0.705
+## 8 SCP591 B immature 0.0244 13.9 -1.58
+## 9 SI-GA-E5 B immature 0.0234 97.9 -0.737
+## 10 SI-GA-E7 B immature 0.0956 702. 0.750
+## # ℹ 590 more rows&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;/div>
+&lt;div id="plotting" class="section level1">
+&lt;h1>Plotting&lt;/h1>
+&lt;p>The bloating functionalities have been improved. Now, both discrete and continuous variables can be visualised overlaying the to reticle data distribution from the model. This helps the user understanding whether the model is descriptively adequate to the data.&lt;/p>
+&lt;p>For example, if the theoretical data distribution from the &lt;code>sccomp&lt;/code> does not overlap with the observed data distribution, this is an indication that the probability distribution used by &lt;code>sccomp&lt;/code> is not suitable for the data or a different model (design matrix) should be used.&lt;/p>
+&lt;pre class="r">&lt;code>outlier_free_estimate |&amp;gt;
+sccomp_test(contrasts = &amp;quot;typehealthy&amp;quot;) |&amp;gt;
+plot()&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## $boxplot
+## $boxplot[[1]]&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-7-1.png" width="672" />&lt;/p>
+&lt;pre>&lt;code>##
+##
+## $credible_intervals_1D&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-7-2.png" width="672" />&lt;/p>
+&lt;p>Now plotting the test against the continuous covariate&lt;/p>
+&lt;pre class="r">&lt;code>outlier_free_estimate |&amp;gt;
+sccomp_test(contrasts = &amp;quot;continuous_covariate&amp;quot;) |&amp;gt;
+plot()&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## $boxplot
+## $boxplot[[1]]&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-8-1.png" width="672" />&lt;/p>
+&lt;pre>&lt;code>##
+##
+## $credible_intervals_1D&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://tidyomics.github.io/tidyomicsBlog/post/2023-12-07-tidy-sccomp/index_files/figure-html/unnamed-chunk-8-2.png" width="672" />&lt;/p>
+&lt;/div>
+&lt;div class="footnotes footnotes-end-of-document">
+&lt;hr />
+&lt;ol>
+&lt;li id="fn1">&lt;p>&lt;a href="https://doi.org/10.1073/pnas.2203828120">Mangiola, Stefano, et al. “sccomp: Robust differential composition and variability analysis for single-cell data.” Proceedings of the National Academy of Sciences 120.33 (2023): e2203828120.&lt;/a>&lt;a href="#fnref1" class="footnote-back">↩︎&lt;/a>&lt;/p>&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>Tidy-transcriptomics manifesto</title><link>https://tidyomics.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/</link><pubDate>Wed, 07 Jul 2021 00:00:00 +0000</pubDate><guid>https://tidyomics.github.io/tidyomicsBlog/post/2021-07-07-tidy-transcriptomics-manifesto/</guid><description>&lt;pre>&lt;code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## ✓ ggplot2 3.3.5 ✓ purrr 0.3.4
+## ✓ tibble 3.1.2 ✓ dplyr 1.0.7
+## ✓ tidyr 1.1.3 ✓ stringr 1.4.0
+## ✓ readr 1.4.0 ✓ forcats 0.5.1&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag() masks stats::lag()&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="images/logo.png" alt="tidyomics/tidyomicsBlog_logo" width="100px" height="100px"/>&lt;/p>
+&lt;p>In this first post, we want to introduce the concept of tidy transcriptomics and its principles is moved by.&lt;/p>
+&lt;div id="what-is-tidy-transcriptomics" class="section level1">
+&lt;h1>What is tidy transcriptomics&lt;/h1>
+&lt;p>Tidy transcriptomics is a specific approach to transcriptomic data analysis in R, that uses the “tidy” principles proposed by &lt;a href="https://joss.theoj.org/papers/10.21105/joss.01686.pdf">Wickham et al.&lt;/a>. Tidy transcriptomics introduces both a tidy data representation and manipulation (for single-cell and bulk) with the packages &lt;code>tidySummarizedExperiment&lt;/code>, &lt;code>tidySingleCellExperiment&lt;/code>, and &lt;code>tidyseurat&lt;/code> and a tidy analysis workflow (for bulk data) with the package &lt;code>tidybulk&lt;/code>.&lt;/p>
+&lt;/div>
+&lt;div id="the-tidy-transcriptomics-manifesto" class="section level1">
+&lt;h1>The tidy transcriptomics manifesto&lt;/h1>
+&lt;p>This manifesto lays down the principles of tidy transcriptomics that &lt;code>tidybulk&lt;/code> and &lt;code>tidySummarizedExperiment&lt;/code>, &lt;code>tidySingleCellExperiment&lt;/code>, and &lt;code>tidyseurat&lt;/code> are based on. These principles are in line with &lt;a href="https://cran.r-project.org/web/packages/tidyverse/vignettes/manifesto.html">the tidy tools manifesto&lt;/a>.&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Use easy-to-understand, verbose, jargon- and acronym-free vocabulary.&lt;/strong> If the English dictionary is not enough to understand the underlying meaning of a function or a variable name, it is a bad sign. _&lt;a href="https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_" class="uri">https://iubmb.onlinelibrary.wiley.com/doi/10.1002/bmb.20922_&lt;/a>; and the cost of saving a few characters may be bigger than we think.&lt;/li>
+&lt;li>&lt;strong>Present/visualise information in its raw form when possible.&lt;/strong> Modern visualisation tools (e.g. ggplot2) allow the use of custom scales to visualise data. For example, for visualising p-values apply the &lt;code>log10_reverse&lt;/code> scale instead of transforming the p-values in their negative-log form; for visualising (raw, scaled and/or adjusted) transcript abundance (in the form of read counts) use the &lt;code>log1p&lt;/code> scale instead of transforming the data in its log (or log count-per-million) form.&lt;/li>
+&lt;li>&lt;strong>Avoid the creation of temporary variables when possible.&lt;/strong> When working interactively, creating variables to store data is a bug-prone process, especially if multiple assignments are done on the same variable through the workflow. The main utility of variables should be to store data that is used more than once. Tidyverse allows complex operations to be combined in a simple way, reducing the need to create temporary variables.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;div id="integration-map" class="section level1">
+&lt;h1>Integration map&lt;/h1>
+&lt;p>All packages are under active development, and are in a &lt;a href="https://lifecycle.r-lib.org/articles/stages.html">maturing&lt;/a> lifecycle.&lt;/p>
+&lt;p>&lt;img src="images/roadmap_integration.png" alt="roadmap" width="90%"/>&lt;/p>
+&lt;p>There are two parts in the tidy transcriptomics ecosystem: data and analysis framework. So far, for bulk RNA sequencing both data (tidySummarizedExperiment) and analysis (tidybulk) frameworks are available. In contrast,for single cell only data frameworks are available (tidySingleCellExperiment and tidyseurat).&lt;/p>
+&lt;div id="what-data-frameworks-are-and-what-they-are-not" class="section level2">
+&lt;h2>What data frameworks are and what they are not&lt;/h2>
+&lt;p>Data frameworks are not data containers. Data frameworks are data-abstraction that display and manipulate your existing containers (i.e. &lt;code>SummarizedExperiment&lt;/code>, &lt;code>SingleCellExperiment&lt;/code> and &lt;code>Seurat&lt;/code> object) in a tidy manner. Therefore there is not such a thing as &lt;code>tidy*&lt;/code> object. This has the advantage of allowing you to use tidyverse on transcriptomics data without compromising your existing pipelines. That is, if a method works for &lt;code>SummarizedExperiment&lt;/code> it works for its tidy representation.&lt;/p>
+&lt;p>Therefore, the question “can we go from &lt;code>tidySummarizedExperiment&lt;/code> to &lt;code>SummarizedExperiment&lt;/code> and viceversa” is not relevant, as we never leave &lt;code>SummarizedExperiment&lt;/code> in the first place.&lt;/p>
+&lt;/div>
+&lt;div id="giving-a-consistent-interface-despite-different-data-containers" class="section level2">
+&lt;h2>Giving a consistent interface despite different data containers&lt;/h2>
+&lt;p>With tidy transcriptomics, we differentiate the data container from the user interface. As an analogy, if we want to see picture of cats, we don’t care that a Unix and Windows machines store information in the hard drive differently. Similarly, if we want to display, manipulate and visualise transcriptomic data, we might not care how the data is stored.&lt;/p>
+&lt;/div>
+&lt;div id="which-analysis-framework-can-interface-with-which-data-framework" class="section level2">
+&lt;h2>Which analysis framework can interface with which data framework&lt;/h2>
+&lt;p>&lt;strong>Bulk RNA sequencing data&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;p>&lt;code>SummarizedExperiment&lt;/code> can interface with &lt;code>Bioconductor&lt;/code> and &lt;code>tidybulk&lt;/code>&lt;/p>&lt;/li>
+&lt;li>&lt;p>&lt;code>tibble&lt;/code> can interface with tidyverse and &lt;code>tidybulk&lt;/code>&lt;/p>&lt;/li>
+&lt;li>&lt;p>&lt;code>tidySummarizedExperiment&lt;/code> can interface with all three: &lt;code>Bioconductor&lt;/code>, tidyverse and &lt;code>tidybulk&lt;/code>&lt;/p>&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Single-cell RNA sequencing data&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;p>&lt;code>SingleCellExperiment&lt;/code> can interface with &lt;code>Bioconductor&lt;/code>&lt;/p>&lt;/li>
+&lt;li>&lt;p>&lt;code>tidySingleCellExperiment&lt;/code> can interface with &lt;code>Bioconductor&lt;/code> and &lt;code>tidyverse&lt;/code>&lt;/p>&lt;/li>
+&lt;li>&lt;p>&lt;code>Seurat&lt;/code> object can interface with &lt;code>Seurat&lt;/code>&lt;/p>&lt;/li>
+&lt;li>&lt;p>&lt;code>tidyseurat&lt;/code> object can interface with &lt;code>Seurat&lt;/code> and &lt;code>tidyverse&lt;/code>&lt;/p>&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;div id="differences-between-tidy-and-base-transcriptomics-sinthax" class="section level1">
+&lt;h1>Differences between tidy and base transcriptomics sinthax&lt;/h1>
+&lt;p>Here we provide few examples of the differences in programming transcriptomics analyses with tidy transcriptomics and the base R alternative. An important aspect is that tidy transcriptomics is complementary with standard workflows. Everything that works with &lt;code>SummarizedExperiment&lt;/code>, &lt;code>SingleCellExperiment&lt;/code> and &lt;code>Seurat&lt;/code> works with their tidy representations.&lt;/p>
+&lt;div id="tidybulk-and-tidysummarizedexperiment" class="section level2">
+&lt;h2>Tidybulk and tidySummarizedExperiment&lt;/h2>
+&lt;p>This example is taken from the workshop (BioC2021)[&lt;a href="https://stemangiola.github.io/bioc2021_tidyomics/tidyomicsBlog/articles/tidyomics/tidyomicsBlog.html" class="uri">https://stemangiola.github.io/bioc2021_tidyomics/tidyomicsBlog/articles/tidyomics/tidyomicsBlog.html&lt;/a>].&lt;/p>
+&lt;p>As tidybulk smoothly integrates with ggplot2 and other tidyverse packages it can save on typing and make plots easier to generate. Compare the code for creating density plots with tidybulk versus standard base R below (standard code adapted from (Law et al. 2016)).&lt;/p>
+&lt;p>&lt;strong>tidybulk&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code># tidybulk
+airway %&amp;gt;%
+keep_abundant(factor_of_interest = dex) %&amp;gt;%
+scale_abundance() %&amp;gt;%
+pivot_longer(cols = c(&amp;quot;counts&amp;quot;, &amp;quot;counts_scaled&amp;quot;), names_to = &amp;quot;source&amp;quot;, values_to = &amp;quot;abundance&amp;quot;) %&amp;gt;%
+ggplot(aes(x = abundance + 1, color = sample)) +
+geom_density() +
+facet_wrap(~source) +
+scale_x_log10() +
+custom_theme&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>base R using edgeR&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code># Example code, no need to run
+# Prepare data set
+library(edgeR)
+dgList &amp;lt;- SE2DGEList(airway)
+group &amp;lt;- factor(dgList$samples$dex)
+keep.exprs &amp;lt;- filterByExpr(dgList, group = group)
+dgList &amp;lt;- dgList[keep.exprs, , keep.lib.sizes = FALSE]
+nsamples &amp;lt;- ncol(dgList)
+logcounts &amp;lt;- log2(dgList$counts)
+# Setup graphics
+col &amp;lt;- RColorBrewer::brewer.pal(nsamples, &amp;quot;Paired&amp;quot;)
+par(mfrow = c(1, 2))
+# Plot raw counts
+plot(density(logcounts[, 1]), col = col[1], lwd = 2, ylim = c(0, 0.26), las = 2, main = &amp;quot;&amp;quot;, xlab = &amp;quot;&amp;quot;)
+title(main = &amp;quot;Counts&amp;quot;)
+for (i in 2:nsamples) {
+den &amp;lt;- density(logcounts[, i])
+lines(den$x, den$y, col = col[i], lwd = 2)
+}
+legend(&amp;quot;topright&amp;quot;, legend = dgList$samples$Run, text.col = col, bty = &amp;quot;n&amp;quot;)
+# Plot scaled counts
+dgList_norm &amp;lt;- calcNormFactors(dgList)
+lcpm_n &amp;lt;- cpm(dgList_norm, log = TRUE)
+plot(density(lcpm_n[, 1]), col = col[1], lwd = 2, ylim = c(0, 0.26), las = 2, main = &amp;quot;&amp;quot;, xlab = &amp;quot;&amp;quot;)
+title(&amp;quot;Counts scaled&amp;quot;)
+for (i in 2:nsamples) {
+den &amp;lt;- density(lcpm_n[, i])
+lines(den$x, den$y, col = col[i], lwd = 2)
+}
+legend(&amp;quot;topright&amp;quot;, legend = dgList_norm$samples$Run, text.col = col, bty = &amp;quot;n&amp;quot;)&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;div id="singlecellexperiment-and-tidysinglecellexperiment" class="section level2">
+&lt;h2>SingleCellExperiment and tidySingleCellExperiment&lt;/h2>
+&lt;p>These examples are taken from the article (Interfacing Seurat with the R tidy universe)[&lt;a href="https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btab404/6283576" class="uri">https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btab404/6283576&lt;/a>].&lt;/p>
+&lt;p>Calculating a transcriptional signature.&lt;/p>
+&lt;p>&lt;strong>Base&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code># Load data
+pbmc_SCE = tidySingleCellExperiment::pbmc_small
+signature_score_1 =
+pbmc_SCE[c(&amp;quot;CD79A&amp;quot;, &amp;quot;CD79B&amp;quot;),] %&amp;gt;%
+logcounts() %&amp;gt;%
+colSums() %&amp;gt;%
+scales::rescale(to = c(0,1))
+signature_score_2 =
+pbmc_SCE[c(&amp;quot;CD3D&amp;quot;, &amp;quot;CCR7&amp;quot;),] %&amp;gt;%
+logcounts() %&amp;gt;%
+colSums() %&amp;gt;%
+scales::rescale(to = c(0,1))
+signature_score_1 - signature_score_2&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## ATGCCAGAACGACT CATGGCCTGTGCAT GAACCTGATGAACC TGACTGGATTCTCA AGTCAGACTGCACA
+## -0.1282987 -1.0000000 -0.4892647 -0.4769175 -0.8142420
+## TCTGATACACGTGT TGGTATCTAAACAG GCAGCTCTGTTTCT GATATAACACGCAT AATGTTGACAGTCA
+## -0.5065754 -0.8943038 -0.8433443 -0.4750597 -0.4399134
+## AGGTCATGAGTGTC AGAGATGATCTCGC GGGTAACTCTAGTG CATGAGACACGGGA TACGCCACTCCGAA
+## 0.4399898 0.8313740 0.8367149 0.9404373 0.8785365
+## CTAAACCTGTGCAT GTAAGCACTCATTC TTGGTACTGAATCC CATCATACGGAGCA TACATCACGCTAAC
+## 0.8647225 0.7631773 0.8315032 0.9127912 0.6386232
+## TTACCATGAATCGC ATAGGAGAAACAGA GCGCACGACTTTAC ACTCGCACGAAAGT ATTACCTGCCTTAT
+## 0.0000000 0.0000000 0.2946328 0.0000000 -0.2487348
+## CCCAACTGCAATCG AAATTCGAATCACG CCATCCGATTCGCC TCCACTCTGAGCTT CATCAGGATGCACA
+## 0.0000000 0.0000000 0.2908813 0.0000000 0.2572103
+## CTAAACCTCTGACA GATAGAGAAGGGTG CTAACGGAACCGAT AGATATACCCGTAA TACTCTGAATCGAC
+## 0.2839127 -0.5116071 0.3556147 0.0000000 0.0000000
+## GCGCATCTTGCTCC GTTGACGATATCGG ACAGGTACTGGTGT GGCATATGCTTATC CATTACACCAACTG
+## 0.0000000 -0.3058682 0.0000000 -0.3499484 0.0000000
+## TAGGGACTGAACTC GCTCCATGAGAAGT TACAATGATGCTAG CTTCATGACCGAAT CTGCCAACAGGAGC
+## 0.0000000 -0.3969658 -0.4491779 0.0000000 -0.4252278
+## TTGCATTGAGCTAC AAGCAAGAGCTTAG CGGCACGAACTCAG GGTGGAGATTACTC GGCCGATGTACTCT
+## -0.5803536 -0.3499484 -0.4602168 -0.4537220 -0.4789804
+## CGTAGCCTGTATGC TGAGCTGAATGCTG CCTATAACGAGACG ATAAGTTGGTACGT AAGCGACTTTGACG
+## 0.2535563 0.0000000 0.3265729 0.3521070 0.2917172
+## ACCAGTGAATACCG ATTGCACTTGCTTT CTAGGTGATGGTTG GCACTAGACCTTTA CATGCGCTAGTCAC
+## 0.2962249 0.0000000 0.0000000 0.3533870 0.0000000
+## TTGAGGACTACGCA ATACCACTCTAAGC CATATAGACTAAGC TTTAGCTGTACTCT GACATTCTCCACCT
+## 0.0000000 0.0000000 0.0000000 0.7333251 0.1920881
+## ACGTGATGCCATGA ATTGTAGATTCCCG GATAGAGATCACGA AATGCGTGGACGGA GCGTAAACACGGTT
+## 0.0000000 0.0000000 0.0000000 0.2500814 -0.2120188
+## ATTCAGCTCATTGG GGCATATGGGGAGT ATCATCTGACACCA GTCATACTTCGCCT TTACGTACGTTCAG
+## 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
+## GAGTTGTGGTAGCT GACGCTCTCTCTCG AGTCTTACTTCGGA GGAACACTTCAGAC CTTGATTGATCTTC
+## 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>tidySingleCellExperiment&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code># Load data
+pbmc_SCE = tidySingleCellExperiment::pbmc_small
+pbmc_SCE %&amp;gt;%
+join_features(c(&amp;quot;CD79A&amp;quot;, &amp;quot;CD79B&amp;quot;, &amp;quot;CD3D&amp;quot;, &amp;quot;CCR7&amp;quot;), assay = &amp;quot;logcounts&amp;quot;, shape = &amp;quot;wide&amp;quot;) %&amp;gt;%
+mutate(signature_score =
+scales::rescale(CD79A + CD79B, to = c(0,1)) -
+scales::rescale(CD3D + CCR7, to = c(0,1))
+) %&amp;gt;%
+select(signature_score, everything())&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A SingleCellExperiment-tibble abstraction: 80 x 22
+## [90m# Features=230 | Assays=counts, logcounts[39m
+## cell signature_score orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8
+## &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;fct&amp;gt;
+## 1 ATGC… -0.128 SeuratPro… 70 47 0
+## 2 CATG… -1 SeuratPro… 85 52 0
+## 3 GAAC… -0.489 SeuratPro… 87 50 1
+## 4 TGAC… -0.477 SeuratPro… 127 56 0
+## 5 AGTC… -0.814 SeuratPro… 173 53 0
+## 6 TCTG… -0.507 SeuratPro… 70 48 0
+## 7 TGGT… -0.894 SeuratPro… 64 36 0
+## 8 GCAG… -0.843 SeuratPro… 72 45 0
+## 9 GATA… -0.475 SeuratPro… 52 36 0
+## 10 AATG… -0.440 SeuratPro… 100 41 0
+## # … with 70 more rows, and 16 more variables: letter.idents &amp;lt;fct&amp;gt;,
+## # groups &amp;lt;chr&amp;gt;, RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;, ident &amp;lt;fct&amp;gt;, CD79A &amp;lt;dbl&amp;gt;,
+## # CD79B &amp;lt;dbl&amp;gt;, CD3D &amp;lt;dbl&amp;gt;, CCR7 &amp;lt;dbl&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;, PC_3 &amp;lt;dbl&amp;gt;,
+## # PC_4 &amp;lt;dbl&amp;gt;, PC_5 &amp;lt;dbl&amp;gt;, tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;p>Cell subsampling for mulisample balanced UMAP representation&lt;/p>
+&lt;p>&lt;strong>Base&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>splits =
+colnames(pbmc_SCE) %&amp;gt;%
+split(pbmc_SCE$file )
+min_size = splits %&amp;gt;%
+sapply(length) %&amp;gt;% min()
+cell_subset = splits %&amp;gt;%
+lapply(function(x) sample(x, min_size)) %&amp;gt;%
+unlist()
+pbmc_SCE[, cell_subset]&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A SingleCellExperiment-tibble abstraction: 72 x 17
+## [90m# Features=230 | Assays=counts, logcounts[39m
+## cell orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
+## &amp;lt;chr&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;chr&amp;gt;
+## 1 ATTA… SeuratPro… 463 77 1 B g1
+## 2 CTAA… SeuratPro… 246 59 0 A g1
+## 3 TAGG… SeuratPro… 156 60 0 A g1
+## 4 ATAG… SeuratPro… 406 74 1 B g1
+## 5 AATG… SeuratPro… 100 41 0 A g1
+## 6 GGCA… SeuratPro… 172 29 0 A g1
+## 7 TACT… SeuratPro… 156 48 0 A g1
+## 8 CTTG… SeuratPro… 233 76 1 B g1
+## 9 GATA… SeuratPro… 328 72 1 B g1
+## 10 ACAG… SeuratPro… 151 59 0 A g1
+## # … with 62 more rows, and 10 more variables: RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;,
+## # ident &amp;lt;fct&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;, PC_3 &amp;lt;dbl&amp;gt;, PC_4 &amp;lt;dbl&amp;gt;, PC_5 &amp;lt;dbl&amp;gt;,
+## # tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>tidySingleCellExperiment&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>pbmc_SCE %&amp;gt;%
+add_count(file , name = &amp;quot;tot_cells&amp;quot;) %&amp;gt;%
+mutate(min_cells = min(tot_cells)) %&amp;gt;%
+group_by(file ) %&amp;gt;%
+sample_n(min_cells)&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## Warning: The `.drop` argument of `add_count()` is deprecated as of dplyr 1.0.0.&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## tidySingleCellExperiment says: A data frame is returned for independent data analysis.&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A tibble: 72 x 33
+## # Groups: file [2]
+## cell orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents groups
+## &amp;lt;chr&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;chr&amp;gt;
+## 1 TTGA… SeuratPro… 787 88 0 A g1
+## 2 CTAA… SeuratPro… 189 53 0 A g1
+## 3 TGGT… SeuratPro… 64 36 0 A g1
+## 4 ATTA… SeuratPro… 463 77 1 B g1
+## 5 GGCA… SeuratPro… 172 29 0 A g1
+## 6 TTGG… SeuratPro… 135 45 0 A g1
+## 7 GCAG… SeuratPro… 72 45 0 A g1
+## 8 CTGC… SeuratPro… 146 47 0 A g1
+## 9 CTTG… SeuratPro… 233 76 1 B g1
+## 10 ACCA… SeuratPro… 417 75 0 A g1
+## # … with 62 more rows, and 26 more variables: RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;,
+## # ident &amp;lt;fct&amp;gt;, tot_cells &amp;lt;int&amp;gt;, min_cells &amp;lt;int&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;,
+## # PC_3 &amp;lt;dbl&amp;gt;, PC_4 &amp;lt;dbl&amp;gt;, PC_5 &amp;lt;dbl&amp;gt;, PC_6 &amp;lt;dbl&amp;gt;, PC_7 &amp;lt;dbl&amp;gt;, PC_8 &amp;lt;dbl&amp;gt;,
+## # PC_9 &amp;lt;dbl&amp;gt;, PC_10 &amp;lt;dbl&amp;gt;, PC_11 &amp;lt;dbl&amp;gt;, PC_12 &amp;lt;dbl&amp;gt;, PC_13 &amp;lt;dbl&amp;gt;,
+## # PC_14 &amp;lt;dbl&amp;gt;, PC_15 &amp;lt;dbl&amp;gt;, PC_16 &amp;lt;dbl&amp;gt;, PC_17 &amp;lt;dbl&amp;gt;, PC_18 &amp;lt;dbl&amp;gt;,
+## # PC_19 &amp;lt;dbl&amp;gt;, tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;div id="tidyseurat" class="section level2">
+&lt;h2>tidyseurat&lt;/h2>
+&lt;p>Calculating a transcriptional signature.&lt;/p>
+&lt;p>&lt;strong>Base&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>library(Seurat)&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## Registered S3 method overwritten by &amp;#39;spatstat.geom&amp;#39;:
+## method from
+## print.boxx cli&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## Attaching SeuratObject&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>##
+## Attaching package: &amp;#39;Seurat&amp;#39;&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following object is masked from &amp;#39;package:SummarizedExperiment&amp;#39;:
+##
+## Assays&lt;/code>&lt;/pre>
+&lt;pre class="r">&lt;code># Load data
+pbmc_Seurat = tidySingleCellExperiment::pbmc_small %&amp;gt;% as.Seurat() %&amp;gt;% NormalizeData()
+signature_score_1 =
+pbmc_Seurat[c(&amp;quot;CD79A&amp;quot;, &amp;quot;CD79B&amp;quot;),] %&amp;gt;%
+Seurat::GetAssayData() %&amp;gt;%
+colSums() %&amp;gt;%
+scales::rescale(to = c(0,1))
+signature_score_2 =
+pbmc_Seurat[c(&amp;quot;CD3D&amp;quot;, &amp;quot;CCR7&amp;quot;),] %&amp;gt;%
+Seurat::GetAssayData() %&amp;gt;%
+colSums() %&amp;gt;%
+scales::rescale(to = c(0,1))
+signature_score_1 - signature_score_2&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## ATGCCAGAACGACT CATGGCCTGTGCAT GAACCTGATGAACC TGACTGGATTCTCA AGTCAGACTGCACA
+## -0.1282987 -1.0000000 -0.4892647 -0.4769175 -0.8142420
+## TCTGATACACGTGT TGGTATCTAAACAG GCAGCTCTGTTTCT GATATAACACGCAT AATGTTGACAGTCA
+## -0.5065754 -0.8943038 -0.8433443 -0.4750597 -0.4399134
+## AGGTCATGAGTGTC AGAGATGATCTCGC GGGTAACTCTAGTG CATGAGACACGGGA TACGCCACTCCGAA
+## 0.4399898 0.8313740 0.8367149 0.9404373 0.8785365
+## CTAAACCTGTGCAT GTAAGCACTCATTC TTGGTACTGAATCC CATCATACGGAGCA TACATCACGCTAAC
+## 0.8647225 0.7631773 0.8315032 0.9127912 0.6386232
+## TTACCATGAATCGC ATAGGAGAAACAGA GCGCACGACTTTAC ACTCGCACGAAAGT ATTACCTGCCTTAT
+## 0.0000000 0.0000000 0.2946328 0.0000000 -0.2487348
+## CCCAACTGCAATCG AAATTCGAATCACG CCATCCGATTCGCC TCCACTCTGAGCTT CATCAGGATGCACA
+## 0.0000000 0.0000000 0.2908813 0.0000000 0.2572103
+## CTAAACCTCTGACA GATAGAGAAGGGTG CTAACGGAACCGAT AGATATACCCGTAA TACTCTGAATCGAC
+## 0.2839127 -0.5116071 0.3556147 0.0000000 0.0000000
+## GCGCATCTTGCTCC GTTGACGATATCGG ACAGGTACTGGTGT GGCATATGCTTATC CATTACACCAACTG
+## 0.0000000 -0.3058682 0.0000000 -0.3499484 0.0000000
+## TAGGGACTGAACTC GCTCCATGAGAAGT TACAATGATGCTAG CTTCATGACCGAAT CTGCCAACAGGAGC
+## 0.0000000 -0.3969658 -0.4491779 0.0000000 -0.4252278
+## TTGCATTGAGCTAC AAGCAAGAGCTTAG CGGCACGAACTCAG GGTGGAGATTACTC GGCCGATGTACTCT
+## -0.5803536 -0.3499484 -0.4602168 -0.4537220 -0.4789804
+## CGTAGCCTGTATGC TGAGCTGAATGCTG CCTATAACGAGACG ATAAGTTGGTACGT AAGCGACTTTGACG
+## 0.2535563 0.0000000 0.3265729 0.3521070 0.2917172
+## ACCAGTGAATACCG ATTGCACTTGCTTT CTAGGTGATGGTTG GCACTAGACCTTTA CATGCGCTAGTCAC
+## 0.2962249 0.0000000 0.0000000 0.3533870 0.0000000
+## TTGAGGACTACGCA ATACCACTCTAAGC CATATAGACTAAGC TTTAGCTGTACTCT GACATTCTCCACCT
+## 0.0000000 0.0000000 0.0000000 0.7333251 0.1920881
+## ACGTGATGCCATGA ATTGTAGATTCCCG GATAGAGATCACGA AATGCGTGGACGGA GCGTAAACACGGTT
+## 0.0000000 0.0000000 0.0000000 0.2500814 -0.2120188
+## ATTCAGCTCATTGG GGCATATGGGGAGT ATCATCTGACACCA GTCATACTTCGCCT TTACGTACGTTCAG
+## 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
+## GAGTTGTGGTAGCT GACGCTCTCTCTCG AGTCTTACTTCGGA GGAACACTTCAGAC CTTGATTGATCTTC
+## 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>tidyseurat&lt;/strong>&lt;/p>
+&lt;p>It is the same as for &lt;code>tidySingleCellExperiment&lt;/code>&lt;/p>
+&lt;pre class="r">&lt;code>library(tidyseurat)&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## ========================================
+## tidyseurat version 0.2.3
+## If you use TIDYSEURAT in published research, please cite:
+##
+## Mangiola et al. Interfacing Seurat with the R tidy universe. Bioinformatics 2021.
+##
+## This message can be suppressed by:
+## suppressPackageStartupMessages(library(tidyseurat))
+##
+## To restore the Seurat default display use options(&amp;quot;restore_Seurat_show&amp;quot; = TRUE)
+## ========================================&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>##
+## Attaching package: &amp;#39;tidyseurat&amp;#39;&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following object is masked from &amp;#39;package:IRanges&amp;#39;:
+##
+## slice&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following object is masked from &amp;#39;package:S4Vectors&amp;#39;:
+##
+## rename&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following object is masked from &amp;#39;package:matrixStats&amp;#39;:
+##
+## count&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following objects are masked from &amp;#39;package:dplyr&amp;#39;:
+##
+## add_count, bind_cols, bind_rows, count&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## The following object is masked from &amp;#39;package:stats&amp;#39;:
+##
+## filter&lt;/code>&lt;/pre>
+&lt;pre class="r">&lt;code>pbmc_Seurat %&amp;gt;%
+join_features(c(&amp;quot;CD79A&amp;quot;, &amp;quot;CD79B&amp;quot;, &amp;quot;CD3D&amp;quot;, &amp;quot;CCR7&amp;quot;), shape = &amp;quot;wide&amp;quot;) %&amp;gt;%
+mutate(signature_score =
+scales::rescale(CD79A + CD79B, to = c(0,1)) -
+scales::rescale(CD3D + CCR7, to = c(0,1))
+) %&amp;gt;%
+select(signature_score, everything())&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A Seurat-tibble abstraction: 80 x 24
+## [90m# Features=230 | Active assay=originalexp | Assays=originalexp[39m
+## cell signature_score orig.ident nCount_original… nFeature_origin… nCount_RNA
+## &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 ATGC… -0.128 SeuratPro… 70 47 70
+## 2 CATG… -1 SeuratPro… 85 52 85
+## 3 GAAC… -0.489 SeuratPro… 87 50 87
+## 4 TGAC… -0.477 SeuratPro… 127 56 127
+## 5 AGTC… -0.814 SeuratPro… 173 53 173
+## 6 TCTG… -0.507 SeuratPro… 70 48 70
+## 7 TGGT… -0.894 SeuratPro… 64 36 64
+## 8 GCAG… -0.843 SeuratPro… 72 45 72
+## 9 GATA… -0.475 SeuratPro… 52 36 52
+## 10 AATG… -0.440 SeuratPro… 100 41 100
+## # … with 70 more rows, and 18 more variables: nFeature_RNA &amp;lt;int&amp;gt;,
+## # RNA_snn_res.0.8 &amp;lt;fct&amp;gt;, letter.idents &amp;lt;fct&amp;gt;, groups &amp;lt;chr&amp;gt;,
+## # RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;, ident &amp;lt;fct&amp;gt;, CD79A &amp;lt;dbl&amp;gt;, CD79B &amp;lt;dbl&amp;gt;,
+## # CD3D &amp;lt;dbl&amp;gt;, CCR7 &amp;lt;dbl&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;, PC_3 &amp;lt;dbl&amp;gt;, PC_4 &amp;lt;dbl&amp;gt;,
+## # PC_5 &amp;lt;dbl&amp;gt;, tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;p>Cell subsampling for mulisample balanced UMAP representation&lt;/p>
+&lt;p>&lt;strong>Base&lt;/strong>&lt;/p>
+&lt;pre class="r">&lt;code>splits =
+colnames(pbmc_Seurat) %&amp;gt;%
+split(pbmc_Seurat$file )
+min_size = splits %&amp;gt;%
+sapply(length) %&amp;gt;% min()
+cell_subset = splits %&amp;gt;%
+lapply(function(x) sample(x, min_size)) %&amp;gt;%
+unlist()
+pbmc_Seurat[, cell_subset]&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A Seurat-tibble abstraction: 72 x 19
+## [90m# Features=230 | Active assay=originalexp | Assays=originalexp[39m
+## cell orig.ident nCount_original… nFeature_origin… nCount_RNA nFeature_RNA
+## &amp;lt;chr&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1 GCAG… SeuratPro… 72 45 72 45
+## 2 GCGT… SeuratPro… 754 83 754 83
+## 3 CATG… SeuratPro… 85 52 85 52
+## 4 CATA… SeuratPro… 286 68 286 68
+## 5 CTGC… SeuratPro… 146 47 146 47
+## 6 CATC… SeuratPro… 353 80 353 80
+## 7 TACT… SeuratPro… 156 48 156 48
+## 8 ATAC… SeuratPro… 612 69 612 69
+## 9 GGCA… SeuratPro… 126 53 126 53
+## 10 GACA… SeuratPro… 872 96 872 96
+## # … with 62 more rows, and 13 more variables: RNA_snn_res.0.8 &amp;lt;fct&amp;gt;,
+## # letter.idents &amp;lt;fct&amp;gt;, groups &amp;lt;chr&amp;gt;, RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;,
+## # ident &amp;lt;fct&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;, PC_3 &amp;lt;dbl&amp;gt;, PC_4 &amp;lt;dbl&amp;gt;, PC_5 &amp;lt;dbl&amp;gt;,
+## # tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;p>&lt;strong>tidyseurat&lt;/strong>&lt;/p>
+&lt;p>It is the same as for &lt;code>tidySingleCellExperiment&lt;/code>&lt;/p>
+&lt;pre class="r">&lt;code>pbmc_Seurat %&amp;gt;%
+add_count(file , name = &amp;quot;tot_cells&amp;quot;) %&amp;gt;%
+mutate(min_cells = min(tot_cells)) %&amp;gt;%
+group_by(file ) %&amp;gt;%
+sample_n(min_cells)&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## tidyseurat says: A data frame is returned for independent data analysis.&lt;/code>&lt;/pre>
+&lt;pre>&lt;code>## # A tibble: 72 x 35
+## # Groups: file [2]
+## cell orig.ident nCount_original… nFeature_origin… nCount_RNA nFeature_RNA
+## &amp;lt;chr&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1 GCAGCT… SeuratProj… 72 45 72 45
+## 2 GCGTAA… SeuratProj… 754 83 754 83
+## 3 CATGGC… SeuratProj… 85 52 85 52
+## 4 CATATA… SeuratProj… 286 68 286 68
+## 5 CTGCCA… SeuratProj… 146 47 146 47
+## 6 CATCAG… SeuratProj… 353 80 353 80
+## 7 TACTCT… SeuratProj… 156 48 156 48
+## 8 ATACCA… SeuratProj… 612 69 612 69
+## 9 GGCATA… SeuratProj… 126 53 126 53
+## 10 GACATT… SeuratProj… 872 96 872 96
+## # … with 62 more rows, and 29 more variables: RNA_snn_res.0.8 &amp;lt;fct&amp;gt;,
+## # letter.idents &amp;lt;fct&amp;gt;, groups &amp;lt;chr&amp;gt;, RNA_snn_res.1 &amp;lt;fct&amp;gt;, file &amp;lt;chr&amp;gt;,
+## # ident &amp;lt;fct&amp;gt;, tot_cells &amp;lt;int&amp;gt;, min_cells &amp;lt;int&amp;gt;, PC_1 &amp;lt;dbl&amp;gt;, PC_2 &amp;lt;dbl&amp;gt;,
+## # PC_3 &amp;lt;dbl&amp;gt;, PC_4 &amp;lt;dbl&amp;gt;, PC_5 &amp;lt;dbl&amp;gt;, PC_6 &amp;lt;dbl&amp;gt;, PC_7 &amp;lt;dbl&amp;gt;, PC_8 &amp;lt;dbl&amp;gt;,
+## # PC_9 &amp;lt;dbl&amp;gt;, PC_10 &amp;lt;dbl&amp;gt;, PC_11 &amp;lt;dbl&amp;gt;, PC_12 &amp;lt;dbl&amp;gt;, PC_13 &amp;lt;dbl&amp;gt;,
+## # PC_14 &amp;lt;dbl&amp;gt;, PC_15 &amp;lt;dbl&amp;gt;, PC_16 &amp;lt;dbl&amp;gt;, PC_17 &amp;lt;dbl&amp;gt;, PC_18 &amp;lt;dbl&amp;gt;,
+## # PC_19 &amp;lt;dbl&amp;gt;, tSNE_1 &amp;lt;dbl&amp;gt;, tSNE_2 &amp;lt;dbl&amp;gt;&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;/div>
+&lt;div id="learning-material" class="section level1">
+&lt;h1>Learning material&lt;/h1>
+&lt;p>We delivered a series of workshops on tidy transcriptomics, which track the progress of the ecosystem.&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/bioc2021_tidyomics/tidyomicsBlog/index.html">Bioc 2021&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://tidyomics/tidyomicsBlog-workshops.github.io/ismb2021_tidyomics/tidyomicsBlog/index.html">ISMB/ECCB 2021&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/rladiestunis2021_tidyomics/tidyomicsBlog/index.html">R-Ladies Tunis 2021&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/bioceurope2020_tidyomics/tidyomicsBlog/index.html">Euro Bioc 2020&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/ABACBS2020_tidyomics/tidyomicsBlog/index.html">ABACBS 2020&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/biocasia2020_tidyomics/tidyomicsBlog/index.html">Bioc Asia 2020&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/rpharma2020_tidyomics/tidyomicsBlog/index.html">R/Pharma 2020&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://stemangiola.github.io/bioc_2020_tidyomics/tidyomicsBlog/index.html">Bioc 2020&lt;/a>&lt;/p>
+&lt;/div>
+&lt;div id="how-to-cite-tidy-transcriptomics" class="section level1">
+&lt;h1>How to cite tidy transcriptomics&lt;/h1>
+&lt;div id="tidybulk" class="section level3">
+&lt;h3>tidybulk&lt;/h3>
+&lt;p>Mangiola, S., Molania, R., Dong, R. et al. tidybulk: an R tidy framework for modular transcriptomic data analysis. Genome Biol 22, 42 (2021). &lt;a href="https://doi.org/10.1186/s13059-020-02233-7" class="uri">https://doi.org/10.1186/s13059-020-02233-7&lt;/a>&lt;/p>
+&lt;/div>
+&lt;div id="tidyseurat-1" class="section level3">
+&lt;h3>tidyseurat&lt;/h3>
+&lt;p>Stefano Mangiola, Maria A Doyle, Anthony T Papenfuss, Interfacing Seurat with the R tidy universe, Bioinformatics, 2021;, btab404, &lt;a href="https://doi.org/10.1093/bioinformatics/btab404" class="uri">https://doi.org/10.1093/bioinformatics/btab404&lt;/a>&lt;/p>
+&lt;/div>
+&lt;div id="tidysummarizedexperiment-and-tidysinglecellexeperiment" class="section level3">
+&lt;h3>tidySummarizedExperiment and tidySingleCellEXeperiment&lt;/h3>
+&lt;p>You can use &lt;code>tidyseurat&lt;/code> citation as introduces the concepts of data abstraction.&lt;/p>
+&lt;/div>
 &lt;/div></description></item></channel></rss>
