@@ -6,15 +6,8 @@ title: About
 weight: 50
 ---
 
-Hugo is a static site engine written in Go.
+This is the blog of the tidyomics ecosystem. In it, we hope to share exciting updates on the development and use of our ecosystem. 
 
+You can find out more at our [homepage](https://github.com/tidyomics).
 
-It makes use of a variety of open source projects including:
-
-* [Cobra](https://github.com/spf13/cobra)
-* [Viper](https://github.com/spf13/viper)
-* [J Walter Weatherman](https://github.com/spf13/jWalterWeatherman)
-* [Cast](https://github.com/spf13/cast)
-
-Learn more and contribute on [GitHub](https://github.com/gohugoio).
-
+This blog is part of [R-Bloggers](https://www.r-bloggers.com).

@@ -28,6 +28,8 @@ You can report mistakes or errors, add suggestions, additions, updates or improv
 
 # How can I add a post to the blog?
 
+This blog exists to showcase the tidyomics ecosystem. Possible posts include analysis which make use of the tidyomics ecosystem or the sharing of new features in our packages. 
+
 We are using Hugo and BlogDown to build our blog. These tools take care of most of the work for us, so that adding a new blog post is quick to do. If you would like more information about Hugo and BlogDown you can find the documentation here: https://bookdown.org/yihui/blogdown/hugo.html.
 
 In brief, the process to add a post is:
