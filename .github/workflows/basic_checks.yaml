@@ -3,7 +3,7 @@ name: Basic checks
 on: [push]
 
 env:
-  cache-version: v1
+  cache-version: v4
   repo-name: tidyomics/tidyomicsBlog
   GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,7 +57,7 @@ jobs:
         
       - name: Cache R packages
         if: runner.os != 'Windows'
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: /usr/local/lib/R/site-library
           key: ${{ env.cache-version }}-${{ runner.os }}-r-${{ hashFiles('.github/depends.Rds') }} 
