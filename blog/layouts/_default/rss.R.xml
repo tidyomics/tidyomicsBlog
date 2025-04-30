@@ -1,0 +1,27 @@
+{{- $pctx := . -}}
+{{- if .IsHome -}}{{ $pctx = .Site }}{{- end -}}
+{{- $pages := where $pctx.RegularPages "Params.categories" "intersect" (slice "R") -}}
+{{- $limit := site.Config.Services.RSS.Limit | default 10 -}}
+{{- if ge $limit 1 -}}{{ $pages = $pages | first $limit }}{{- end -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ if eq .Title .Site.Title }}{{ .Site.Title }} (R Posts){{ else }}{{ with .Title }}{{.}} (R Posts){{ end }}{{ end }}</title>
+    <link>{{ .Permalink }}</link>
+    <description>Full-content RSS feed for R posts on {{ .Site.Title }}</description>
+    {{ with .Site.LanguageCode }}<language>{{.}}</language>{{end}}
+    {{ with .Site.Copyright }}<copyright>{{.}}</copyright>{{end}}
+    {{ if not .Date.IsZero }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}
+    <atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />
+    {{ range $pages }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      <guid>{{ .Permalink }}</guid>
+      <description>{{ .Content | html }}</description>
+      {{ range .Params.categories }}<category>{{ . }}</category>{{ end }}
+    </item>
+    {{ end }}
+  </channel>
+</rss>
