@@ -10,6 +10,6 @@ The blog of tidyomics
 4. Follow `contributing.qmd` steps.
 4. Send a pull request.
 
-## How to build tidyomicsBlog
+## How to build tidyomicsBlog 
 
 1. Click "Build Website" button under the RStudio "Build" tab.
