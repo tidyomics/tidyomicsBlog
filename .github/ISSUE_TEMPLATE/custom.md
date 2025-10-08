@@ -12,7 +12,7 @@ Thanks for contributing a pull request!
 
 For more information on how to submit:
 
-https://bioconductor.github.io/biocblog/contributing.html
+https://bioconductor.github.io/tidyomicsBlog/contributing.html
 
 Note that we are a team of volunteers; we appreciate your
 patience during the review process. 

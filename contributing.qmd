@@ -2,20 +2,19 @@
 title: "Contributing"
 ---
 
-We very much appreciate contributions to the Bioconductor community blog from the broader community.
+We very much appreciate contributions to the TidyomicsBlog from the broader community.
 If you are interested in publishing some of your own work or insights, we'd love to hear from you!
 
 # Requirements
 
 There are a few minimum requirements for a blog post to be considered for acceptance (adapted from [SciPy](https://blog.scientific-python.org/about/submit/)). 
 
-* The main subject must relate to Bioconductor.
+* The main subject must relate to Tidyomics ecosystem.
 * Content is published under Creative Common CC-BY-4.0 License for the text and BSD 3-Clause License for any code.
 * You have the right to publish any images included. 
 * Images must be compressed using a tool like `pngquant`.
 * Images must contain alt text for accessibility.
-* The post and authors abide by the Bioconductor [Code of Conduct](https://www.bioconductor.org/about/code-of-conduct).
-* The post must be written in English or a language we have a reviewer for. If not English, please open a [GitHub issue](https://github.com/Bioconductor/biocblog/issues) to check we can review.
+* The post must be written in English or a language we have a reviewer for.
 
 # How to contribute
 
@@ -23,11 +22,11 @@ Articles posted on the Bioconductor community blog are authored using
 [Quarto](https://quarto.org).
 The way to contribute a new article is as follows:
 
-1.  Create a fork of the [biocblog repository](https://github.com/Bioconductor/biocblog) on GitHub. ![](./GitHubForkButton.png) And Git clone it to your local environment!
+1.  Create a fork of the [tidyomicsBlog repository](https://github.com/tidyomics/tidyomicsBlog) on GitHub. ![](./GitHubForkButton.png) And Git clone it to your local environment!
 
-2. [Install RStudio](https://rstudio.com/products/rstudio/download/) and double click the `biocblog.Rproj` file in the cloned repo. The latest release of RStudio (v2022.07 at this point) includes support for editing and preview of [Quarto](https://quarto.org) documents.
+2. [Install RStudio](https://rstudio.com/products/rstudio/download/) and double click the `tidyomicsBlog.Rproj` file in the cloned repo. The latest release of RStudio (v2025.05 at this point) includes support for editing and preview of [Quarto](https://quarto.org) documents.
 
-3. [Create a new `qmd` file](https://quarto.org/docs/websites/website-blog.html#posts-directory) in your RStudio, and check the content with clicking `Preview Website` button under the `Build` tab! ![](./PreviewWebsiteButton.png)
+3. [Create a new `qmd` file](https://quarto.org/docs/websites/website-blog.html#posts-directory) in your RStudio, and check the content with clicking `Render Website` button under the `Build` tab! ![](./PreviewWebsiteButton.png)
 
 4. If including images:
 

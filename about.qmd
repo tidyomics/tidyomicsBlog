@@ -1,31 +1,15 @@
 ---
 title: "About"
-image: cab.png
+image: tidyomics_logo.png
 about:
   template: jolla
   links:
-    - icon: mastodon
-      text: Mastodon
-      href: https://genomic.social/@bioconductor
-    - icon: linkedin
-      text: LinkedIn
-      href: https://www.linkedin.com/company/bioconductor/
-    - icon: bluesky
-      text: Bluesky
-      href: https://bsky.app/profile/bioconductor.bsky.social   
-    - icon: youtube
-      text: YouTube
-      href: https://www.youtube.com/user/bioconductor
-    - icon: chat-dots
-      text: Chat
-      href: https://chat.bioconductor.org/
     - icon: github
       text: Github
-      href: https://github.com/bioconductor/biocblog
-
+      href: https://github.com/tidyomics
 ---
 
-Welcome to the Bioconductor community blog!
+Welcome to the Tidyomics community blog!
 Here you'll find the small contributions, highlight a package functionality, etc.
 There is a chance for people to give a shoutout to something great that happened
 recently in the community.
@@ -34,8 +18,8 @@ We also like to draw from a wide variety of contributors
 (so please consider submitting a post if so motivated!).
 
 If you are interested in publishing some of your own work or insights on
-the Bioconductor community blog, we'd love to hear from you!
+the Tidyomics community blog, we'd love to hear from you!
 See the article on [contributing posts](contributing.html) for additional details.
 
-The Bioconductor community blog was created using
+The Tidyomics community blog was created using
 [Quarto](https://quarto.org/).

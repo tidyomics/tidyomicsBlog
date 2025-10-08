@@ -1,5 +1,5 @@
 ---
-title: "Bioconductor community blog"
+title: "The Tidyomics Blog"
 listing:
   contents: posts
   sort: "date desc"

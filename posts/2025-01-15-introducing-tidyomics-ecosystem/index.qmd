@@ -1,0 +1,245 @@
+---
+title: "The Tidyomics Ecosystem"
+author: "Stefano Mangiola"
+date: "2025-07-07"
+package: tidyomics
+tags:
+  - tidyomics/tidyomicsBlog
+  - ecosystem
+  - transcriptomics
+  - tidyverse
+  - bioconductor
+description: "A comprehensive introduction to the tidyomics ecosystem, including core packages, publications, GitHub projects, and community resources for tidy transcriptomics analysis."
+format:
+  html:
+    toc: true
+    toc-float: true
+execute:
+  freeze: true
+---
+
+
+
+![The Tidyomics Book Cover - A comprehensive guide to the tidyomics ecosystem for omics data analysis](tidyomics_book_cover.png){.cover-image width=100%}
+
+# Introduction
+
+The tidyomics ecosystem was born from a common challenge faced by life-scientists: every omics technology and framework in R seemed to require learning a new data structure and syntax.  Switching from bulk RNA-seq to single-cell, or from expression data to genomic ranges, often felt climbing a different mountain. Tidyomics keeps the **underlying objects exactly the same** while giving them a single, tidyverse-flavoured grammar so that moving from bulk RNA-seq to single-cell or spatial data is no harder than shifting between two dplyr pipelines.  Its design principles take inspiration from the tidyverse philosophy of clear, human-readable code as articulated by Wickham *et al.* (2019) ([JOSS 10.21105/joss.01686](https://joss.theoj.org/papers/10.21105/joss.01686)).
+
+That question snowballed into an international collaboration—and ultimately into `tidyomics`.
+
+# What is Tidyomics?
+
+![Tidyomics Logo - The official logo of the tidyomics ecosystem](logo.png){width="120px"}
+
+`tidyomics` is an open project to develop and integrate software and documentation to enable a tidy data analysis framework for omics data objects ([Hutchison *et al.* 2024](https://doi.org/10.1038/s41592-024-02299-2)). The development of packages and tutorials is organized around [tidyomics open challenges](https://github.com/tidyomics/). Tidyomics enables the use of familiar tidyverse verbs (`select`, `filter`, `mutate`, etc.) to manipulate rich data objects in the Bioconductor ecosystem. Importantly, the data objects are not modified, but tidyomics provides a tidy *interface* to work on the native objects, leveraging existing Bioconductor classes and algorithms.
+
+`tidyomics` is a set of R packages by an international group of developers. The ecosystem allows for code such as:
+
+```r
+single_cell_data |>
+  filter(Phase == "G1") |>
+  ggplot(aes(UMAP_1, UMAP_2, color=score)) + 
+  geom_point()
+```
+
+(filter single cells in G1 phase and plot UMAP coordinates)
+
+or
+
+```r
+chip_seq_peaks |>
+  filter(FDR < 0.01) |>
+  join_overlap_inner(promoters) |>
+  group_by(promoter_type) |>
+  summarize(ave_score = mean(score))
+```
+
+(compute average score by the type of promoter overlap for significant peaks)
+
+## Core Principles
+
+The tidyomics ecosystem is built on several fundamental principles:
+
+- **Tidy interface to native objects**: Provides tidy verbs while preserving Bioconductor object structure
+- **Verbose, jargon-free vocabulary**: Function and variable names are designed to be self-explanatory
+- **Minimal temporary variables**: Reduce the need for intermediate variables through chaining operations
+- **Consistent interfaces**: Provide uniform interfaces across different data containers
+- **Compatibility**: Work seamlessly with existing Bioconductor and tidyverse workflows
+
+## Omics Integration Under a Unique Consistent Interface
+
+The tidyomics ecosystem provides a unified approach to omics data analysis, enabling seamless integration across different omics domains through a consistent tidy interface.
+
+![Tidyomics Network Integration - A diagram showing how the tidyomics ecosystem integrates different omics domains through a consistent tidy interface](tidyomics_net.png){.center-image width=80%}
+
+This integration allows researchers to work with transcriptomics, genomics, and other omics data using the same familiar tidyverse verbs, regardless of the underlying data structure.
+
+# Core Packages
+
+Before diving into the individual packages you can simply load the **meta-package** and immediately gain access to all tidyomics functionality:
+
+```{r}
+#| eval: false
+# install.packages("tidyomics")   # CRAN or r-universe when available
+library(tidyomics)  # loads tidySummarizedExperiment, tidySingleCellExperiment, plyranges, etc.
+```
+
+With a single call you have a tidy interface ready for bulk, single-cell and genomic range data.
+
+## Transcriptomics Packages
+
+Each tidyomics package tackles a real-world analytical challenge.  Bulk RNA-seq analyses, for example, are traditionally scattered across disjoint data frames, objects and helper lists.  `tidySummarizedExperiment` re-imagines a `SummarizedExperiment` as a tibble-first citizen: you can `filter()`, `mutate()` and `group_by()` genes or samples exactly as you do with any tidyverse data frame.  For single-cell data the same philosophy inspired `tidySingleCellExperiment`, while for users of the Seurat workflow we created `tidyseurat`, a drop-in tidy wrapper that never compromises the original Seurat object.
+
+### tidySummarizedExperiment
+The tidy interface for `SummarizedExperiment` objects, enabling tidyverse operations on bulk RNA-seq data.
+
+**GitHub**: <https://github.com/tidyomics/tidySummarizedExperiment>
+
+### tidySingleCellExperiment
+Single-cell experiments often contain millions of cells and dozens of matrices.  `tidySingleCellExperiment` flattens this complexity so you can focus on the biology instead of the bookkeeping.
+
+**GitHub**: <https://github.com/tidyomics/tidySingleCellExperiment>
+
+### tidyseurat
+For Seurat users, `tidyseurat` adds the missing tidyverse layer without forcing you to abandon familiar Seurat functions.
+
+**GitHub**: <https://github.com/stemangiola/tidyseurat>
+
+### tidySpatialExperiment
+Spatial transcriptomics combines gene expression with tissue geography. `tidySpatialExperiment` brings the tidy philosophy to `SpatialExperiment` objects so you can transform, visualise and model spatial spots with the same verbs you already use for bulk and single-cell data.
+
+**GitHub**: <https://github.com/william-hutchison/tidySpatialExperiment>
+
+## Genomics Packages
+
+Genomic ranges represent locations along chromosomes—think of them as the geographical coordinates of the genome.  With traditional Bioconductor tools, even simple tasks such as “take promoters and find overlaps with ATAC-seq peaks” require specialised syntax.  The tidy answer is **`plyranges`**, a grammar that lets you manipulate `GRanges` with the fluency of dplyr verbs.  And because biology is three-dimensional, the sister package **`plyinteractions`** brings the same elegance to chromatin-interaction data.
+
+### plyranges
+A tidy interface for genomic ranges data, providing a grammar of genomic data manipulation.
+
+**GitHub**: [https://github.com/tidyomics/plyranges](https://github.com/tidyomics/plyranges)
+
+## Analysis Packages (tidyomics ecosystem)
+
+The core adapters above focus on **data representation**; the packages below provide high-level analysis grammars that build on those tidy foundations.
+
+### tidybulk
+
+**GitHub**: <https://github.com/stemangiola/tidybulk>
+
+### plyinteractions
+A tidy interface for genomic interaction data, enabling analysis of chromatin interactions.
+
+**GitHub**: [https://github.com/tidyomics/plyinteractions](https://github.com/tidyomics/plyinteractions)
+
+
+# Publications
+
+*Hutchison W.J.*, *Keyes T.J.*, *et al.* (2024). **“The tidyomics ecosystem: enhancing omic data analyses.”** *Nature Methods* 21, 1166–1170. DOI [10.1038/s41592-024-02299-2](https://doi.org/10.1038/s41592-024-02299-2)
+
+This community paper introduces tidyomics and demonstrates its scalability on 7.5 million PBMCs from the Human Cell Atlas.
+
+## Transcriptomics
+
+1. *Mangiola S.*, Molania R., Dong R., Doyle M.A. & Papenfuss A.T. (2021). **“tidybulk: a tidy framework for modular transcriptomic data analysis.”** *Genome Biology* 22, 42. DOI [10.1186/s13059-020-02254-4](https://doi.org/10.1186/s13059-020-02254-4)
+2. *Mangiola S.*, Doyle M.A. & Papenfuss A.T. (2021). **“Interfacing Seurat with the R tidy universe.”** *Bioinformatics* 37(22), 4100–4103. DOI [10.1093/bioinformatics/btab404](https://doi.org/10.1093/bioinformatics/btab404)
+
+## Genomics
+
+3. *Lee S.*, Cook D. & Lawrence M. (2019). **“plyranges: a grammar of genomic data transformation.”** *Genome Biology* 20, 4. DOI [10.1186/s13059-018-1597-8](https://doi.org/10.1186/s13059-018-1597-8)
+
+# Community
+
+Tidyomics is more than code — it is a **lively community of developers, users and code-curators** who collaborate across academic labs, core facilities and industry groups on five continents.  Developers extend the toolbox, users pressure-test new ideas on real datasets, and curators keep documentation and tutorials clear and current.  No matter whether you write R every day or are about to analyse your first sequencing experiment, you’ll find mentors ready to help — and eager to learn from your perspective.
+
+## Getting Involved
+
+### Contributing
+The tidyomics ecosystem welcomes contributions from the community. You can contribute by:
+
+1. **Reporting Issues**: Use the GitHub issue trackers for each package -> 1. **Reporting Issues** – open or search issues in the relevant repository: <https://github.com/tidyomics>
+2. **Submitting Pull Requests**: Contribute code improvements or new features -> 2. **Submitting Pull Requests** – <https://github.com/orgs/tidyomics/projects/1>
+3. **Improving Documentation**: Help make the ecosystem more accessible -> 3. **Improving Documentation**
+4. **Creating Tutorials**: Share your knowledge with the community!
+
+### Communication Channels
+
+- **GitHub Discussions** – start or join a thread in any tidyomics repository: <https://github.com/orgs/tidyomics/projects/1>
+- **Bioconductor Support Forum** – tag your post with *tidyomics*: <https://support.bioconductor.org>
+- **Zulip Chat** – drop by the `#tidiness_in_bioc` stream for real-time discussion: <https://bioconductor.zulipchat.com/#narrow/stream/184946-tidiness_in_bioc>
+
+
+### Transcriptomics Example
+```{r}
+#| eval: false
+library(tidyverse)
+library(tidybulk)
+library(tidySummarizedExperiment)
+
+# Example workflow (requires airway data)
+# data(airway, package = "airway")
+# airway %>%
+#   keep_abundant(factor_of_interest = dex) %>%
+#   scale_abundance() %>%
+#   test_differential_abundance(~ dex) %>%
+#   filter(abundant) %>%
+#   arrange(desc(abs(logFC)))
+```
+
+### Genomics Example
+```{r}
+#| eval: false
+library(plyranges)
+library(tidyverse)
+
+# Example workflow (requires genomic data)
+# granges %>%
+#   filter(score > 10) %>%
+#   join_overlap_inner(promoters) %>%
+#   group_by(gene_id) %>%
+#   summarize(mean_score = mean(score))
+```
+
+### Single-Cell Example
+```{r}
+#| eval: false
+library(tidySingleCellExperiment)
+library(tidyverse)
+
+# Example workflow (requires single-cell data)
+# sce %>%
+#   filter(Phase == "G1") %>%
+#   ggplot(aes(UMAP_1, UMAP_2, color=score)) + 
+#   geom_point()
+```
+
+# Future Directions
+
+## Planned Developments
+
+1. **Enhanced Single-Cell Support**: Expanded analysis capabilities for single-cell data
+2. **Multi-Omics Integration**: Support for multi-omics data analysis
+3. **Cloud Computing**: Integration with cloud-based analysis platforms
+4. **Educational Expansion**: More comprehensive educational materials
+
+## Community Goals
+
+1. **Increased Adoption**: Broader adoption in the bioinformatics community
+2. **Educational Integration**: Integration into more university curricula
+3. **Industry Applications**: Adoption in pharmaceutical and biotech industries
+4. **International Collaboration**: Expansion of the global community
+
+# To conclude..
+
+The tidyomics ecosystem represents a significant advancement in omics data analysis, providing a consistent, intuitive, and powerful framework for biological data analysis across multiple domains including transcriptomics and genomics. By bringing the principles of tidy data to omics, the ecosystem makes complex biological analyses more accessible, reproducible, and enjoyable.
+
+Whether you're a seasoned bioinformatician working with transcriptomics or genomics data, or just starting your journey in omics analysis, the tidyomics ecosystem provides the tools and resources you need to analyze your data effectively and efficiently.
+
+The ecosystem continues to grow with new packages and capabilities being developed through the [tidyomics open challenges](https://github.com/tidyomics/), ensuring that the community drives the development of tools that meet real-world needs.
+
+Join the community, contribute to the ecosystem, and help shape the future of tidy omics!
+
+---
+
+*For more information, visit the [tidyomics GitHub organization](https://github.com/tidyomics) or follow us on [Zulip](https://community-bioc.zulipchat.com/#narrow/channel/507542-tidiness_in_bioc).* 

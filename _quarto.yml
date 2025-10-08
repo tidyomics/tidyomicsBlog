@@ -7,26 +7,16 @@ execute:
   freeze: true
 
 website:
-  title: "Bioconductor community blog"
+  title: "tidyomicsBlog"
   site-url: https://blog.bioconductor.org/
-  description: "A blog for the Bioconductor community!"
+  description: "The Tidyomics Blog"
   open-graph: true
   navbar:
     right:
       - about.qmd
       - contributing.qmd
       - icon: github
-        href: https://github.com/bioconductor/biocblog
-      - icon: linkedin
-        href: https://www.linkedin.com/company/bioconductor/
-      - icon: bluesky
-        href: https://bsky.app/profile/bioconductor.bsky.social        
-      - icon: mastodon
-        href: https://genomic.social/@bioconductor
-      - icon: youtube
-        href: https://www.youtube.com/user/bioconductor
-      - icon: chat-dots
-        href: https://chat.bioconductor.org/
+        href: https://github.com/tidyomics/tidyomicsBlog
       - icon: rss
         href: index.xml
   body-footer: |
