@@ -1,5 +1,5 @@
 # tidyomicsBlog
-The blog of tidyomics
+The blog of `tidyomics`
 
 ## How to contribute tidyomicsBlog
 
