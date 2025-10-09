@@ -92,8 +92,7 @@ airway
 
 ::: {.smaller}
 ```r    
-# A SummarizedExperiment-tibble abstraction: Features=63677 | Samples=8 | 
-#   Assays=counts
+# A SummarizedExperiment-tibble abstraction: Features=63677 | Samples=8 | Assays=counts
 #                                  |----------------- COVARIATES ---------------|
         .feature  .sample | counts | SampleName cell  dex   albut Run   avgLength
         <chr>     <chr>   | <chr>  | <fct>      <fct> <fct> <fct> <fct> <chr>    
