@@ -8,7 +8,7 @@ execute:
 
 website:
   title: "tidyomicsBlog"
-  site-url: https://blog.bioconductor.org/
+  site-url: https://tidyomics.github.io/tidyomicsBlog/
   description: "The Tidyomics Blog"
   open-graph: true
   navbar:
