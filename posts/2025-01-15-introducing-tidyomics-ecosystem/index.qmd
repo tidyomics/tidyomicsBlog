@@ -9,7 +9,7 @@ tags:
   - transcriptomics
   - tidyverse
   - bioconductor
-description: "An introduction to the tidyomics ecosystem, including principles, core packages, publications, and community resources for tidy transcriptomics analysis."
+description: "An introduction to the tidyomics ecosystem, including principles, core packages, publications, and community resources for tidy omic analysis."
 format:
   html:
     toc: true
