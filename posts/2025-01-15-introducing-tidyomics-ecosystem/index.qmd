@@ -26,7 +26,7 @@ execute:
 
 The tidyomics ecosystem was born from a common challenge faced by life-scientists: every omics technology and framework in R seemed to require learning a new data structure and syntax.  Switching from bulk RNA-seq to single-cell, or from expression data to genomic ranges, often felt climbing a different mountain. Tidyomics keeps the **underlying objects exactly the same** while giving them a single, tidyverse-flavoured grammar so that moving from bulk RNA-seq to single-cell or spatial data is no harder than shifting between two dplyr pipelines.  Its design principles take inspiration from the tidyverse philosophy of clear, human-readable code as articulated by Wickham *et al.* (2019) ([JOSS 10.21105/joss.01686](https://joss.theoj.org/papers/10.21105/joss.01686)).
 
-That question snowballed into an international collaboration—and ultimately into `tidyomics`.
+This initiative snowballed into an international collaboration—and ultimately into `tidyomics` ([Nat. Methods 2024](https://www.nature.com/articles/s41592-024-02299-2)). Thanks to support from the [Chan Zuckerberg Initiative's Essential Open Source Software for Science (EOSS) Cycle 6 program](https://chanzuckerberg.com/eoss/proposals/?cycle=6), we are actively improving tidyomics through performance optimization, enhanced documentation, and ecosystem expansion to better serve the biomedical research community.
 
 # What is Tidyomics?
 
@@ -194,12 +194,12 @@ A tidy interface for genomic interaction data, enabling analysis of chromatin in
 
 The core adapters above focus on **data representation**; the packages below provide high-level analysis grammars that build on those tidy foundations.
 
-## tidybulk
+### tidybulk
 A tidy framework for modular transcriptomic data analysis, `tidybulk` streamlines bulk RNA-seq workflows by integrating differential expression, batch correction, and gene set enrichment into a consistent, pipe-friendly grammar. It enables users to perform complex analyses with simple, readable code, leveraging tidyverse principles for reproducibility and clarity.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidybulk.html)** | **[GitHub](https://github.com/stemangiola/tidybulk)**
 
-## nullranges
+### nullranges
 A tidy interface for statistical null range generation and overlap analysis in genomics. `nullranges` enables users to create matched sets of genomic ranges for robust enrichment testing, supporting reproducible and flexible workflows for tasks such as permutation-based significance assessment and background modeling.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/nullranges.html)** | **[GitHub](https://github.com/nullranges)**
@@ -307,7 +307,7 @@ The tidyomics ecosystem represents a significant advancement in omics data analy
 
 Whether you're a seasoned bioinformatician working with transcriptomics or genomics data, or just starting your journey in omics analysis, the tidyomics ecosystem provides the tools and resources you need to analyze your data effectively and efficiently.
 
-The ecosystem continues to grow with new packages and capabilities being developed through the [tidyomics open challenges](https://github.com/tidyomics/), ensuring that the community drives the development of tools that meet real-world needs.
+The ecosystem continues to grow with new packages and capabilities being developed through the [tidyomics open challenges](https://github.com/orgs/tidyomics/projects/1), ensuring that the community drives the development of tools that meet real-world needs.
 
 Join the community, contribute to the ecosystem, and help shape the future of tidy omics!
 
