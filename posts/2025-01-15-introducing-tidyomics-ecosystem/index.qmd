@@ -190,16 +190,16 @@ A tidy interface for genomic interaction data, enabling analysis of chromatin in
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/plyinteractions.html)** | **[GitHub](https://github.com/tidyomics/plyinteractions)**
 
-## Analysis Packages (non-core packages)
+# Analysis Packages (non-core packages)
 
 The core adapters above focus on **data representation**; the packages below provide high-level analysis grammars that build on those tidy foundations.
 
-### tidybulk
+## tidybulk
 A tidy framework for modular transcriptomic data analysis, `tidybulk` streamlines bulk RNA-seq workflows by integrating differential expression, batch correction, and gene set enrichment into a consistent, pipe-friendly grammar. It enables users to perform complex analyses with simple, readable code, leveraging tidyverse principles for reproducibility and clarity.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidybulk.html)** | **[GitHub](https://github.com/stemangiola/tidybulk)**
 
-### nullranges
+## nullranges
 A tidy interface for statistical null range generation and overlap analysis in genomics. `nullranges` enables users to create matched sets of genomic ranges for robust enrichment testing, supporting reproducible and flexible workflows for tasks such as permutation-based significance assessment and background modeling.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/nullranges.html)** | **[GitHub](https://github.com/nullranges)**
