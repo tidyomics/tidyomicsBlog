@@ -1,7 +1,7 @@
 ---
 title: "The Tidyomics Ecosystem"
 author: "Stefano Mangiola, tidyomics community"
-date: "2025-10-20"
+date: "2025-10-10"
 package: tidyomics
 tags:
   - tidyomics/tidyomicsBlog
