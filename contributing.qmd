@@ -9,7 +9,7 @@ If you are interested in publishing some of your own work or insights, we'd love
 
 There are a few minimum requirements for a blog post to be considered for acceptance (adapted from [SciPy](https://blog.scientific-python.org/about/submit/)). 
 
-* The main subject must relate to Tidyomics ecosystem.
+* The main subject must relate to Tidyomics ecosystem, but can extend to tidy approached to biological analyses.
 * Content is published under Creative Common CC-BY-4.0 License for the text and BSD 3-Clause License for any code.
 * You have the right to publish any images included. 
 * Images must be compressed using a tool like `pngquant`.
