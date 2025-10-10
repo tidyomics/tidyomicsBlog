@@ -18,7 +18,7 @@ There are a few minimum requirements for a blog post to be considered for accept
 
 # How to contribute
 
-Articles posted on the Bioconductor community blog are authored using
+Articles posted on the tidyomics community blog are authored using
 [Quarto](https://quarto.org).
 The way to contribute a new article is as follows:
 

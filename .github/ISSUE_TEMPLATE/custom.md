@@ -20,9 +20,9 @@ patience during the review process.
 Again, thanks for contributing!
 -->
 
-- [ ] The main subject relates to at least one project affiliated to the Bioconductor Ecosystem.
+- [ ] The main subject relates to at least one project affiliated to the tidyomics Ecosystem.
 - [ ] I have the right to publish the content under BSD 3-Clause License for the code and Creative Common CC-BY-4.0 License for the text.
-- [ ] The post and I abide by the Bioconductor [Code of Conduct](https://www.bioconductor.org/about/code-of-conduct).
+- [ ] The post and I abide by the tidyomics [Code of Conduct](https://github.com/tidyomics/.github/blob/main/profile/CODE_OF_CONDUCT.md).
 If images are included:
 - [ ] I have the right to publish the images.
 - [ ] I have compressed the images using a tool like `pngquant`. 
