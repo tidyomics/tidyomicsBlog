@@ -212,7 +212,7 @@ This community paper introduces tidyomics and demonstrates its scalability on 7.
 
 ## Transcriptomics
 
-- *Mangiola S.*, Molania R., Dong R., Doyle M.A. & Papenfuss A.T. (2021). **“tidybulk: a tidy framework for modular transcriptomic data analysis.”** *Genome Biology* 22, 42. DOI [10.1186/s13059-020-02254-4](https://doi.org/10.1186/s13059-020-02254-4)
+- *Mangiola S.*, Molania R., Dong R., Doyle M.A. & Papenfuss A.T. (2021). **“tidybulk: a tidy framework for modular transcriptomic data analysis.”** *Genome Biology* 22, 42. DOI [10.1186/s13059-020-02233-7](https://doi.org/10.1186/s13059-020-02233-7)
 - *Mangiola S.*, Doyle M.A. & Papenfuss A.T. (2021). **“Interfacing Seurat with the R tidy universe.”** *Bioinformatics* 37(22), 4100–4103. DOI [10.1093/bioinformatics/btab404](https://doi.org/10.1093/bioinformatics/btab404)
 
 ## Genomics
