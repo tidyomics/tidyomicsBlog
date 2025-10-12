@@ -13,3 +13,7 @@ The blog of `tidyomics`
 ## How to build tidyomicsBlog 
 
 1. Click "Build Website" button under the RStudio "Build" tab.
+
+## (for emergencies) How to update a post after publication.
+
+Mistakes can happen. Although we strongly recommend checking your post before merging, as a policy, we allow 2 days to correct errors in the published website. In order to do that, you have to delete your post within the `_freeze` directory; otherwise, the HTML render will not be overwritten.
