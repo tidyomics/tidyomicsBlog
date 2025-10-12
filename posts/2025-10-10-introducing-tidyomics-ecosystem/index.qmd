@@ -32,7 +32,7 @@ This initiative snowballed into an international collaboration—and ultimately 
 
 ![Tidyomics Logo - The official logo of the tidyomics ecosystem](logo.png){width="120px"}
 
-`tidyomics` is an open project to develop and integrate software and documentation to enable a tidy data analysis framework for omics data objects ([Hutchison *et al.* 2024](https://doi.org/10.1038/s41592-024-02299-2)). The development of packages and tutorials is organized around [tidyomics open challenges](https://github.com/tidyomics/). Tidyomics enables the use of familiar tidyverse verbs (`select`, `filter`, `mutate`, etc.) to manipulate rich data objects in the Bioconductor ecosystem. Importantly, while the data objects are not modified, `tidyomics` provides a tidy *interface* to work on the native objects, leveraging existing Bioconductor classes and algorithms.
+`tidyomics` is an open project to develop and integrate software and documentation to enable a tidy data analysis framework for omics data objects ([Hutchison *et al.* 2024](https://doi.org/10.1038/s41592-024-02299-2)). The development of packages and tutorials is organized around [tidyomics open challenges](https://github.com/orgs/tidyomics/projects/1). Tidyomics enables the use of familiar tidyverse verbs (`select`, `filter`, `mutate`, etc.) to manipulate rich data objects in the Bioconductor ecosystem. Importantly, while the data objects are not modified, `tidyomics` provides a tidy *interface* to work on the native objects, leveraging existing Bioconductor classes and algorithms.
 
 `tidyomics` is a set of R packages by an international group of developers. The ecosystem allows for code such as:
 
