@@ -24,7 +24,7 @@ execute:
 
 # Introduction
 
-The tidyomics ecosystem was born from a common challenge faced by life-scientists: every omics technology and framework in R seemed to require learning a new data structure and syntax.  Switching from bulk RNA-seq to single-cell, or from expression data to genomic ranges, often felt climbing a different mountain. Tidyomics keeps the **underlying objects exactly the same** while giving them a single, tidyverse-flavoured grammar so that moving from bulk RNA-seq to single-cell or spatial data is no harder than shifting between two dplyr pipelines.  Its design principles take inspiration from the tidyverse philosophy of clear, human-readable code as articulated by Wickham *et al.* (2019) ([JOSS 10.21105/joss.01686](https://joss.theoj.org/papers/10.21105/joss.01686)).
+The tidyomics ecosystem was born from a common challenge faced by life-scientists: omics technologies and frameworks in R often require specialised data structures and syntax.  Switching from bulk RNA-seq to single-cell, or from expression data to genomic ranges, often felt climbing a different mountain. Tidyomics keeps the **underlying objects exactly the same** while giving them a single, tidyverse-flavoured grammar and data display making moving from bulk RNA-seq to single-cell or spatial data seamless.  Its design principles take inspiration from the tidyverse philosophy of clear, human-readable code as articulated by Wickham *et al.* (2019) ([JOSS 10.21105/joss.01686](https://joss.theoj.org/papers/10.21105/joss.01686)).
 
 This initiative snowballed into an international collaboration—and ultimately into `tidyomics` ([Nat. Methods 2024](https://www.nature.com/articles/s41592-024-02299-2)). Thanks to support from the [Chan Zuckerberg Initiative's Essential Open Source Software for Science (EOSS) Cycle 6 program](https://chanzuckerberg.com/eoss/proposals/?cycle=6), we are actively improving tidyomics through performance optimization, enhanced documentation, and ecosystem expansion to better serve the biomedical research community.
 
@@ -32,7 +32,7 @@ This initiative snowballed into an international collaboration—and ultimately 
 
 ![Tidyomics Logo - The official logo of the tidyomics ecosystem](logo.png){width="120px"}
 
-`tidyomics` is an open project to develop and integrate software and documentation to enable a tidy data analysis framework for omics data objects ([Hutchison *et al.* 2024](https://doi.org/10.1038/s41592-024-02299-2)). The development of packages and tutorials is organized around [tidyomics open challenges](https://github.com/tidyomics/). Tidyomics enables the use of familiar tidyverse verbs (`select`, `filter`, `mutate`, etc.) to manipulate rich data objects in the Bioconductor ecosystem. Importantly, the data objects are not modified, but tidyomics provides a tidy *interface* to work on the native objects, leveraging existing Bioconductor classes and algorithms.
+`tidyomics` is an open project to develop and integrate software and documentation to enable a tidy data analysis framework for omics data objects ([Hutchison *et al.* 2024](https://doi.org/10.1038/s41592-024-02299-2)). The development of packages and tutorials is organized around [tidyomics open challenges](https://github.com/tidyomics/). Tidyomics enables the use of familiar tidyverse verbs (`select`, `filter`, `mutate`, etc.) to manipulate rich data objects in the Bioconductor ecosystem. Importantly, while the data objects are not modified, `tidyomics` provides a tidy *interface* to work on the native objects, leveraging existing Bioconductor classes and algorithms.
 
 `tidyomics` is a set of R packages by an international group of developers. The ecosystem allows for code such as:
 
@@ -83,7 +83,7 @@ colData names(9): SampleName cell ... Sample BioSample
 ```
 :::
 
-Loading `tidyprint` (available in the 3.22 Bioconductor release), the `SummarizedExperimenrt` is abstracted to a richer flat representation, without altering its internal properties or structure.
+Loading `tidyprint` (available from the 3.22 Bioconductor release), the `SummarizedExperimenrt` is abstracted to a richer flat representation, without altering its internal properties or structure.
 
 ```r
 library(tidyprint)
@@ -148,13 +148,13 @@ With a single call you have a tidy interface ready for spatial, single-cell, bul
 ## Utility packages
 
 ### tidyprint
-`tidyprint` offers a consistent, user-friendly print method for Bioconductor objects such as `SummarizedExperiment`, `SingleCellExperiment`, and others. It flattens complex S4 objects into tidy tibbles for straightforward inspection, summarization, and reporting—without modifying the underlying data. This approach makes it easy to explore and understand your data at a glance using familiar tidyverse conventions.
+`tidyprint` (available from the 3.22 Bioconductor release) offers a consistent, user-friendly print method for Bioconductor objects such as `SummarizedExperiment`. It flattens the display of complex S4 objects into tidy tibbles for straightforward inspection, summarization, and reporting—without modifying the underlying data. This approach makes it easy to explore and understand your data at a glance using familiar tidyverse conventions.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidyprint.html)** | **[GitHub](https://github.com/tidyomics/tidyprint)**  
 
 ## Transcriptomics Packages
 
-Each tidyomics package tackles a real-world analytical challenge.  Bulk RNA-seq analyses, for example, are traditionally scattered across disjoint data frames, objects and helper lists.  `tidySummarizedExperiment` re-imagines a `SummarizedExperiment` as a tibble-first citizen: you can `filter()`, `mutate()` and `group_by()` genes or samples exactly as you do with any tidyverse data frame.  For single-cell data the same philosophy inspired `tidySingleCellExperiment`, while for users of the Seurat workflow we created `tidyseurat`, a drop-in tidy wrapper that never compromises the original Seurat object.
+Bulk RNA-seq analyses, for example, are traditionally scattered across disjoint data frames, objects and helper lists.  `tidySummarizedExperiment` re-imagines a `SummarizedExperiment` through a tibble-like interface: you can `filter()`, `mutate()` and `group_by()` genes or samples exactly as you do with any tidyverse data frame.  For single-cell data the same philosophy inspired `tidySingleCellExperiment`, while for users of the Seurat workflow we created `tidyseurat`, a drop-in tidy wrapper that makes transitioning between Bioconductor and Seurat frameworks seamless.
 
 ### tidySummarizedExperiment
 The tidy interface for `SummarizedExperiment` objects, enabling tidyverse operations on bulk RNA-seq data.
@@ -162,7 +162,7 @@ The tidy interface for `SummarizedExperiment` objects, enabling tidyverse operat
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidySummarizedExperiment.html)** | **[GitHub](https://github.com/tidyomics/tidySummarizedExperiment)**
 
 ### tidySingleCellExperiment
-Single-cell experiments often contain millions of cells and dozens of matrices.  `tidySingleCellExperiment` flattens this complexity so you can focus on the biology instead of the bookkeeping.
+Single-cell experiments are highly dimensional. `tidySingleCellExperiment` flattens this complexity so you can focus on the biology instead of the bookkeeping.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidySingleCellExperiment.html)** | **[GitHub](https://github.com/tidyomics/tidySingleCellExperiment)**
 
@@ -172,7 +172,7 @@ For Seurat users, `tidyseurat` adds the missing tidyverse layer without forcing 
 **[CRAN](https://cran.r-project.org/web/packages/tidyseurat/index.html)** | **[GitHub](https://github.com/stemangiola/tidyseurat)**
 
 ### tidySpatialExperiment
-Spatial transcriptomics combines gene expression with tissue geography. `tidySpatialExperiment` brings the tidy philosophy to `SpatialExperiment` objects so you can transform, visualise and model spatial spots with the same verbs you already use for bulk and single-cell data.
+Spatial transcriptomics combines gene expression with tissue spatial coordinates. `tidySpatialExperiment` brings the tidy philosophy to `SpatialExperiment` objects so you can transform, visualise and gate spatial spots with the same verbs you already use for bulk and single-cell data.
 
 **[Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/tidySpatialExperiment.html)** | **[GitHub](https://github.com/william-hutchison/tidySpatialExperiment)**
 
@@ -242,47 +242,45 @@ The tidyomics ecosystem welcomes contributions from the community. You can contr
 
 
 ### Transcriptomics Example
-```{r}
+```{r, eval=FALSE}
 #| eval: false
 library(tidyverse)
 library(tidybulk)
 library(tidySummarizedExperiment)
 
-# Example workflow (requires airway data)
-# data(airway, package = "airway")
-# airway |>
-#   keep_abundant(factor_of_interest = dex) |>
-#   scale_abundance() |>
-#   test_differential_abundance(~ dex) |>
-#   filter(abundant) |>
-#   arrange(desc(abs(logFC)))
+data(airway, package = "airway")
+airway |>
+  keep_abundant(factor_of_interest = dex) |>
+  scale_abundance() |>
+  test_differential_abundance(~ dex) |>
+  filter(abundant) |>
+  arrange(desc(abs(logFC)))
 ```
 
 ### Genomics Example
-```{r}
+```{r, eval=FALSE}
 #| eval: false
 library(plyranges)
 library(tidyverse)
 
-# Example workflow (requires genomic data)
-# granges |>
-#   filter(score > 10) |>
-#   join_overlap_inner(promoters) |>
-#   group_by(gene_id) |>
-#   summarize(mean_score = mean(score))
+Example workflow (requires genomic data)
+granges |>
+  filter(score > 10) |>
+  join_overlap_inner(promoters) |>
+  group_by(gene_id) |>
+  summarize(mean_score = mean(score))
 ```
 
 ### Single-Cell Example
-```{r}
+```{r, eval=FALSE}
 #| eval: false
 library(tidySingleCellExperiment)
 library(tidyverse)
 
-# Example workflow (requires single-cell data)
-# sce |>
-#   filter(Phase == "G1") |>
-#   ggplot(aes(UMAP_1, UMAP_2, color=score)) + 
-#   geom_point()
+sce |>
+  filter(Phase == "G1") |>
+  ggplot(aes(UMAP_1, UMAP_2, color=score)) + 
+  geom_point()
 ```
 
 # Future Directions
@@ -290,9 +288,9 @@ library(tidyverse)
 ## Planned Developments
 
 1. **Enhanced Single-Cell Support**: Expanded analysis capabilities for single-cell data
-2. **Multi-Omics Integration**: Support for multi-omics data analysis
-3. **Cloud Computing**: Integration with cloud-based analysis platforms
-4. **Educational Expansion**: More comprehensive educational materials
+2. **Proteomics Integration**: Support for proteomic data analysis
+3. **Education**: More comprehensive educational materials
+4. **Reproducibility**: Allow to track object manipulation history with `tidyomicslog`
 
 ## Community Goals
 
