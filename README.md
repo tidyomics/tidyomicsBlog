@@ -16,4 +16,7 @@ The blog of `tidyomics`
 
 ## (for emergencies) How to update a post after publication.
 
-Mistakes can happen. Although we strongly recommend checking your post before merging, as a policy, we allow 2 days to correct errors in the published website. In order to do that, you have to delete your post within the `_freeze` directory; otherwise, the HTML render will not be overwritten.
+Mistakes can happen. Although we strongly recommend checking your post before merging, as a policy, we allow 2 days to correct errors in the published website. In order to do that, you have to 
+
+1. delete your post within the `_freeze` directory; otherwise, the HTML render will not be overwritten.
+2. Re-render the blog as described above.
