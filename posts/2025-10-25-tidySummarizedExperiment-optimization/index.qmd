@@ -49,17 +49,17 @@ for (pkg in required_packages) {
 ```
 
 
-The generality of `tidySummarizedExperiment` makes heasy to interface with several of the `tidyverse` packages (e.g. `dplyr`, `tidyr`, `ggplot`, `purrr`, `plotly`). This is possible thanks to its approach of converting `SummarizedExperiment` objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to SummarizedExperiment. For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume gigabytes of additional memory and add significant computational time to even simple operations like filtering or grouping. 
+The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes heasy to interface with several of the [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume gigabytes of additional memory and add significant computational time to even simple operations like filtering or grouping. 
 
-With the new `tidySummarizedExperiment` release (v1.19.7), we have introduced a new optimization that addresses these performance limitations. This optimization is powered by:
+With the new [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) release ([v1.19.7](https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7)), we have introduced a new optimization that addresses these performance limitations. This optimization is powered by:
 
 1) Check for the query domain (assay, colData, rowData), and execute specialised operation.
-2) Use of `plyxp` for complex domain-specific queries.
+2) Use of [`plyxp`](https://bioconductor.org/packages/plyxp) for complex domain-specific queries.
 
 
 # What is plyxp?
 
-`plyxp` is a high-performance execution engine designed to accelerate data manipulation operations in R, particularly for complex data structures like those used in genomics and single-cell analysis. The name "plyxp" reflects its role as a **ply** (manipulation) **exp** (expression) engine that optimizes the execution of data transformation pipelines.
+[`plyxp`](https://bioconductor.org/packages/plyxp) provides `rlang` data masks for the `SummarizedExperiment` class. This enables evaluation of unquoted expressions directly in the relevant contexts of a `SummarizedExperiment` (e.g. assays, `colData`, `rowData`), with optional access to other contexts when needed. The goal is for evaluation to feel like operating on a regular data.frame—without ever unwinding to a rectangular tibble/data.frame. This avoids costly round‑trips through intermediate tabular representations while preserving the semantics and integrity of the original Bioconductor object.
 
 ### Motivation and design principles
 
@@ -73,12 +73,11 @@ These design choices aim to preserve dimnames, avoid unnecessary tibble round-tr
 
 # Benchmarking Overview
 
-This vignette benchmarks a set of mutate(), filter(), select(), and distinct() scenarios comparing performance before and after optimization, by explicitly checking out specific commits via git worktree, loading each commit's code with devtools::load_all(), running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.
+This vignette benchmarks a set of [`mutate()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/mutate.html), [`filter()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/filter.html), [`select()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/select.html), and [`distinct()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/distinct.html) scenarios (see [documentation](https://bioconductor.org/packages/tidySummarizedExperiment)) comparing performance before and after optimization, by explicitly checking out specific commits via git worktree, loading each commit's code with `devtools::load_all()`, running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.
 
-- Before optimization: commit 87445757d2d0332e7d335d22cd28f73568b7db66
-- After optimization: commit 9f7c26e0519c92f9682b270d566da127367bcbc0
+- Before optimization: [commit 87445757d2d0332e7d335d22cd28f73568b7db66](https://github.com/tidyomics/tidySummarizedExperiment/commit/87445757d2d0332e7d335d22cd28f73568b7db66)
+- After optimization: [commit 9f7c26e0519c92f9682b270d566da127367bcbc0](https://github.com/tidyomics/tidySummarizedExperiment/commit/9f7c26e0519c92f9682b270d566da127367bcbc0)
 
-Requirements: git, devtools, airway, dplyr, SummarizedExperiment, ggplot2, microbenchmark.
 
 ### Setup helper functions
 
@@ -118,40 +117,40 @@ create_airway_test_se <- function() {
 
 benchmark_scenarios <- function() {
   list(
-    coldata_simple_assignment = quo({ se %>% mutate(new_dex = dex) }),
-    coldata_arithmetic = quo({ se %>% mutate(avgLength_plus_5 = avgLength + 5) }),
-    coldata_concat = quo({ se %>% mutate(sample_info = paste(cell, dex, SampleName, sep = "_")) }),
-    coldata_grouped_mean = quo({ se %>% group_by(dex) %>% mutate(avgLength_group_mean = mean(avgLength)) %>% ungroup() }),
-    assay_simple_assignment = quo({ se %>% mutate(counts_copy = counts) }),
-    assay_plus_one = quo({ se %>% mutate(counts_plus_1 = counts + 1) }),
-    assay_log = quo({ se %>% mutate(log_counts_manual = log2(counts + 1)) }),
-    complex_conditional_coldata = quo({ se %>% mutate(length_group = ifelse(avgLength > mean(avgLength), "longer", "shorter")) }),
-    complex_nested = quo({ se %>% mutate(complex_category = ifelse(dex == "trt" & avgLength > mean(avgLength), "treated_long", ifelse(dex == "untrt", "untreated", "other"))) }),
-    mixed_assay_coldata = quo({ se %>% mutate(new_counts = counts * avgLength) }),
-    multiple_simple_assay = quo({ se %>% mutate(normalized_counts = counts / 1000, sqrt_counts = sqrt(counts)) }),
-    chained_mutates = quo({ se %>% mutate(tmp = avgLength * 2) %>% mutate(flag = ifelse(tmp > mean(tmp), 1, 0)) }),
+    coldata_simple_assignment = quo({ se |> mutate(new_dex = dex) }),
+    coldata_arithmetic = quo({ se |> mutate(avgLength_plus_5 = avgLength + 5) }),
+    coldata_concat = quo({ se |> mutate(sample_info = paste(cell, dex, SampleName, sep = "_")) }),
+    coldata_grouped_mean = quo({ se |> group_by(dex) |> mutate(avgLength_group_mean = mean(avgLength)) |> ungroup() }),
+    assay_simple_assignment = quo({ se |> mutate(counts_copy = counts) }),
+    assay_plus_one = quo({ se |> mutate(counts_plus_1 = counts + 1) }),
+    assay_log = quo({ se |> mutate(log_counts_manual = log2(counts + 1)) }),
+    complex_conditional_coldata = quo({ se |> mutate(length_group = ifelse(avgLength > mean(avgLength), "longer", "shorter")) }),
+    complex_nested = quo({ se |> mutate(complex_category = ifelse(dex == "trt" & avgLength > mean(avgLength), "treated_long", ifelse(dex == "untrt", "untreated", "other"))) }),
+    mixed_assay_coldata = quo({ se |> mutate(new_counts = counts * avgLength) }),
+    multiple_simple_assay = quo({ se |> mutate(normalized_counts = counts / 1000, sqrt_counts = sqrt(counts)) }),
+    chained_mutates = quo({ se |> mutate(tmp = avgLength * 2) |> mutate(flag = ifelse(tmp > mean(tmp), 1, 0)) }),
 
     # Filter benchmarks (scoped and non-rectangular)
-    filter_coldata_simple = quo({ se %>% filter(dex == "trt") }),
-    filter_coldata_numeric = quo({ se %>% filter(avgLength > median(avgLength)) }),
-    filter_assay_nonrect = quo({ se %>% filter(counts > 0) }),
+    filter_coldata_simple = quo({ se |> filter(dex == "trt") }),
+    filter_coldata_numeric = quo({ se |> filter(avgLength > median(avgLength)) }),
+    filter_assay_nonrect = quo({ se |> filter(counts > 0) }),
 
     # Select benchmarks (covering colData-only, rowData-only, assays-only, mixed)
-    select_coldata_simple = quo({ se %>% select(.sample, dex) }),
-    select_rowdata_simple = quo({ se %>% select(.feature) }),
-    select_assay_only = quo({ se %>% select(counts) }),
-    select_mixed_keys_counts = quo({ se %>% select(.sample, .feature, counts) }),
-    select_coldata_wide = quo({ se %>% select(.sample, dex, avgLength, SampleName) }),
+    select_coldata_simple = quo({ se |> select(.sample, dex) }),
+    select_rowdata_simple = quo({ se |> select(.feature) }),
+    select_assay_only = quo({ se |> select(counts) }),
+    select_mixed_keys_counts = quo({ se |> select(.sample, .feature, counts) }),
+    select_coldata_wide = quo({ se |> select(.sample, dex, avgLength, SampleName) }),
 
     # Distinct benchmarks (covering colData-only, rowData-only, assays-only, mixed)
-    distinct_coldata_simple = quo({ se %>% distinct(dex) }),
-    distinct_coldata_multiple = quo({ se %>% distinct(dex, avgLength) }),
-    distinct_rowdata_simple = quo({ se %>% distinct(.feature) }),
-    distinct_assay_only = quo({ se %>% distinct(counts) }),
-    distinct_mixed_keys_counts = quo({ se %>% distinct(.sample, .feature, counts) }),
-    distinct_coldata_wide = quo({ se %>% distinct(.sample, dex, avgLength, SampleName) }),
-    distinct_with_keep_all = quo({ se %>% distinct(dex, .keep_all = TRUE) }),
-    distinct_complex_expression = quo({ se %>% distinct(dex, avgLength) })
+    distinct_coldata_simple = quo({ se |> distinct(dex) }),
+    distinct_coldata_multiple = quo({ se |> distinct(dex, avgLength) }),
+    distinct_rowdata_simple = quo({ se |> distinct(.feature) }),
+    distinct_assay_only = quo({ se |> distinct(counts) }),
+    distinct_mixed_keys_counts = quo({ se |> distinct(.sample, .feature, counts) }),
+    distinct_coldata_wide = quo({ se |> distinct(.sample, dex, avgLength, SampleName) }),
+    distinct_with_keep_all = quo({ se |> distinct(dex, .keep_all = TRUE) }),
+    distinct_complex_expression = quo({ se |> distinct(dex, avgLength) })
   )
 }
 
@@ -223,10 +222,6 @@ if (!dir.exists(wt_after)) {
   stop("Worktree directory does not exist: ", wt_after)
 }
 
-cat("Using existing worktrees for benchmark comparison\n")
-cat("Before optimization:", wt_before, "\n")
-cat("After optimization:", wt_after, "\n")
-
 # Before optimization (commit 87445757)
 load_branch_code(wt_before)
 res_before <- run_all_scenarios(branch_label = "before_optimization", reps = 10L)
@@ -235,7 +230,7 @@ res_before <- run_all_scenarios(branch_label = "before_optimization", reps = 10L
 load_branch_code(wt_after)
 res_after <- run_all_scenarios(branch_label = "after_optimization", reps = 10L)
 
-results <- dplyr::bind_rows(res_before, res_after) %>%
+results <- dplyr::bind_rows(res_before, res_after) |>
   dplyr::mutate(operation = dplyr::case_when(
     grepl("^filter", scenario) ~ "filter",
     grepl("^select", scenario) ~ "select",
@@ -243,12 +238,38 @@ results <- dplyr::bind_rows(res_before, res_after) %>%
     TRUE ~ "mutate"
   ))
 
-summary_table <- results %>%
-  group_by(branch, scenario) %>%
-  summarise(median_ms = median(elapsed_ms), .groups = "drop") %>%
-  tidyr::pivot_wider(names_from = branch, values_from = median_ms)
+summary_table <- results |>
+  group_by(branch, scenario) |>
+  summarise(median_ms = median(elapsed_ms), .groups = "drop") |>
+  tidyr::pivot_wider(names_from = branch, values_from = median_ms) |> 
+  dplyr::mutate(speedup = round(before_optimization / after_optimization, 2))
 
-summary_table
+```
+
+```{r summary_table}
+#| echo: false
+#| message: false
+#| warning: false
+
+reactable::reactable(
+  summary_table,
+  searchable = TRUE,
+  filterable = TRUE,
+  sortable = TRUE,
+  pagination = TRUE,
+  defaultPageSize = 10,
+  highlight = TRUE,
+  striped = TRUE,
+  bordered = TRUE,
+  compact = TRUE,
+  defaultColDef = reactable::colDef(align = "left", minWidth = 120),
+  columns = list(
+    scenario = reactable::colDef(name = "Scenario", minWidth = 220),
+    after_optimization = reactable::colDef(name = "After (ms)", format = reactable::colFormat(digits = 1)),
+    before_optimization = reactable::colDef(name = "Before (ms)", format = reactable::colFormat(digits = 1)),
+    speedup = reactable::colDef(name = "Speedup (x)", format = reactable::colFormat(digits = 2))
+  )
+)
 ```
 
 # Visualise with ggplot boxplots
