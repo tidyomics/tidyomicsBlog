@@ -43,7 +43,7 @@ library(omicslog)
 For this example, we worked with the `airway` dataset. To extend `tidyomics` with `omicslog`, it is only necessary to add the `log_start()` function before applying the different filtering criteria:
 
 ```r
-data(airway, package="airway")
+data(airway, package = "airway")
 
 result <- 
   airway |>
