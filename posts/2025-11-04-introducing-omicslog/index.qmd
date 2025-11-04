@@ -29,7 +29,7 @@ We started by enabling logging for the `SummarizedExperiment` class, powered by 
 
 Let’s start with a practical example, beginning with the package installation and library loading:
 
-```{r, echo=FALSE, messages=FALSE, warnings=FALSE}
+```r
 if (!require("devtools", quietly = TRUE))
     install.packages("devtools")
 
@@ -42,7 +42,7 @@ library(omicslog)
 
 For this example, we worked with the `airway` dataset. To extend `tidyomics` with `omicslog`, it is only necessary to add the `log_start()` function before applying the different filtering criteria:
 
-```{r}
+```r
 data(airway, package="airway")
 
 result <- 
@@ -60,7 +60,7 @@ result
 ```
 
 :::{.smaller}
-```{r}
+```r
 #> # A SummarizedExperiment-tibble abstraction: 1 × 22
 #> # Features=1 | Samples=1 | Assays=counts
 #>   .feature     .sample counts SampleName cell  treat Run   avgLength 
@@ -85,7 +85,7 @@ As a result, the `metadata` shows a short description of the different modificat
 
 Notwithstanding, `omicslog` can also work with base R commands by simply adding the dataset name to the `log_start()` function:
 
-```{r}
+```r
 options(restore_SummarizedExperiment_show = TRUE)
 
 result_base <- log_start(airway) # Starting the logging operations
@@ -99,7 +99,7 @@ result_base
 ```
 
 :::{.smaller}
-```{r}
+```r
 #> class: SummarizedExperimentLogged 
 #> dim: 1 4 
 #> metadata(1): ''
