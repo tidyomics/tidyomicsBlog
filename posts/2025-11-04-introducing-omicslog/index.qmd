@@ -51,7 +51,7 @@ result <-
   filter(dex == "untrt") |>
   select(!albut) |>
   mutate(dex_upper = toupper(dex)) |>
-  extract(col = dex,into = "treat") |>
+  extract(col = dex, into = "treat") |>
   mutate(Run = tolower(Run)) |> 
   filter(.feature == "ENSG00000000003") |>
   slice(3)
