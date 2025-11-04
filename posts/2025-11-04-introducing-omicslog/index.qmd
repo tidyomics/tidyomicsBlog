@@ -1,0 +1,87 @@
+---
+title: "Omicslog"
+author: "Juan Henao"
+date: "2025-10-23"
+package: tidyomics
+tags:
+  - tidyomics/tidyomicsBlog
+  - logging
+  - tidyverse
+  - bioconductor
+description: "Providing logging capabilities for SummarizedExperiment objects."
+format:
+  html:
+    toc: true
+    toc-float: true
+execute:
+  freeze: true
+---
+
+# Welcome to omicslog!
+
+I still remember being in front of my PI, trying to recall, or even worse, to guess the number of samples we had ignored when running a specific analysis, such as filtering low-count genes for DEG analysis or excluding biological samples collected outside a target time window when we aimed to discover biomarker candidates for early disease detection. I especially remember how that became even worse across the different projects we were working on simultaneously.
+
+The solution was always the same: rerun the whole code up to the line that could answer those questions. That was even more frustrating considering that, in many cases, those questions came from pure curiosity rather than information that would be included in the final publication.
+
+Inspired by the `lab notebook` from my wet lab colleagues and the `tidylog` package, we present `omicslog`, a package that provides logging capabilities for omics-oriented objects. Our goal is to establish a standard for tracking changes to these objects, acting as an automated dry lab notebook and improving the reproducibility of specific analyses.
+
+We started by enabling logging for the `SummarizedExperiment` class, powered by `tidyomics` functionalities. Every function in the pipeline is evaluated, with changes traced and aggregated as metadata.
+
+Let’s start with a practical example, beginning with the package installation and library loading:
+
+```{r, echo=FALSE, messages=FALSE, warnings=FALSE}
+if (!require("devtools", quietly = TRUE))
+    install.packages("devtools")
+
+devtools::install_github("tidyomics/omicslog")
+
+library(SummarizedExperiment)
+library(tidySummarizedExperiment)
+library(omicslog)
+```
+
+For this example, we worked with the `airway` dataset. To extend `tidyomics` with `omicslog`, it is only necessary to add the `log_start()` function before applying the different filtering criteria:
+
+```{r}
+data(airway, package="airway")
+
+result <- 
+  airway |>
+  log_start() |> # Starting the logging operations
+  filter(dex == "untrt") |>
+  select(!albut) |>
+  mutate(dex_upper = toupper(dex)) |>
+  extract(col = dex,into = "treat") |>
+  mutate(Run = tolower(Run)) |> 
+  filter(.feature == "ENSG00000000003") |>
+  slice(3)
+
+result
+```
+
+As a result, the `metadata` shows a short description of the different modifications the `SummarizedExperiment` underwent during each function in the pipeline, formatted as `[TIME] FUNCTION NAME: ONE-LINE DESCRIPTION`.
+
+Notwithstanding, `omicslog` can also work with base R commands by simply adding the dataset name to the `log_start()` function:
+
+```{r}
+options(restore_SummarizedExperiment_show = TRUE)
+
+result_base <- log_start(airway) # Starting the logging operations
+
+result_base <- result_base[, colData(result_base)$dex == "untrt"]
+colData(result_base)$dex_upper <- toupper(colData(result_base)$dex)
+colData(result_base)$Run <- tolower(colData(result_base)$Run)
+result_base <- result_base[rownames(result_base) == "ENSG00000000003", ]
+
+result_base
+```
+
+# We need your feedback!
+
+**Tell us your stories:** 
+
+* What is your experience working with omics-oriented objects? 
+* What difficulties have you faced when tracing changes across different experiments? 
+* What else can we do to make your research more comfortable and easier to track?
+
+Don’t hesitate to open an issue in the [omicslog](https://github.com/tidyomics/omicslog "logging capabilities for SummarizedExperiment objects") GitHub repo.
