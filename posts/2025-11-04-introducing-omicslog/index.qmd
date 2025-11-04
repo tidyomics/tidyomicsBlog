@@ -1,7 +1,7 @@
 ---
 title: "Omicslog"
 author: "Juan Henao"
-date: "2025-10-23"
+date: "2025-11-04"
 package: tidyomics
 tags:
   - tidyomics/tidyomicsBlog
