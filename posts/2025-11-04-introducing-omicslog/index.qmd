@@ -9,6 +9,7 @@ tags:
   - tidyverse
   - bioconductor
 description: "Providing logging capabilities for SummarizedExperiment objects."
+image: omicslog_blog_logo.png
 format:
   html:
     toc: true
