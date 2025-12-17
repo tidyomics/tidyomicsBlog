@@ -49,7 +49,7 @@ data(airway, package = "airway")
 result <- 
   airway |>
   log_start() |> # Starting the logging operations
-  filter(dex == "untrt") |>
+  filter(dex == "trt") |>
   select(!albut) |>
   mutate(dex_upper = toupper(dex)) |>
   extract(col = dex, into = "treat") |>
@@ -62,23 +62,21 @@ result
 
 :::{.smaller}
 ```r
-#> # A SummarizedExperiment-tibble abstraction: 1 × 22
+#> # A SummarizedExperiment-tibble abstraction: 1 × 1
 #> # Features=1 | Samples=1 | Assays=counts
-#>   .feature     .sample counts SampleName cell  treat Run   avgLength 
-#>   <chr>        <chr>    <int> <fct>      <fct> <chr> <chr>     <int>  
-#> 1 ENSG0000000… SRR103…   1138 GSM1275870 N080… untrt srr1…       120 
-#> # ℹ 9 more variables: gene_name <chr>, entrezid <int>, gene_biotype <chr>, 
-#> # gene_seq_start <int>, gene_seq_end <int>, seq_name <chr>, seq_strand <int>, 
-#> #  seq_coord_system <int>, symbol <chr>
+#>   .feature      .sample counts SampleName cell  treat Run   avgLength Experiment
+#>   <chr>         <chr>    <int> <fct>      <fct> <chr> <chr>     <int> <fct>     
+#> 1 ENSG00000000… SRR103…   1047 GSM1275871 N080… trt   srr1…       126 SRX384354 
+#> # ℹ 3 more variables: Sample <fct>, BioSample <fct>, dex_upper <chr>
 #> 
 #> Operation log:
-#> [2025-06-09 18:34:15] filter: removed 4 samples (50%), 4 samples remaining
-#> [2025-06-09 18:34:15] select: removed 1 (11%), 8 column(s) remaining
-#> [2025-06-09 18:34:16] mutate: added 1 new column(s): dex_upper
-#> [2025-06-09 18:34:17] extract: extracted 'dex' into column: treat (original removed)
-#> [2025-06-09 18:34:17] mutate: modified column(s): Run
-#> [2025-06-09 18:34:17] filter: removed 63676 genes (100%), 1 genes remaining
-#> [2025-06-09 18:34:18] slice: Kept 1/4 rows (25.0%); removed 3 rows
+#> [2025-12-17 13:21:30] filter: removed 4 samples (50%), 4 samples remaining
+#> [2025-12-17 13:21:31] select: removed 1 (11%), 8 column(s) remaining
+#> [2025-12-17 13:21:31] mutate: added 1 new column(s): dex_upper
+#> [2025-12-17 13:21:31] extract: extracted 'dex' into column: treat (original removed)
+#> [2025-12-17 13:21:31] mutate: modified column(s): Run
+#> [2025-12-17 13:21:31] filter: removed 64101 genes (100%), 1 genes remaining
+#> [2025-12-17 13:21:31] slice: Kept 1/4 rows (25.0%); removed 3 rows
 ```
 :::
 
@@ -91,7 +89,7 @@ options(restore_SummarizedExperiment_show = TRUE)
 
 result_base <- log_start(airway) # Starting the logging operations
 
-result_base <- result_base[, colData(result_base)$dex == "untrt"]
+result_base <- result_base[, colData(result_base)$dex == "trt"]
 colData(result_base)$dex_upper <- toupper(colData(result_base)$dex)
 colData(result_base)$Run <- tolower(colData(result_base)$Run)
 result_base <- result_base[rownames(result_base) == "ENSG00000000003", ]
@@ -106,24 +104,124 @@ result_base
 #> metadata(1): ''
 #> assays(1): counts
 #> rownames(1): ENSG00000000003
-#> rowData names(10): gene_id gene_name ... seq_coord_system symbol
-#> colnames(4): SRR1039508 SRR1039512 SRR1039516 SRR1039520
+#> rowData names(0):
+#> colnames(4): SRR1039509 SRR1039513 SRR1039517 SRR1039521
 #> colData names(10): SampleName cell ... BioSample dex_upper
 #> 
 #> Operation log:
-#> [2025-06-05 11:02:29] subset: removed 4 samples (50%), 4 samples remaining
-#> [2025-06-05 11:02:29] colData<-: added 1 new column(s): dex_upper
-#> [2025-06-05 11:02:29] colData<-: modified column 'Run'
-#> [2025-06-05 11:02:29] subset: removed 63676 genes (100%), 1 genes remaining
+#> [2025-12-17 13:22:58] subset: removed 4 samples (50%), 4 samples remaining
+#> [2025-12-17 13:22:58] colData<-: added 1 new column(s): dex_upper
+#> [2025-12-17 13:22:58] colData<-: modified column 'Run'
+#> [2025-12-17 13:22:58] subset: removed 64101 genes (100%), 1 genes remaining
 ```
 :::
 
+# Behind the scenes
+
+How does `omicslog` operate? In essence, for every function you apply to a `SummarizedExperiment` object, it tracks changes in rows and columns and records a message describing those changes in a dedicated logging structure stored in the object’s `metadata`.
+
+Let us suppose we want to filter the `airway` dataset to retain only samples treated with dexamethasone (`dex == "trt"`):
+
+```r
+result1 <- airway |> filter(dex == "untrt")
+```
+
+How many samples did we keep? Let us find out:
+
+```r
+remaining_samples <- length(colData(result1)$Sample)
+remaining_samples
+```
+
+:::{.smaller}
+```r
+#> [1] 4
+```
+:::
+
+What about the removed data? How many samples were discarded?
+
+```r
+samples_removed <- length(colData(airway)$Sample) - length(colData(result1)$Sample)
+samples_removed
+```
+
+:::{.smaller}
+```r
+#> [1] 4
+```
+:::
+
+It is often useful to express this change as a percentage, since we may be discarding a substantial amount of information:
+
+```r
+percentage <- round(100 - samples_removed / length(colData(airway)$Sample) * 100,2)
+percentage
+```
+
+:::{.smaller}
+```r
+#> [1] 50
+```
+:::
+
+At this point, we have a clear idea of how much the dataset has been modified. However, in practice, we often need to retrieve this kind of information repeatedly. To avoid manual bookkeeping, we would like to store it directly in the object itself, using the `metadata` slot.
+
+Before doing so, we need some additional context, such as *when* the operation was executed and *which* function was used:
+
+```r
+time <- Sys.time()
+func <- "filter"
+```
+
+The most straightforward way to persist this information is to create a concise log message:
+
+```r
+result1@metadata$log_history <- paste(time, func,": removed", samples_removed, "samples", "(", percentage,"%)", remaining_samples, "samples remaining")
+result1@metadata$log_history
+```
+
+:::{.smaller}
+```r
+#> [1] "2025-12-17 13:27:34 filter : removed 4 samples ( 50 %) 4 samples remaining"
+```
+:::
+
+Column-related operations follow the same logic. For example, let us remove the `albut` column, as we are not interested in samples treated with albuterol:
+
+```r
+result2 <- result1 |>
+  select(!albut)
+```
+
+Even though we know that exactly one column was removed, it is still valuable to keep track of *how* the dataset was modified, *when* the change occurred, and *which* function was responsible:
+
+```r
+columns_removed <- ncol(colData(result1)) - ncol(colData(result2))
+columns_remaining <- ncol(colData(result2))
+percentage <- 100 - round(ncol(colData(result2)) / ncol(colData(result1)) * 100,2)
+time <- Sys.time()
+func <- "select"
+
+result1@metadata$log_history <- c(result1@metadata$log_history,
+paste(time, func,": removed", columns_removed, "(", percentage,"%)", columns_remaining, "column(s) remaining")
+)
+result1@metadata$log_history
+```
+
+:::{.smaller}
+```r
+#> [1] "2025-12-17 13:27:34 filter : removed 4 samples ( 50 %) 4 samples remaining"
+#> [2] "2025-12-17 13:28:38 select : removed 1 ( 11.11 %) 8 column(s) remaining"
+```
+:::
+
+As shown above, we extract the same type of information and append a new log entry to the `metadata` slot, just as we did for the row-based operation.
+
+Too much work for a single data transformation? We agree. This is exactly where `omicslog` comes in—handling all logging operations automatically, so you can focus on the analysis.
+
 # We need your feedback!
 
-**Tell us your stories:** 
-
-* What is your experience working with omics-oriented objects? 
-* What difficulties have you faced when tracing changes across different experiments? 
-* What else can we do to make your research more comfortable and easier to track?
+Besides the messages shown above, what other operation details might you be interested in logging for an omics-oriented project?
 
 Don’t hesitate to open an issue in the [omicslog](https://github.com/tidyomics/omicslog "logging capabilities for SummarizedExperiment objects") GitHub repo.
