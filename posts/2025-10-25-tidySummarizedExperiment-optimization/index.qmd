@@ -49,27 +49,130 @@ for (pkg in required_packages) {
 ```
 
 
-The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes heasy to interface with several of the [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume gigabytes of additional memory and add significant computational time to even simple operations like filtering or grouping. 
+The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes heasy to interface with several of the [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume memory and add significant computational time to even simple operations like filtering or grouping. 
 
 With the new [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) release ([v1.19.7](https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7)), we have introduced a new optimization that addresses these performance limitations. This optimization is powered by:
 
 1) Check for the query domain (assay, colData, rowData), and execute specialised operation.
 2) Use of [`plyxp`](https://bioconductor.org/packages/plyxp) for complex domain-specific queries.
 
-
-# What is plyxp?
-
-[`plyxp`](https://bioconductor.org/packages/plyxp) provides `rlang` data masks for the `SummarizedExperiment` class. This enables evaluation of unquoted expressions directly in the relevant contexts of a `SummarizedExperiment` (e.g. assays, `colData`, `rowData`), with optional access to other contexts when needed. The goal is for evaluation to feel like operating on a regular data.frame—without ever unwinding to a rectangular tibble/data.frame. This avoids costly round‑trips through intermediate tabular representations while preserving the semantics and integrity of the original Bioconductor object.
-
 ### Motivation and design principles
 
-This benchmark supports ongoing work to improve mutate() execution paths, including exploring plyxp-backed execution for mixed-slot operations (see issue: [Attempt using plyxp for some cases in tidySummarizedExperiment](https://github.com/tidyomics/genomics-todos/issues/19)). The current proposal is grounded in three principles:
+This benchmark supports ongoing work to improve [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) performance. In this benchmark we show up to 30x improvement in operations such as `mutate()`.
+
+The current optimisation is grounded in three principles:
 
 - Decompose operation series: break `mutate(a=..., b=..., c=...)` into single operations for simpler handling and clearer routing. Reference implementation in `R/mutate.R` (decomposition step) at [L146](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L146).
 - Analyze scope: infer whether each expression targets `colData`, `rowData`, `assays`, or a mix (noting that the current analyser is likely over-engineered and could be simplified). See [L149](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L149).
 - Route mixed operations via plyxp: when an expression touches multiple slots, prefer the plyxp path for correctness and performance. See [L155](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L155).
 
 These design choices aim to preserve dimnames, avoid unnecessary tibble round-trips, and provide predictable performance across simple and mixed-slot scenarios.
+
+### Exmple of code optimisation
+
+This was the `mutate()` method before optimisation. The previous implementation relied on 
+`as_tibble() |> dplyr::mutate() |> update_SE_from_tibble(.data)`
+
+The function `update_SE_from_tibble` interprets the input tibble and converts it back to a `SummarizedExperiment`. Although this step provides great generality and flexibility, it is particularly expensive because it has to infer which columns are sample-wise or feature-wise.
+
+```{r example-after}
+#| eval: false
+
+mutate.SummarizedExperiment <- function(.data, ...) {
+    # Legacy implementation of mutate() for SummarizedExperiment:
+    # - Validates requested edits against special/view-only columns
+    # - Performs mutate() via tibble round-trip, then reconstructs the SE
+    # Check that we are not modifying a key column
+    cols <- enquos(...) |> names()
+    
+    # Deprecation of special column names:
+    # capture all quoted args to detect deprecated special-column usage
+    .cols <- enquos(..., .ignore_empty="all") %>% 
+        map(~ quo_name(.x)) %>% unlist()
+    if (is_sample_feature_deprecated_used(.data, .cols)) {
+        # Record deprecated usage into metadata for backward compatibility
+        .data <- ping_old_special_column_into_metadata(.data)
+    }
+    
+    # Identify view-only/special columns (sample/feature keys, etc.)
+    # Use a small slice to reduce overhead while probing structure
+    special_columns <- get_special_columns(
+        # Decrease the size of the dataset
+        .data[1:min(100, nrow(.data)), 1:min(20, ncol(.data))]
+    ) |> c(get_needed_columns(.data))
+    
+    # Are any requested targets among special/view-only columns?
+    tst <-
+        intersect(
+            cols,
+            special_columns
+        ) |> 
+        length() |>
+        gt(0)
+
+
+    if (tst) {
+        columns <-
+            special_columns |>
+                paste(collapse=", ")
+        stop(
+            "tidySummarizedExperiment says:",
+            " you are trying to rename a column that is view only",
+            columns,
+            "(it is not present in the colData).",
+            " If you want to mutate a view-only column,",
+            " make a copy and mutate that one."
+        )
+    }
+
+    # If Ranges column not in query, prefer faster tibble conversion
+    # Skip expanding GRanges columns when not referenced
+    skip_GRanges <-
+        get_GRanges_colnames() %in% 
+        cols |>
+        not()
+    
+    # Round-trip: SE -> tibble -> dplyr::mutate -> SE
+    .data |>
+        as_tibble(skip_GRanges=skip_GRanges) |>
+        dplyr::mutate(...) |>
+        update_SE_from_tibble(.data)
+}
+
+```
+
+The new implementation captures all easy cases, such as sample-only and feature-only metadata mutate. If the mutate is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by `plyxp`, otherwise the general solution is used.
+
+```{r example-before}
+#| eval: false
+mutate.SummarizedExperiment <- function(.data, ...) {
+
+       # Check if query is composed (multiple expressions)
+    if (is_composed("mutate", ...)) return(decompose_tidy_operation("mutate", ...)(.data))
+
+        # Check for scope and dispatch elegantly
+        scope_report <- analyze_query_scope_mutate(.data, ...)
+        scope <- scope_report$scope
+
+        result <-
+        if(scope == "coldata_only") modify_samples(.data, "mutate", ...)
+        else if(scope == "rowdata_only") modify_features(.data, "mutate", ...)
+        else if(scope == "assay_only") mutate_assay(.data, ...)
+        else if(scope == "mixed") modify_se_plyxp(.data, "mutate", scope_report, ...)
+        else mutate_via_tibble(.data, ...)
+
+        # Record latest mutate scope into metadata for testing/introspection
+        meta <- S4Vectors::metadata(result)
+        if (is.null(meta)) meta <- list()
+        meta$latest_mutate_scope_report <- scope_report
+        S4Vectors::metadata(result) <- meta
+
+        return(result)
+
+}
+
+```
+
 
 # Benchmarking Overview
 
@@ -82,6 +185,8 @@ This vignette benchmarks a set of [`mutate()`](https://tidyomics.github.io/tidyS
 ### Setup helper functions
 
 ```{r helpers}
+#| code-fold: true
+#| code-summary: "Show the code"
 #| message: false
 #| warning: false
 
@@ -207,9 +312,12 @@ run_all_scenarios_parallel <- function(branch_label, reps = 20L, workers = 1L, i
 ### Run benchmarks on both branches
 
 ```{r worktrees}
+#| code-fold: true
+#| code-summary: "Show the code"
 #| cache: false
 #| warning: false
 #| message: false
+
 # Worktree directories (already exist in the post directory)
 wt_before <- ".__bench_before__"
 wt_after <- ".__bench_after__"
@@ -275,6 +383,8 @@ reactable::reactable(
 # Visualise with ggplot boxplots
 
 ```{r plot}
+#| code-fold: true
+#| code-summary: "Show the code"
 #| fig-width: 10
 #| fig-height: 8
 dodge_w <- 0.7
