@@ -14,7 +14,7 @@ tags:
   - plyxp
   - SummarizedExperiment
   - benchmarking
-description: "Performance optimization of tidySummarizedExperiment using plyxp for enhanced bulk RNA-seq data analysis workflows."
+description: "Performance optimisation of tidySummarizedExperiment and related benchmark."
 image: benchmark_plot.png
 format:
   html:
