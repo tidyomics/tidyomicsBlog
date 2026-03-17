@@ -2,6 +2,7 @@
 title: "Speed-up tidySummarizedExperiment through query optimisation and plyxp backend"
 author: "Stefano Mangiola"
 contributors:
+  - Stefano Mangiola
   - Michael Love
   - Justin Landis
 date: "2025-10-25"
