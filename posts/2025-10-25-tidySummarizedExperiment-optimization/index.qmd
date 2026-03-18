@@ -50,9 +50,9 @@ for (pkg in required_packages) {
 ```
 
 
-The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes it easy to interface with several [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume memory and add significant computational time to even simple operations like filtering or grouping. 
+The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes it easy to interface with several [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume memory and add significant computational overhead to even simple operations such as filtering or grouping. 
 
-With the new [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) release ([v1.19.7](https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7)), we have introduced new optimizations that address these performance limitations. This optimization is powered by:
+With the new [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) release ([v1.19.7](https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7)), we have introduced new optimisations that address these performance limitations. This optimisation is powered by:
 
 1) Check for the query domain (assay, colData, rowData), and execute specialised operation.
 2) Use of [`plyxp`](https://bioconductor.org/packages/plyxp) for complex domain-specific queries.
@@ -62,7 +62,7 @@ It uses data-masking functionality from the [rlang](https://rlang.r-lib.org/) pa
 
 ### Motivation and design principles
 
-This benchmark supports ongoing work to improve [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) performance. In this benchmark we show up to 30x improvement in operations such as `mutate()`.
+This benchmark supports ongoing work to improve the performance of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment). In this benchmark, we show up to 30x improvement in operations such as `mutate()`.
 
 The current optimisation is grounded in three principles:
 
@@ -77,7 +77,7 @@ These design choices aim to preserve dimnames, avoid unnecessary tibble round-tr
 This was the `mutate()` method before optimisation. The previous implementation relied on 
 `as_tibble() |> dplyr::mutate() |> update_SE_from_tibble(.data)`
 
-The function `update_SE_from_tibble` interprets the input tibble and converts it back to a `SummarizedExperiment`. Although this step provides great generality and flexibility, it is particularly expensive because it has to infer which columns are sample-wise or feature-wise.
+The function `update_SE_from_tibble` interprets the input tibble and converts it back to a `SummarizedExperiment`. Although this step provides great generality and flexibility, it is particularly expensive because it must infer whether columns are sample-wise or feature-wise.
 
 ```{r example-after}
 #| eval: false
@@ -145,7 +145,7 @@ mutate.SummarizedExperiment <- function(.data, ...) {
 
 ```
 
-The new implementation captures all easy cases, such as sample-only and feature-only metadata `mutate()`. If the mutate is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by `plyxp`, otherwise the general solution is used.
+The new implementation captures all easy cases, such as sample-only and feature-only metadata `mutate()`. If `mutate()` is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by `plyxp`. Otherwise, the general solution is used.
 
 ```{r example-before}
 #| eval: false
@@ -180,10 +180,10 @@ mutate.SummarizedExperiment <- function(.data, ...) {
 
 # Benchmarking Overview
 
-This vignette benchmarks a set of [`mutate()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/mutate.html), [`filter()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/filter.html), [`select()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/select.html), and [`distinct()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/distinct.html) scenarios (see [documentation](https://bioconductor.org/packages/tidySummarizedExperiment)) comparing performance before and after optimization, by explicitly checking out specific commits via git worktree, loading each commit's code with `devtools::load_all()`, running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.
+This vignette benchmarks a set of [`mutate()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/mutate.html), [`filter()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/filter.html), [`select()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/select.html), and [`distinct()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/distinct.html) scenarios (see [documentation](https://bioconductor.org/packages/tidySummarizedExperiment)) comparing performance before and after optimisation, by explicitly checking out specific commits via git worktree, loading each commit's code with `devtools::load_all()`, running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.
 
-- Before optimization: [commit 87445757d2d0332e7d335d22cd28f73568b7db66](https://github.com/tidyomics/tidySummarizedExperiment/commit/87445757d2d0332e7d335d22cd28f73568b7db66)
-- After optimization: [commit 9f7c26e0519c92f9682b270d566da127367bcbc0](https://github.com/tidyomics/tidySummarizedExperiment/commit/9f7c26e0519c92f9682b270d566da127367bcbc0)
+- Before optimisation: [commit 87445757d2d0332e7d335d22cd28f73568b7db66](https://github.com/tidyomics/tidySummarizedExperiment/commit/87445757d2d0332e7d335d22cd28f73568b7db66)
+- After optimisation: [commit 9f7c26e0519c92f9682b270d566da127367bcbc0](https://github.com/tidyomics/tidySummarizedExperiment/commit/9f7c26e0519c92f9682b270d566da127367bcbc0)
 
 
 ### Setup helper functions
@@ -334,11 +334,11 @@ if (!dir.exists(wt_after)) {
   stop("Worktree directory does not exist: ", wt_after)
 }
 
-# Before optimization (commit 87445757)
+# Before optimisation (commit 87445757)
 load_branch_code(wt_before)
 res_before <- run_all_scenarios(branch_label = "before_optimization", reps = 10L)
 
-# After optimization (commit 9f7c26e)
+# After optimisation (commit 9f7c26e)
 load_branch_code(wt_after)
 res_after <- run_all_scenarios(branch_label = "after_optimization", reps = 10L)
 
