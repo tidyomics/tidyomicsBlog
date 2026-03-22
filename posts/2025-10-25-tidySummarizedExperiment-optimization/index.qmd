@@ -6,7 +6,7 @@ contributors:
   - Michael Love
   - Justin Landis
   - Pierre-Paul Axisa
-date: "2025-10-25"
+date: "2026-03-22"
 package: tidySummarizedExperiment
 tags:
   - tidyomics/tidyomicsBlog
