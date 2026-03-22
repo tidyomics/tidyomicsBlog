@@ -5,6 +5,7 @@ contributors:
   - Stefano Mangiola
   - Michael Love
   - Justin Landis
+  - Pierre-Paul Axisa
 date: "2025-10-25"
 package: tidySummarizedExperiment
 tags:
@@ -27,6 +28,8 @@ execute:
 ---
 
 ![tidySummarizedExperiment logo](logo.png){width="150px" fig-align="left"}
+
+*Contributors: Michael Love, Justin Landis, Pierre-Paul Axisa*
 
 ```{r setup}
 #| echo: false
