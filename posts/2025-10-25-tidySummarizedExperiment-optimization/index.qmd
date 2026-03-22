@@ -35,7 +35,7 @@ execute:
 
 # Install missing packages if needed (universal approach)
 required_packages <- c("devtools", "ggplot2", "dplyr", "SummarizedExperiment", 
-                      "airway", "microbenchmark", "rlang")
+                      "airway", "microbenchmark", "rlang", "reactable", "patchwork")
 
 for (pkg in required_packages) {
   if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
@@ -79,8 +79,10 @@ This was the `mutate()` method before optimisation. The previous implementation 
 
 The function `update_SE_from_tibble` interprets the input tibble and converts it back to a `SummarizedExperiment`. Although this step provides great generality and flexibility, it is particularly expensive because it must infer whether columns are sample-wise or feature-wise.
 
-```{r example-after}
+```{r example-before}
 #| eval: false
+#| code-fold: true
+#| code-summary: "Show pre-optimization source"
 
 mutate.SummarizedExperiment <- function(.data, ...) {
     # Legacy implementation of mutate() for SummarizedExperiment:
@@ -147,8 +149,15 @@ mutate.SummarizedExperiment <- function(.data, ...) {
 
 The new implementation captures all easy cases, such as sample-only and feature-only metadata `mutate()`. If `mutate()` is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by `plyxp`. Otherwise, the general solution is used.
 
-```{r example-before}
+Key components to compare:
+- The pre-optimization code always uses a tibble round-trip (`as_tibble() |> dplyr::mutate() |> update_SE_from_tibble()`).
+- The optimized code first analyzes scope (`colData`, `rowData`, `assay`, or mixed) and dispatches to specialized paths.
+- The fallback still exists (`mutate_via_tibble`) for complex cases, preserving generality.
+
+```{r example-after}
 #| eval: false
+#| code-fold: true
+#| code-summary: "Show post-optimization source"
 mutate.SummarizedExperiment <- function(.data, ...) {
 
        # Check if query is composed (multiple expressions)
@@ -202,6 +211,8 @@ suppressPackageStartupMessages({
   library(devtools)
   library(airway)
   library(microbenchmark)
+  library(reactable)
+  library(patchwork)
 })
 
 load_branch_code <- function(worktree_dir) {
@@ -384,16 +395,16 @@ reactable::reactable(
 )
 ```
 
-# Visualise with ggplot boxplots
+# Visualize with combined performance plots
 
 ```{r plot}
 #| code-fold: true
 #| code-summary: "Show the code"
-#| fig-width: 10
+#| fig-width: 14
 #| fig-height: 8
 dodge_w <- 0.7
 
-ggplot(results, aes(x = scenario, y = elapsed_ms, fill = branch)) +
+p_box <- ggplot(results, aes(x = scenario, y = elapsed_ms, fill = branch)) +
   geom_boxplot(position = position_dodge(width = dodge_w), width = 0.7, outlier.shape = NA) +
 
   # Add jittered points aligned with the dodged boxplots
@@ -414,11 +425,76 @@ ggplot(results, aes(x = scenario, y = elapsed_ms, fill = branch)) +
   # Angle x labels  
   theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
 
-  # Save the plot
-  ggsave("benchmark_plot.png", width = 10, height = 8)
+# Speedup summary panel (median before/after ratio)
+speedup_plot_data <- summary_table |>
+  dplyr::mutate(operation = dplyr::case_when(
+    grepl("^filter", scenario) ~ "filter",
+    grepl("^select", scenario) ~ "select",
+    grepl("^distinct", scenario) ~ "distinct",
+    TRUE ~ "mutate"
+  ))
+
+p_speedup <- ggplot(
+  speedup_plot_data,
+  aes(x = speedup, y = reorder(scenario, speedup))
+) +
+  geom_col(width = 0.7, fill = "grey70", color = "grey40") +
+  facet_grid(operation ~ ., scales = "free_y", space = "free_y") +
+  labs(
+    title = "Median speedup by scenario",
+    x = "Speedup (before/after, x)",
+    y = NULL
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+combined_plot <- p_box + p_speedup + patchwork::plot_layout(widths = c(2.3, 1))
+combined_plot
+
+# Save the combined figure
+ggsave("benchmark_plot.png", plot = combined_plot, width = 14, height = 8)
 
   
 ```
+
+### Interpreting the benchmark results
+
+```{r results_interpretation_values}
+#| include: false
+#| message: false
+#| warning: false
+speedup_rank <- summary_table |>
+  dplyr::arrange(dplyr::desc(speedup))
+
+top3 <- head(speedup_rank, 3)
+bottom3 <- tail(speedup_rank, 3) |>
+  dplyr::arrange(speedup)
+
+op_speedup <- summary_table |>
+  dplyr::mutate(operation = dplyr::case_when(
+    grepl("^filter", scenario) ~ "filter",
+    grepl("^select", scenario) ~ "select",
+    grepl("^distinct", scenario) ~ "distinct",
+    TRUE ~ "mutate"
+  )) |>
+  dplyr::group_by(operation) |>
+  dplyr::summarise(median_speedup = median(speedup), .groups = "drop") |>
+  dplyr::arrange(dplyr::desc(median_speedup))
+
+speedup_min <- round(min(summary_table$speedup), 2)
+speedup_max <- round(max(summary_table$speedup), 2)
+top3_text <- paste0(top3$scenario, " (", round(top3$speedup, 2), "x)", collapse = ", ")
+bottom3_text <- paste0(bottom3$scenario, " (", round(bottom3$speedup, 2), "x)", collapse = ", ")
+op_speedup_text <- paste0(op_speedup$operation, " (", round(op_speedup$median_speedup, 2), "x)", collapse = ", ")
+```
+
+Across all scenarios, speedup ranges from **`r speedup_min`x** to **`r speedup_max`x**.
+
+Operations with the strongest gains are: **`r top3_text`**.
+
+Lower-gain outliers are: **`r bottom3_text`**.
+
+By operation family, median speedup is: **`r op_speedup_text`**.
 
 # Session Info
 ```{r sessionInfo}
