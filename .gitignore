@@ -6,3 +6,4 @@
 renv
 .DS_Store
 **/*.quarto_ipynb
+_freeze/site_libs/*

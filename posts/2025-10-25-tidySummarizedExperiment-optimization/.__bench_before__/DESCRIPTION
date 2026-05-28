@@ -1,0 +1,65 @@
+Type: Package
+Package: tidySummarizedExperiment
+Title: Brings SummarizedExperiment to the Tidyverse 
+Version: 1.19.6
+Authors@R: c(person("Stefano", "Mangiola", email = "mangiolastefano@gmail.com",
+                  role = c("aut", "cre")) )
+Author: Stefano Mangiola [aut, cre] <mangiolastefano@gmail.com>
+Maintainer: Stefano Mangiola <mangiolastefano@gmail.com>
+Description: The tidySummarizedExperiment package provides a set of tools for creating and
+  manipulating tidy data representations of SummarizedExperiment objects. SummarizedExperiment
+  is a widely used data structure in bioinformatics for storing high-throughput genomic data, 
+  such as gene expression or DNA sequencing data. 
+  The tidySummarizedExperiment package introduces a tidy framework for working with SummarizedExperiment objects. 
+  It allows users to convert their data into a tidy format, where each observation is a row 
+  and each variable is a column. This tidy representation simplifies data manipulation, 
+  integration with other tidyverse packages, and enables seamless integration with the broader 
+  ecosystem of tidy tools for data analysis.
+License: GPL-3
+Depends:
+    R (>= 4.3.0),
+    SummarizedExperiment,
+    ttservice (>= 0.5.0)
+Imports:
+	dplyr,
+    tibble (>= 3.0.4),
+    magrittr,
+    tidyr,
+    ggplot2,
+    rlang,
+    purrr,
+    lifecycle,
+    methods,
+    utils,
+    S4Vectors,
+    tidyselect,
+    ellipsis,
+    vctrs,
+    pillar,
+    stringr,
+    cli,
+    fansi,
+    stats,
+    pkgconfig
+Suggests:
+    BiocStyle,
+    testthat,
+    knitr,
+    markdown,
+    rmarkdown,
+    plotly,
+    rbibutils,
+    prettydoc
+VignetteBuilder: 
+    knitr
+RdMacros:
+    lifecycle
+Biarch: true
+biocViews: AssayDomain, Infrastructure, RNASeq, DifferentialExpression, GeneExpression, Normalization, Clustering, QualityControl, Sequencing, Transcription, Transcriptomics
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Roxygen: list(markdown = TRUE)
+LazyDataCompression: xz
+URL: https://github.com/stemangiola/tidySummarizedExperiment
+BugReports: https://github.com/stemangiola/tidySummarizedExperiment/issues
