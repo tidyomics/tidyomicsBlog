@@ -1,0 +1,508 @@
+---
+title: "Speeding up tidySummarizedExperiment through query optimisation and the plyxp backend"
+author: "Stefano Mangiola"
+contributors:
+  - Stefano Mangiola
+  - Michael Love
+  - Justin Landis
+  - Pierre-Paul Axisa
+date: "2026-03-22"
+package: tidySummarizedExperiment
+tags:
+  - tidyomics/tidyomicsBlog
+  - optimization
+  - performance
+  - plyxp
+  - SummarizedExperiment
+  - benchmarking
+description: "Performance optimisation of tidySummarizedExperiment and related benchmark."
+image: benchmark_plot.png
+format:
+  html:
+    toc: true
+    toc-float: true
+    theme: yeti
+    css: ../../../styles.css
+execute:
+  freeze: true
+---
+
+![tidySummarizedExperiment logo](logo.png){width="150px" fig-align="left"}
+
+*Contributors: Michael Love, Justin Landis, Pierre-Paul Axisa*
+
+```{r setup}
+#| echo: false
+#| message: false
+#| warning: false
+
+# Install missing packages if needed (universal approach)
+required_packages <- c("devtools", "ggplot2", "dplyr", "SummarizedExperiment", 
+                      "airway", "microbenchmark", "rlang", "reactable", "patchwork")
+
+for (pkg in required_packages) {
+  if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+    if (pkg %in% c("SummarizedExperiment", "airway")) {
+      if (!require("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+      BiocManager::install(pkg, ask = FALSE)
+    } else {
+      install.packages(pkg)
+    }
+  }
+}
+```
+
+
+The generality of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) makes it easy to interface with several [`tidyverse`](https://www.tidyverse.org/) packages (e.g. [`dplyr`](https://CRAN.R-project.org/package=dplyr), [`tidyr`](https://CRAN.R-project.org/package=tidyr), [`ggplot2`](https://CRAN.R-project.org/package=ggplot2), [`purrr`](https://CRAN.R-project.org/package=purrr), [`plotly`](https://CRAN.R-project.org/package=plotly)). This is possible thanks to its approach of converting [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment) objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to [`SummarizedExperiment`](https://bioconductor.org/packages/SummarizedExperiment). For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume memory and add significant computational overhead to even simple operations such as filtering or grouping. 
+
+With the new [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment) release ([v1.19.7](https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7)), we have introduced new optimisations that address these performance limitations. This optimisation is powered by:
+
+1) Check for the query domain (assay, colData, rowData), and execute specialised operation.
+2) Use of [`plyxp`](https://bioconductor.org/packages/plyxp) for complex domain-specific queries.
+
+_plyxp_ is a tidyomics package developed by [Justin Landis](https://github.com/jtlandis), and first released as part of Bioconductor 3.20 in October 2024. 
+It uses data-masking functionality from the [rlang](https://rlang.r-lib.org/) package to perform efficient operations on _SummarizedExperiment_ objects.
+
+### Motivation and design principles
+
+This benchmark supports ongoing work to improve the performance of [`tidySummarizedExperiment`](https://bioconductor.org/packages/tidySummarizedExperiment). In this benchmark, we show up to 30x improvement in operations such as `mutate()`.
+
+The current optimisation is grounded in three principles:
+
+- Decompose operation series: break `mutate(a=..., b=..., c=...)` into single operations for simpler handling and clearer routing. Reference implementation in `R/mutate.R` (decomposition step) at [L146](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L146).
+- Analyse scope: infer whether each expression targets `colData`, `rowData`, `assays`, or a mix (noting that the current analyser is likely over-engineered and could be simplified). See [L149](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L149).
+- Route mixed operations via plyxp: when an expression touches multiple slots, prefer the plyxp path for correctness and performance. See [L155](https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L155).
+
+These design choices aim to preserve dimnames, avoid unnecessary tibble round-trips, and provide predictable performance across simple and mixed-slot scenarios.
+
+### Example of code optimisation
+
+This was the `mutate()` method before optimisation. The previous implementation relied on 
+`as_tibble() |> dplyr::mutate() |> update_SE_from_tibble(.data)`
+
+The function `update_SE_from_tibble` interprets the input tibble and converts it back to a `SummarizedExperiment`. Although this step provides great generality and flexibility, it is particularly expensive because it must infer whether columns are sample-wise or feature-wise.
+
+```{r example-before}
+#| eval: false
+#| code-fold: true
+#| code-summary: "Show pre-optimization source"
+
+mutate.SummarizedExperiment <- function(.data, ...) {
+    # Legacy implementation of mutate() for SummarizedExperiment:
+    # - Validates requested edits against special/view-only columns
+    # - Performs mutate() via tibble round-trip, then reconstructs the SE
+    # Check that we are not modifying a key column
+    cols <- enquos(...) |> names()
+    
+    # Deprecation of special column names:
+    # capture all quoted args to detect deprecated special-column usage
+    .cols <- enquos(..., .ignore_empty="all") %>% 
+        map(~ quo_name(.x)) %>% unlist()
+    if (is_sample_feature_deprecated_used(.data, .cols)) {
+        # Record deprecated usage into metadata for backward compatibility
+        .data <- ping_old_special_column_into_metadata(.data)
+    }
+    
+    # Identify view-only/special columns (sample/feature keys, etc.)
+    # Use a small slice to reduce overhead while probing structure
+    special_columns <- get_special_columns(
+        # Decrease the size of the dataset
+        .data[1:min(100, nrow(.data)), 1:min(20, ncol(.data))]
+    ) |> c(get_needed_columns(.data))
+    
+    # Are any requested targets among special/view-only columns?
+    tst <-
+        intersect(
+            cols,
+            special_columns
+        ) |> 
+        length() |>
+        gt(0)
+
+
+    if (tst) {
+        columns <-
+            special_columns |>
+                paste(collapse=", ")
+        stop(
+            "tidySummarizedExperiment says:",
+            " you are trying to rename a column that is view only",
+            columns,
+            "(it is not present in the colData).",
+            " If you want to mutate a view-only column,",
+            " make a copy and mutate that one."
+        )
+    }
+
+    # If Ranges column not in query, prefer faster tibble conversion
+    # Skip expanding GRanges columns when not referenced
+    skip_GRanges <-
+        get_GRanges_colnames() %in% 
+        cols |>
+        not()
+    
+    # Round-trip: SE -> tibble -> dplyr::mutate -> SE
+    .data |>
+        as_tibble(skip_GRanges=skip_GRanges) |>
+        dplyr::mutate(...) |>
+        update_SE_from_tibble(.data)
+}
+
+```
+
+The new implementation captures all easy cases, such as sample-only and feature-only metadata `mutate()`. If `mutate()` is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by `plyxp`. Otherwise, the general solution is used.
+
+Key components to compare:
+- The pre-optimization code always uses a tibble round-trip (`as_tibble() |> dplyr::mutate() |> update_SE_from_tibble()`).
+- The optimized code first analyzes scope (`colData`, `rowData`, `assay`, or mixed) and dispatches to specialized paths.
+- The fallback still exists (`mutate_via_tibble`) for complex cases, preserving generality.
+
+```{r example-after}
+#| eval: false
+#| code-fold: true
+#| code-summary: "Show post-optimization source"
+mutate.SummarizedExperiment <- function(.data, ...) {
+
+       # Check if query is composed (multiple expressions)
+    if (is_composed("mutate", ...)) return(decompose_tidy_operation("mutate", ...)(.data))
+
+        # Check for scope and dispatch elegantly
+        scope_report <- analyze_query_scope_mutate(.data, ...)
+        scope <- scope_report$scope
+
+        result <-
+        if(scope == "coldata_only") modify_samples(.data, "mutate", ...)
+        else if(scope == "rowdata_only") modify_features(.data, "mutate", ...)
+        else if(scope == "assay_only") mutate_assay(.data, ...)
+        else if(scope == "mixed") modify_se_plyxp(.data, "mutate", scope_report, ...)
+        else mutate_via_tibble(.data, ...)
+
+        # Record latest mutate scope into metadata for testing/introspection
+        meta <- S4Vectors::metadata(result)
+        if (is.null(meta)) meta <- list()
+        meta$latest_mutate_scope_report <- scope_report
+        S4Vectors::metadata(result) <- meta
+
+        return(result)
+
+}
+
+```
+
+
+# Benchmarking Overview
+
+This vignette benchmarks a set of [`mutate()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/mutate.html), [`filter()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/filter.html), [`select()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/select.html), and [`distinct()`](https://tidyomics.github.io/tidySummarizedExperiment/reference/distinct.html) scenarios (see [documentation](https://bioconductor.org/packages/tidySummarizedExperiment)) comparing performance before and after optimisation, by explicitly checking out specific commits via git worktree, loading each commit's code with `devtools::load_all()`, running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.
+
+- Before optimisation: [commit 87445757d2d0332e7d335d22cd28f73568b7db66](https://github.com/tidyomics/tidySummarizedExperiment/commit/87445757d2d0332e7d335d22cd28f73568b7db66)
+- After optimisation: [commit 9f7c26e0519c92f9682b270d566da127367bcbc0](https://github.com/tidyomics/tidySummarizedExperiment/commit/9f7c26e0519c92f9682b270d566da127367bcbc0)
+
+
+### Setup helper functions
+
+```{r helpers}
+#| code-fold: true
+#| code-summary: "Show the code"
+#| message: false
+#| warning: false
+
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(dplyr)
+  library(SummarizedExperiment)
+  library(rlang)
+  library(devtools)
+  library(airway)
+  library(microbenchmark)
+  library(reactable)
+  library(patchwork)
+})
+
+load_branch_code <- function(worktree_dir) {
+  if (!requireNamespace("devtools", quietly = TRUE)) stop("Please install devtools to run this vignette.")
+  # Debug: print the directory we're looking for
+  cat("Looking for worktree directory:", worktree_dir, "\n")
+  cat("Directory exists:", dir.exists(worktree_dir), "\n")
+  cat("Current working directory:", getwd(), "\n")
+  # Check if directory exists
+  if (!dir.exists(worktree_dir)) {
+    stop(paste("Worktree directory does not exist:", worktree_dir))
+  }
+  suppressMessages(devtools::load_all(worktree_dir, quiet = TRUE))
+}
+
+create_airway_test_se <- function() {
+  suppressPackageStartupMessages(library(airway))
+  data(airway)
+  se <- airway
+  se[1:200, ]
+}
+
+benchmark_scenarios <- function() {
+  list(
+    coldata_simple_assignment = quo({ se |> mutate(new_dex = dex) }),
+    coldata_arithmetic = quo({ se |> mutate(avgLength_plus_5 = avgLength + 5) }),
+    coldata_concat = quo({ se |> mutate(sample_info = paste(cell, dex, SampleName, sep = "_")) }),
+    coldata_grouped_mean = quo({ se |> group_by(dex) |> mutate(avgLength_group_mean = mean(avgLength)) |> ungroup() }),
+    assay_simple_assignment = quo({ se |> mutate(counts_copy = counts) }),
+    assay_plus_one = quo({ se |> mutate(counts_plus_1 = counts + 1) }),
+    assay_log = quo({ se |> mutate(log_counts_manual = log2(counts + 1)) }),
+    complex_conditional_coldata = quo({ se |> mutate(length_group = ifelse(avgLength > mean(avgLength), "longer", "shorter")) }),
+    complex_nested = quo({ se |> mutate(complex_category = ifelse(dex == "trt" & avgLength > mean(avgLength), "treated_long", ifelse(dex == "untrt", "untreated", "other"))) }),
+    mixed_assay_coldata = quo({ se |> mutate(new_counts = counts * avgLength) }),
+    multiple_simple_assay = quo({ se |> mutate(normalized_counts = counts / 1000, sqrt_counts = sqrt(counts)) }),
+    chained_mutates = quo({ se |> mutate(tmp = avgLength * 2) |> mutate(flag = ifelse(tmp > mean(tmp), 1, 0)) }),
+
+    # Filter benchmarks (scoped and non-rectangular)
+    filter_coldata_simple = quo({ se |> filter(dex == "trt") }),
+    filter_coldata_numeric = quo({ se |> filter(avgLength > median(avgLength)) }),
+    filter_assay_nonrect = quo({ se |> filter(counts > 0) }),
+
+    # Select benchmarks (covering colData-only, rowData-only, assays-only, mixed)
+    select_coldata_simple = quo({ se |> select(.sample, dex) }),
+    select_rowdata_simple = quo({ se |> select(.feature) }),
+    select_assay_only = quo({ se |> select(counts) }),
+    select_mixed_keys_counts = quo({ se |> select(.sample, .feature, counts) }),
+    select_coldata_wide = quo({ se |> select(.sample, dex, avgLength, SampleName) }),
+
+    # Distinct benchmarks (covering colData-only, rowData-only, assays-only, mixed)
+    distinct_coldata_simple = quo({ se |> distinct(dex) }),
+    distinct_coldata_multiple = quo({ se |> distinct(dex, avgLength) }),
+    distinct_rowdata_simple = quo({ se |> distinct(.feature) }),
+    distinct_assay_only = quo({ se |> distinct(counts) }),
+    distinct_mixed_keys_counts = quo({ se |> distinct(.sample, .feature, counts) }),
+    distinct_coldata_wide = quo({ se |> distinct(.sample, dex, avgLength, SampleName) }),
+    distinct_with_keep_all = quo({ se |> distinct(dex, .keep_all = TRUE) }),
+    distinct_complex_expression = quo({ se |> distinct(dex, avgLength) })
+  )
+}
+
+run_one <- function(expr_quo, reps = 5L) {
+  se_base <- create_airway_test_se()
+  mb <- microbenchmark::microbenchmark(
+    eval_tidy(expr_quo),
+    times = reps,
+    setup = { se <- se_base },          # reuse the same input, avoid recreating inside the timed expr
+    control = list(warmup = 2L)
+  )
+  # microbenchmark returns nanoseconds; convert to milliseconds
+  as.numeric(mb$time) / 1e6
+}
+
+run_all_scenarios <- function(branch_label, reps = 7L) {
+  scenarios <- benchmark_scenarios()
+  out <- list()
+  for (nm in names(scenarios)) {
+    tms <- run_one(scenarios[[nm]], reps = reps)
+    out[[length(out) + 1L]] <- data.frame(
+      branch = branch_label,
+      scenario = nm,
+      replicate = seq_along(tms),
+      elapsed_ms = tms,
+      stringsAsFactors = FALSE
+    )
+  }
+  bind_rows(out)
+}
+
+# Parallel version: run each scenario on a separate worker
+run_all_scenarios_parallel <- function(branch_label, reps = 20L, workers = 1L, initializer = NULL) {
+  scenarios <- benchmark_scenarios()
+  nms <- names(scenarios)
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+  future::plan(future::multisession, workers = workers)
+  res <- future.apply::future_lapply(nms, function(nm) {
+    if (!is.null(initializer)) initializer()
+    tms <- run_one(scenarios[[nm]], reps = reps)
+    data.frame(
+      branch = branch_label,
+      scenario = nm,
+      replicate = seq_along(tms),
+      elapsed_ms = tms,
+      stringsAsFactors = FALSE
+    )
+  }, future.seed = TRUE)
+  dplyr::bind_rows(res)
+}
+```
+
+### Run benchmarks on both branches
+
+```{r worktrees}
+#| code-fold: true
+#| code-summary: "Show the code"
+#| cache: false
+#| warning: false
+#| message: false
+
+# Worktree directories (already exist in the post directory)
+wt_before <- ".__bench_before__"
+wt_after <- ".__bench_after__"
+
+# Verify worktrees exist
+if (!dir.exists(wt_before)) {
+  stop("Worktree directory does not exist: ", wt_before)
+}
+if (!dir.exists(wt_after)) {
+  stop("Worktree directory does not exist: ", wt_after)
+}
+
+# Before optimisation (commit 87445757)
+load_branch_code(wt_before)
+res_before <- run_all_scenarios(branch_label = "before_optimization", reps = 10L)
+
+# After optimisation (commit 9f7c26e)
+load_branch_code(wt_after)
+res_after <- run_all_scenarios(branch_label = "after_optimization", reps = 10L)
+
+results <- dplyr::bind_rows(res_before, res_after) |>
+  dplyr::mutate(operation = dplyr::case_when(
+    grepl("^filter", scenario) ~ "filter",
+    grepl("^select", scenario) ~ "select",
+    grepl("^distinct", scenario) ~ "distinct",
+    TRUE ~ "mutate"
+  ))
+
+summary_table <- results |>
+  group_by(branch, scenario) |>
+  summarise(median_ms = median(elapsed_ms), .groups = "drop") |>
+  tidyr::pivot_wider(names_from = branch, values_from = median_ms) |> 
+  dplyr::mutate(speedup = round(before_optimization / after_optimization, 2))
+
+```
+
+```{r summary_table}
+#| echo: false
+#| message: false
+#| warning: false
+
+reactable::reactable(
+  summary_table,
+  searchable = TRUE,
+  filterable = TRUE,
+  sortable = TRUE,
+  pagination = TRUE,
+  defaultPageSize = 10,
+  highlight = TRUE,
+  striped = TRUE,
+  bordered = TRUE,
+  compact = TRUE,
+  defaultColDef = reactable::colDef(align = "left", minWidth = 120),
+  columns = list(
+    scenario = reactable::colDef(name = "Scenario", minWidth = 220),
+    after_optimization = reactable::colDef(name = "After (ms)", format = reactable::colFormat(digits = 1)),
+    before_optimization = reactable::colDef(name = "Before (ms)", format = reactable::colFormat(digits = 1)),
+    speedup = reactable::colDef(name = "Speedup (x)", format = reactable::colFormat(digits = 2))
+  )
+)
+```
+
+# Visualize with combined performance plots
+
+```{r plot}
+#| code-fold: true
+#| code-summary: "Show the code"
+#| fig-width: 14
+#| fig-height: 8
+dodge_w <- 0.7
+
+p_box <- ggplot(results, aes(x = scenario, y = elapsed_ms, fill = branch)) +
+  geom_boxplot(position = position_dodge(width = dodge_w), width = 0.7, outlier.shape = NA) +
+
+  # Add jittered points aligned with the dodged boxplots
+  geom_point(
+    position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0, dodge.width = dodge_w), 
+    alpha = 0.6, 
+    size = 0.5
+  ) +
+  scale_y_log10() + 
+  coord_flip() +
+  facet_grid(operation ~ ., scales = "free_y", space = "free_y") +
+  annotation_logticks(sides = "b") +
+  labs(title = "Performance comparison: Before vs After optimization",
+       x = "Scenario",
+       y = "Elapsed (ms)") +
+  theme_bw() +
+  
+  # Angle x labels  
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Speedup summary panel (median before/after ratio)
+speedup_plot_data <- summary_table |>
+  dplyr::mutate(operation = dplyr::case_when(
+    grepl("^filter", scenario) ~ "filter",
+    grepl("^select", scenario) ~ "select",
+    grepl("^distinct", scenario) ~ "distinct",
+    TRUE ~ "mutate"
+  ))
+
+p_speedup <- ggplot(
+  speedup_plot_data,
+  aes(x = speedup, y = reorder(scenario, speedup))
+) +
+  geom_col(width = 0.7, fill = "grey70", color = "grey40") +
+  facet_grid(operation ~ ., scales = "free_y", space = "free_y") +
+  labs(
+    title = "Median speedup by scenario",
+    x = "Speedup (before/after, x)",
+    y = NULL
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+combined_plot <- p_box + p_speedup + patchwork::plot_layout(widths = c(2.3, 1))
+combined_plot
+
+# Save the combined figure
+ggsave("benchmark_plot.png", plot = combined_plot, width = 14, height = 8)
+
+  
+```
+
+### Interpreting the benchmark results
+
+```{r results_interpretation_values}
+#| include: false
+#| message: false
+#| warning: false
+speedup_rank <- summary_table |>
+  dplyr::arrange(dplyr::desc(speedup))
+
+top3 <- head(speedup_rank, 3)
+bottom3 <- tail(speedup_rank, 3) |>
+  dplyr::arrange(speedup)
+
+op_speedup <- summary_table |>
+  dplyr::mutate(operation = dplyr::case_when(
+    grepl("^filter", scenario) ~ "filter",
+    grepl("^select", scenario) ~ "select",
+    grepl("^distinct", scenario) ~ "distinct",
+    TRUE ~ "mutate"
+  )) |>
+  dplyr::group_by(operation) |>
+  dplyr::summarise(median_speedup = median(speedup), .groups = "drop") |>
+  dplyr::arrange(dplyr::desc(median_speedup))
+
+speedup_min <- round(min(summary_table$speedup), 2)
+speedup_max <- round(max(summary_table$speedup), 2)
+top3_text <- paste0(top3$scenario, " (", round(top3$speedup, 2), "x)", collapse = ", ")
+bottom3_text <- paste0(bottom3$scenario, " (", round(bottom3$speedup, 2), "x)", collapse = ", ")
+op_speedup_text <- paste0(op_speedup$operation, " (", round(op_speedup$median_speedup, 2), "x)", collapse = ", ")
+```
+
+Across all scenarios, speedup ranges from **`r speedup_min`x** to **`r speedup_max`x**.
+
+Operations with the strongest gains are: **`r top3_text`**.
+
+Lower-gain outliers are: **`r bottom3_text`**.
+
+By operation family, median speedup is: **`r op_speedup_text`**.
+
+# Session Info
+```{r sessionInfo}
+#| echo: false
+sessionInfo()
+```
+
+
