@@ -29,7 +29,7 @@ The Tidyomics community is organising a hackathon during the pre-conference prog
 
 This is a community event for people who build, use, teach, document, or are curious about tidy interfaces for omics data analysis in R. Whether you are a regular contributor or new to Tidyomics, the hackathon is a chance to meet collaborators, turn ideas into concrete issues, and make progress on packages, tutorials, and documentation together.
 
-And yes, there will be Tidyomics stickers to give away during the event, another good reason to join us in Turku.
+Grab your Tidyomics stickers during the conference! Thanks to Bea Campillo Minano for printing them.
 
 ![Tidyomics stickers for hackathon participants](tidyomics-sticker-giveaway.png){.cover-image width=70% fig-align="center"}
 
