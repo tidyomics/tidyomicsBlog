@@ -11,7 +11,7 @@ website:
   site-url: https://tidyomics.github.io/tidyomicsBlog/
   description: "The Tidyomics Blog"
   open-graph: true
-  favicon: favicon.png
+  favicon: favicon-transparent.png
   navbar:
     right:
       - about.qmd
