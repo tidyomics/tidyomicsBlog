@@ -1,6 +1,6 @@
 ---
 title: "EuroBioC2026 Tidyomics Hackathon"
-author: "Nicholas Cooley"
+author: "Stefano Mangiola"
 contributors:
   - Juan Henao
   - Stevie Pederson
