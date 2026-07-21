@@ -1,5 +1,5 @@
 ---
-title: "Products from EuroBioC2026 Tidyomics Hackathon"
+title: "Outcomes from EuroBioC2026 Tidyomics Hackathon"
 author: "Juan Henao"
 date: "2026-07-20"
 package: tidyomics
@@ -9,7 +9,7 @@ tags:
   - tidyverse
   - bioconductor
 description: "Maintaining and refining the Tidyomics ecosystem: enhancing core packages and interoperability for EuroBioC2026"
-image: participants.png
+image: thumbnail.jpg
 format:
   html:
     toc: true
