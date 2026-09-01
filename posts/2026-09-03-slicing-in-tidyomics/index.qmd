@@ -11,6 +11,7 @@ tags:
   - slice
   - dplyr
 description: "How to use dplyr-style slice operations on omics data objects in the tidyomics project."
+image: slice.png
 format:
   html:
     toc: true
@@ -39,7 +40,15 @@ for genomic ranges objects.
 
 This post walks through how slicing works across _tidyomics_ packages.
 
-# tidyseurat
+# Transcriptomics: tidyseurat, tidySCE and tidySE
+
+All three transcriptomics packages — `tidyseurat`, `tidySingleCellExperiment`,
+and `tidySummarizedExperiment` — implement `slice_*` in the same way, operating
+on cells or samples (i.e. columns of the underlying data matrix). We use
+`tidyseurat` here as a representative example; the same code patterns apply
+directly to the other two packages.
+
+## tidyseurat
 
 `tidyseurat` lets you work with Seurat objects using familiar tidyverse verbs.
 We'll use `pbmc_small`, a small PBMC dataset bundled with Seurat (80 cells, 230 genes).
@@ -57,7 +66,7 @@ seurat_obj <- pbmc_small |>
   select(-starts_with("RNA"))
 ```
 
-With `slice()` you can select cells by position, just as you would rows in a tibble. 
+With `slice()` you can select cells by position, just as you would rows in a tibble.
 In Bioconductor packages, and in _Seurat_, cells are represented as columns in the counts matrix.
 
 ```{r}
@@ -88,7 +97,14 @@ seurat_obj |>
   select(-starts_with("PC"))
 ```
 
-# plyranges
+## tidySE and tidySCE
+
+`tidySummarizedExperiment` (tidySE) and `tidySingleCellExperiment` (tidySCE)
+also gained `slice_*` support in 2023.
+The functions operate on samples (columns) in the same way as
+`tidyseurat` operates on cells, so the patterns above transfer directly.
+
+# Genomics: plyranges
 
 `plyranges` extends dplyr-style verbs to Bioconductor `GRanges` objects.
 We construct a small ranges object to demonstrate slicing:
@@ -147,13 +163,6 @@ by_type |> slice_max(gc)
 # One range from each type
 by_type |> slice_sample(n = 1)
 ```
-
-# tidySE and tidySCE
-
-`tidySummarizedExperiment` (tidySE) and `tidySingleCellExperiment` (tidySCE)
-also gained `slice_*` support in 2023. 
-The functions operate on samples (columns) in the same way as
-`tidyseurat` operates on cells, so the patterns above transfer directly.
 
 # Session information
 
