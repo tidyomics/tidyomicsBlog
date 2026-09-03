@@ -20,6 +20,11 @@ execute:
   freeze: true
 ---
 
+```{r}
+#| include: false
+options(crayon.enabled = FALSE, cli.num_colors = 1)
+```
+
 # Introduction
 
 The tidyverse verb `slice()` lets you select observations by position, returning a subset of the data based on integer indices. There are also some related convenience functions, which return observations by:
