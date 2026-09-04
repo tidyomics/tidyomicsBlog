@@ -24,6 +24,13 @@ execute:
 #| include: false
 Sys.setenv(NO_COLOR = "1")
 options(crayon.enabled = FALSE, cli.num_colors = 0)
+local({
+  hook <- knitr::knit_hooks$get("output")
+  knitr::knit_hooks$set(output = function(x, options) {
+    x <- gsub("\033\\[[0-9;]*m", "", x)
+    hook(x, options)
+  })
+})
 ```
 
 # Introduction
