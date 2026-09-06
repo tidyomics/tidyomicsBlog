@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Stefano Mangiola">
+<meta name="dcterms.date" content="2026-03-22">
+<meta name="description" content="Performance optimisation of tidySummarizedExperiment and related benchmark.">
+
+<title>Speeding up tidySummarizedExperiment through query optimisation and the plyxp backend – tidyomicsBlog</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon-transparent.png" rel="icon" type="image/png">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-ca2e1c130e42dc5088189c72e1fdc568.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../../site_libs/core-js-2.5.3/shim.min.js"></script>
+<script src="../../site_libs/react-18.2.0/react.min.js"></script>
+<script src="../../site_libs/react-18.2.0/react-dom.min.js"></script>
+<script src="../../site_libs/reactwidget-2.0.0/react-tools.js"></script>
+<link href="../../site_libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="../../site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="../../site_libs/reactable-0.4.5/reactable.css" rel="stylesheet">
+<script src="../../site_libs/reactable-binding-0.4.5/reactable.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../../styles.css">
+<meta property="og:title" content="Speeding up tidySummarizedExperiment through query optimisation and the plyxp backend – tidyomicsBlog">
+<meta property="og:description" content="Performance optimisation of tidySummarizedExperiment and related benchmark.">
+<meta property="og:image" content="https://tidyomics.github.io/tidyomicsBlog/posts/2025-10-25-tidySummarizedExperiment-optimization/benchmark_plot.png">
+<meta property="og:site_name" content="tidyomicsBlog">
+<meta property="og:image:height" content="2400">
+<meta property="og:image:width" content="4200">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">tidyomicsBlog</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../contributing.html"> 
+<span class="menu-text">Contributing</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/tidyomics/tidyomicsBlog"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Speeding up tidySummarizedExperiment through query optimisation and the plyxp backend</h1>
+                  <div>
+        <div class="description">
+          Performance optimisation of tidySummarizedExperiment and related benchmark.
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Stefano Mangiola </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">March 22, 2026</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#motivation-and-design-principles" id="toc-motivation-and-design-principles" class="nav-link active" data-scroll-target="#motivation-and-design-principles">Motivation and design principles</a></li>
+  <li><a href="#example-of-code-optimisation" id="toc-example-of-code-optimisation" class="nav-link" data-scroll-target="#example-of-code-optimisation">Example of code optimisation</a></li>
+  <li><a href="#benchmarking-overview" id="toc-benchmarking-overview" class="nav-link" data-scroll-target="#benchmarking-overview">Benchmarking Overview</a>
+  <ul class="collapse">
+  <li><a href="#setup-helper-functions" id="toc-setup-helper-functions" class="nav-link" data-scroll-target="#setup-helper-functions">Setup helper functions</a></li>
+  <li><a href="#run-benchmarks-on-both-branches" id="toc-run-benchmarks-on-both-branches" class="nav-link" data-scroll-target="#run-benchmarks-on-both-branches">Run benchmarks on both branches</a></li>
+  </ul></li>
+  <li><a href="#visualize-with-combined-performance-plots" id="toc-visualize-with-combined-performance-plots" class="nav-link" data-scroll-target="#visualize-with-combined-performance-plots">Visualize with combined performance plots</a>
+  <ul class="collapse">
+  <li><a href="#interpreting-the-benchmark-results" id="toc-interpreting-the-benchmark-results" class="nav-link" data-scroll-target="#interpreting-the-benchmark-results">Interpreting the benchmark results</a></li>
+  </ul></li>
+  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session Info</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<div class="quarto-figure quarto-figure-left">
+<figure class="figure">
+<p><img src="logo.png" class="img-fluid figure-img" width="150"></p>
+<figcaption>tidySummarizedExperiment logo</figcaption>
+</figure>
+</div>
+<p><em>Contributors: Michael Love, Justin Landis, Pierre-Paul Axisa</em></p>
+<p>The generality of <a href="https://bioconductor.org/packages/tidySummarizedExperiment"><code>tidySummarizedExperiment</code></a> makes it easy to interface with several <a href="https://www.tidyverse.org/"><code>tidyverse</code></a> packages (e.g.&nbsp;<a href="https://CRAN.R-project.org/package=dplyr"><code>dplyr</code></a>, <a href="https://CRAN.R-project.org/package=tidyr"><code>tidyr</code></a>, <a href="https://CRAN.R-project.org/package=ggplot2"><code>ggplot2</code></a>, <a href="https://CRAN.R-project.org/package=purrr"><code>purrr</code></a>, <a href="https://CRAN.R-project.org/package=plotly"><code>plotly</code></a>). This is possible thanks to its approach of converting <a href="https://bioconductor.org/packages/SummarizedExperiment"><code>SummarizedExperiment</code></a> objects to tibbles, performing operations, and converting back to the original format. This conversion process introduces substantial overhead when working with large-scale datasets. Each operation requires multiple data transformations, with the conversion to tibble format creating memory copies of the entire dataset, followed by the reverse conversion back to <a href="https://bioconductor.org/packages/SummarizedExperiment"><code>SummarizedExperiment</code></a>. For datasets containing hundreds of samples and tens of thousands of genes, these repeated conversions can consume memory and add significant computational overhead to even simple operations such as filtering or grouping.</p>
+<p>With the new <a href="https://bioconductor.org/packages/tidySummarizedExperiment"><code>tidySummarizedExperiment</code></a> release (<a href="https://github.com/tidyomics/tidySummarizedExperiment/releases/tag/v1.19.7">v1.19.7</a>), we have introduced new optimisations that address these performance limitations. This optimisation is powered by:</p>
+<ol type="1">
+<li>Check for the query domain (assay, colData, rowData), and execute specialised operation.</li>
+<li>Use of <a href="https://bioconductor.org/packages/plyxp"><code>plyxp</code></a> for complex domain-specific queries.</li>
+</ol>
+<p><em>plyxp</em> is a tidyomics package developed by <a href="https://github.com/jtlandis">Justin Landis</a>, and first released as part of Bioconductor 3.20 in October 2024. It uses data-masking functionality from the <a href="https://rlang.r-lib.org/">rlang</a> package to perform efficient operations on <em>SummarizedExperiment</em> objects.</p>
+<section id="motivation-and-design-principles" class="level3">
+<h3 class="anchored" data-anchor-id="motivation-and-design-principles">Motivation and design principles</h3>
+<p>This benchmark supports ongoing work to improve the performance of <a href="https://bioconductor.org/packages/tidySummarizedExperiment"><code>tidySummarizedExperiment</code></a>. In this benchmark, we show up to 30x improvement in operations such as <code>mutate()</code>.</p>
+<p>The current optimisation is grounded in three principles:</p>
+<ul>
+<li>Decompose operation series: break <code>mutate(a=..., b=..., c=...)</code> into single operations for simpler handling and clearer routing. Reference implementation in <code>R/mutate.R</code> (decomposition step) at <a href="https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L146">L146</a>.</li>
+<li>Analyse scope: infer whether each expression targets <code>colData</code>, <code>rowData</code>, <code>assays</code>, or a mix (noting that the current analyser is likely over-engineered and could be simplified). See <a href="https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L149">L149</a>.</li>
+<li>Route mixed operations via plyxp: when an expression touches multiple slots, prefer the plyxp path for correctness and performance. See <a href="https://github.com/tidyomics/tidySummarizedExperiment/blob/92072d71f9d3b9a82cfc5fdced8e52477c44d80f/R/mutate.R#L155">L155</a>.</li>
+</ul>
+<p>These design choices aim to preserve dimnames, avoid unnecessary tibble round-trips, and provide predictable performance across simple and mixed-slot scenarios.</p>
+</section>
+<section id="example-of-code-optimisation" class="level3">
+<h3 class="anchored" data-anchor-id="example-of-code-optimisation">Example of code optimisation</h3>
+<p>This was the <code>mutate()</code> method before optimisation. The previous implementation relied on <code>as_tibble() |&gt; dplyr::mutate() |&gt; update_SE_from_tibble(.data)</code></p>
+<p>The function <code>update_SE_from_tibble</code> interprets the input tibble and converts it back to a <code>SummarizedExperiment</code>. Although this step provides great generality and flexibility, it is particularly expensive because it must infer whether columns are sample-wise or feature-wise.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show pre-optimization source</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>mutate.SummarizedExperiment <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Legacy implementation of mutate() for SummarizedExperiment:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># - Validates requested edits against special/view-only columns</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># - Performs mutate() via tibble round-trip, then reconstructs the SE</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that we are not modifying a key column</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    cols <span class="ot">&lt;-</span> <span class="fu">enquos</span>(...) <span class="sc">|&gt;</span> <span class="fu">names</span>()</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Deprecation of special column names:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># capture all quoted args to detect deprecated special-column usage</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    .cols <span class="ot">&lt;-</span> <span class="fu">enquos</span>(..., <span class="at">.ignore_empty=</span><span class="st">"all"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">quo_name</span>(.x)) <span class="sc">%&gt;%</span> <span class="fu">unlist</span>()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is_sample_feature_deprecated_used</span>(.data, .cols)) {</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Record deprecated usage into metadata for backward compatibility</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        .data <span class="ot">&lt;-</span> <span class="fu">ping_old_special_column_into_metadata</span>(.data)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Identify view-only/special columns (sample/feature keys, etc.)</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use a small slice to reduce overhead while probing structure</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    special_columns <span class="ot">&lt;-</span> <span class="fu">get_special_columns</span>(</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Decrease the size of the dataset</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        .data[<span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">100</span>, <span class="fu">nrow</span>(.data)), <span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">20</span>, <span class="fu">ncol</span>(.data))]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span> <span class="fu">c</span>(<span class="fu">get_needed_columns</span>(.data))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Are any requested targets among special/view-only columns?</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    tst <span class="ot">&lt;-</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="fu">intersect</span>(</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            cols,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            special_columns</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        ) <span class="sc">|&gt;</span> </span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">length</span>() <span class="sc">|&gt;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="fu">gt</span>(<span class="dv">0</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (tst) {</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        columns <span class="ot">&lt;-</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>            special_columns <span class="sc">|&gt;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                <span class="fu">paste</span>(<span class="at">collapse=</span><span class="st">", "</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        <span class="fu">stop</span>(</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>            <span class="st">"tidySummarizedExperiment says:"</span>,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>            <span class="st">" you are trying to rename a column that is view only"</span>,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>            columns,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>            <span class="st">"(it is not present in the colData)."</span>,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>            <span class="st">" If you want to mutate a view-only column,"</span>,</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>            <span class="st">" make a copy and mutate that one."</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If Ranges column not in query, prefer faster tibble conversion</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Skip expanding GRanges columns when not referenced</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    skip_GRanges <span class="ot">&lt;-</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>        <span class="fu">get_GRanges_colnames</span>() <span class="sc">%in%</span> </span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        cols <span class="sc">|&gt;</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">not</span>()</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Round-trip: SE -&gt; tibble -&gt; dplyr::mutate -&gt; SE</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    .data <span class="sc">|&gt;</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>        <span class="fu">as_tibble</span>(<span class="at">skip_GRanges=</span>skip_GRanges) <span class="sc">|&gt;</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>        dplyr<span class="sc">::</span><span class="fu">mutate</span>(...) <span class="sc">|&gt;</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>        <span class="fu">update_SE_from_tibble</span>(.data)</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The new implementation captures all easy cases, such as sample-only and feature-only metadata <code>mutate()</code>. If <code>mutate()</code> is a mixed operation that can be factored out to sample- and feature-wise operation it is handled by <code>plyxp</code>. Otherwise, the general solution is used.</p>
+<p>Key components to compare: - The pre-optimization code always uses a tibble round-trip (<code>as_tibble() |&gt; dplyr::mutate() |&gt; update_SE_from_tibble()</code>). - The optimized code first analyzes scope (<code>colData</code>, <code>rowData</code>, <code>assay</code>, or mixed) and dispatches to specialized paths. - The fallback still exists (<code>mutate_via_tibble</code>) for complex cases, preserving generality.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show post-optimization source</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>mutate.SummarizedExperiment <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, ...) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>       <span class="co"># Check if query is composed (multiple expressions)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is_composed</span>(<span class="st">"mutate"</span>, ...)) <span class="fu">return</span>(<span class="fu">decompose_tidy_operation</span>(<span class="st">"mutate"</span>, ...)(.data))</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Check for scope and dispatch elegantly</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        scope_report <span class="ot">&lt;-</span> <span class="fu">analyze_query_scope_mutate</span>(.data, ...)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        scope <span class="ot">&lt;-</span> scope_report<span class="sc">$</span>scope</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        result <span class="ot">&lt;-</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span>(scope <span class="sc">==</span> <span class="st">"coldata_only"</span>) <span class="fu">modify_samples</span>(.data, <span class="st">"mutate"</span>, ...)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">if</span>(scope <span class="sc">==</span> <span class="st">"rowdata_only"</span>) <span class="fu">modify_features</span>(.data, <span class="st">"mutate"</span>, ...)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">if</span>(scope <span class="sc">==</span> <span class="st">"assay_only"</span>) <span class="fu">mutate_assay</span>(.data, ...)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">if</span>(scope <span class="sc">==</span> <span class="st">"mixed"</span>) <span class="fu">modify_se_plyxp</span>(.data, <span class="st">"mutate"</span>, scope_report, ...)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="fu">mutate_via_tibble</span>(.data, ...)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Record latest mutate scope into metadata for testing/introspection</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        meta <span class="ot">&lt;-</span> S4Vectors<span class="sc">::</span><span class="fu">metadata</span>(result)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">is.null</span>(meta)) meta <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        meta<span class="sc">$</span>latest_mutate_scope_report <span class="ot">&lt;-</span> scope_report</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        S4Vectors<span class="sc">::</span><span class="fu">metadata</span>(result) <span class="ot">&lt;-</span> meta</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(result)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="benchmarking-overview" class="level1">
+<h1>Benchmarking Overview</h1>
+<p>This vignette benchmarks a set of <a href="https://tidyomics.github.io/tidySummarizedExperiment/reference/mutate.html"><code>mutate()</code></a>, <a href="https://tidyomics.github.io/tidySummarizedExperiment/reference/filter.html"><code>filter()</code></a>, <a href="https://tidyomics.github.io/tidySummarizedExperiment/reference/select.html"><code>select()</code></a>, and <a href="https://tidyomics.github.io/tidySummarizedExperiment/reference/distinct.html"><code>distinct()</code></a> scenarios (see <a href="https://bioconductor.org/packages/tidySummarizedExperiment">documentation</a>) comparing performance before and after optimisation, by explicitly checking out specific commits via git worktree, loading each commit’s code with <code>devtools::load_all()</code>, running the same scenarios multiple times, and comparing the runtimes with ggplot boxplots.</p>
+<ul>
+<li>Before optimisation: <a href="https://github.com/tidyomics/tidySummarizedExperiment/commit/87445757d2d0332e7d335d22cd28f73568b7db66">commit 87445757d2d0332e7d335d22cd28f73568b7db66</a></li>
+<li>After optimisation: <a href="https://github.com/tidyomics/tidySummarizedExperiment/commit/9f7c26e0519c92f9682b270d566da127367bcbc0">commit 9f7c26e0519c92f9682b270d566da127367bcbc0</a></li>
+</ul>
+<section id="setup-helper-functions" class="level3">
+<h3 class="anchored" data-anchor-id="setup-helper-functions">Setup helper functions</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(dplyr)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(SummarizedExperiment)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(rlang)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(devtools)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(airway)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(microbenchmark)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(reactable)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(patchwork)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>load_branch_code <span class="ot">&lt;-</span> <span class="cf">function</span>(worktree_dir) {</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"devtools"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">stop</span>(<span class="st">"Please install devtools to run this vignette."</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Debug: print the directory we're looking for</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Looking for worktree directory:"</span>, worktree_dir, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Directory exists:"</span>, <span class="fu">dir.exists</span>(worktree_dir), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Current working directory:"</span>, <span class="fu">getwd</span>(), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check if directory exists</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(worktree_dir)) {</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="fu">paste</span>(<span class="st">"Worktree directory does not exist:"</span>, worktree_dir))</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressMessages</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(worktree_dir, <span class="at">quiet =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>create_airway_test_se <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(airway))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data</span>(airway)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  se <span class="ot">&lt;-</span> airway</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  se[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>, ]</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>benchmark_scenarios <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">coldata_simple_assignment =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">new_dex =</span> dex) }),</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">coldata_arithmetic =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">avgLength_plus_5 =</span> avgLength <span class="sc">+</span> <span class="dv">5</span>) }),</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">coldata_concat =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">sample_info =</span> <span class="fu">paste</span>(cell, dex, SampleName, <span class="at">sep =</span> <span class="st">"_"</span>)) }),</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">coldata_grouped_mean =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">group_by</span>(dex) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">avgLength_group_mean =</span> <span class="fu">mean</span>(avgLength)) <span class="sc">|&gt;</span> <span class="fu">ungroup</span>() }),</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">assay_simple_assignment =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">counts_copy =</span> counts) }),</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">assay_plus_one =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">counts_plus_1 =</span> counts <span class="sc">+</span> <span class="dv">1</span>) }),</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">assay_log =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">log_counts_manual =</span> <span class="fu">log2</span>(counts <span class="sc">+</span> <span class="dv">1</span>)) }),</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">complex_conditional_coldata =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">length_group =</span> <span class="fu">ifelse</span>(avgLength <span class="sc">&gt;</span> <span class="fu">mean</span>(avgLength), <span class="st">"longer"</span>, <span class="st">"shorter"</span>)) }),</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">complex_nested =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">complex_category =</span> <span class="fu">ifelse</span>(dex <span class="sc">==</span> <span class="st">"trt"</span> <span class="sc">&amp;</span> avgLength <span class="sc">&gt;</span> <span class="fu">mean</span>(avgLength), <span class="st">"treated_long"</span>, <span class="fu">ifelse</span>(dex <span class="sc">==</span> <span class="st">"untrt"</span>, <span class="st">"untreated"</span>, <span class="st">"other"</span>))) }),</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">mixed_assay_coldata =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">new_counts =</span> counts <span class="sc">*</span> avgLength) }),</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">multiple_simple_assay =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">normalized_counts =</span> counts <span class="sc">/</span> <span class="dv">1000</span>, <span class="at">sqrt_counts =</span> <span class="fu">sqrt</span>(counts)) }),</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">chained_mutates =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">tmp =</span> avgLength <span class="sc">*</span> <span class="dv">2</span>) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">flag =</span> <span class="fu">ifelse</span>(tmp <span class="sc">&gt;</span> <span class="fu">mean</span>(tmp), <span class="dv">1</span>, <span class="dv">0</span>)) }),</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Filter benchmarks (scoped and non-rectangular)</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">filter_coldata_simple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">filter</span>(dex <span class="sc">==</span> <span class="st">"trt"</span>) }),</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">filter_coldata_numeric =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">filter</span>(avgLength <span class="sc">&gt;</span> <span class="fu">median</span>(avgLength)) }),</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">filter_assay_nonrect =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">filter</span>(counts <span class="sc">&gt;</span> <span class="dv">0</span>) }),</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Select benchmarks (covering colData-only, rowData-only, assays-only, mixed)</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">select_coldata_simple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">select</span>(.sample, dex) }),</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">select_rowdata_simple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">select</span>(.feature) }),</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">select_assay_only =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">select</span>(counts) }),</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">select_mixed_keys_counts =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">select</span>(.sample, .feature, counts) }),</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">select_coldata_wide =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">select</span>(.sample, dex, avgLength, SampleName) }),</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Distinct benchmarks (covering colData-only, rowData-only, assays-only, mixed)</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_coldata_simple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(dex) }),</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_coldata_multiple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(dex, avgLength) }),</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_rowdata_simple =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(.feature) }),</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_assay_only =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(counts) }),</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_mixed_keys_counts =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(.sample, .feature, counts) }),</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_coldata_wide =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(.sample, dex, avgLength, SampleName) }),</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_with_keep_all =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(dex, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) }),</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    <span class="at">distinct_complex_expression =</span> <span class="fu">quo</span>({ se <span class="sc">|&gt;</span> <span class="fu">distinct</span>(dex, avgLength) })</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>run_one <span class="ot">&lt;-</span> <span class="cf">function</span>(expr_quo, <span class="at">reps =</span> <span class="dv">5</span>L) {</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>  se_base <span class="ot">&lt;-</span> <span class="fu">create_airway_test_se</span>()</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>  mb <span class="ot">&lt;-</span> microbenchmark<span class="sc">::</span><span class="fu">microbenchmark</span>(</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">eval_tidy</span>(expr_quo),</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    <span class="at">times =</span> reps,</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">setup =</span> { se <span class="ot">&lt;-</span> se_base },          <span class="co"># reuse the same input, avoid recreating inside the timed expr</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">control =</span> <span class="fu">list</span>(<span class="at">warmup =</span> <span class="dv">2</span>L)</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>  <span class="co"># microbenchmark returns nanoseconds; convert to milliseconds</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.numeric</span>(mb<span class="sc">$</span>time) <span class="sc">/</span> <span class="fl">1e6</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>run_all_scenarios <span class="ot">&lt;-</span> <span class="cf">function</span>(branch_label, <span class="at">reps =</span> <span class="dv">7</span>L) {</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>  scenarios <span class="ot">&lt;-</span> <span class="fu">benchmark_scenarios</span>()</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(scenarios)) {</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    tms <span class="ot">&lt;-</span> <span class="fu">run_one</span>(scenarios[[nm]], <span class="at">reps =</span> reps)</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    out[[<span class="fu">length</span>(out) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>      <span class="at">branch =</span> branch_label,</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>      <span class="at">scenario =</span> nm,</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>      <span class="at">replicate =</span> <span class="fu">seq_along</span>(tms),</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>      <span class="at">elapsed_ms =</span> tms,</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>      <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(out)</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Parallel version: run each scenario on a separate worker</span></span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>run_all_scenarios_parallel <span class="ot">&lt;-</span> <span class="cf">function</span>(branch_label, <span class="at">reps =</span> <span class="dv">20</span>L, <span class="at">workers =</span> <span class="dv">1</span>L, <span class="at">initializer =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>  scenarios <span class="ot">&lt;-</span> <span class="fu">benchmark_scenarios</span>()</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>  nms <span class="ot">&lt;-</span> <span class="fu">names</span>(scenarios)</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>  old_plan <span class="ot">&lt;-</span> future<span class="sc">::</span><span class="fu">plan</span>()</span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>  <span class="fu">on.exit</span>(future<span class="sc">::</span><span class="fu">plan</span>(old_plan), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>  future<span class="sc">::</span><span class="fu">plan</span>(future<span class="sc">::</span>multisession, <span class="at">workers =</span> workers)</span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> future.apply<span class="sc">::</span><span class="fu">future_lapply</span>(nms, <span class="cf">function</span>(nm) {</span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(initializer)) <span class="fu">initializer</span>()</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>    tms <span class="ot">&lt;-</span> <span class="fu">run_one</span>(scenarios[[nm]], <span class="at">reps =</span> reps)</span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>      <span class="at">branch =</span> branch_label,</span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>      <span class="at">scenario =</span> nm,</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>      <span class="at">replicate =</span> <span class="fu">seq_along</span>(tms),</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>      <span class="at">elapsed_ms =</span> tms,</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>      <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">future.seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">bind_rows</span>(res)</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="run-benchmarks-on-both-branches" class="level3">
+<h3 class="anchored" data-anchor-id="run-benchmarks-on-both-branches">Run benchmarks on both branches</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Worktree directories (already exist in the post directory)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>wt_before <span class="ot">&lt;-</span> <span class="st">".__bench_before__"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>wt_after <span class="ot">&lt;-</span> <span class="st">".__bench_after__"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify worktrees exist</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(wt_before)) {</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Worktree directory does not exist: "</span>, wt_before)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(wt_after)) {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Worktree directory does not exist: "</span>, wt_after)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Before optimisation (commit 87445757)</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">load_branch_code</span>(wt_before)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Looking for worktree directory: .__bench_before__ 
+Directory exists: TRUE 
+Current working directory: /Users/a1234450/Documents/GitHub/tidyomicsBlog/posts/2025-10-25-tidySummarizedExperiment-optimization </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>res_before <span class="ot">&lt;-</span> <span class="fu">run_all_scenarios</span>(<span class="at">branch_label =</span> <span class="st">"before_optimization"</span>, <span class="at">reps =</span> <span class="dv">10</span>L)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># After optimisation (commit 9f7c26e)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">load_branch_code</span>(wt_after)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Looking for worktree directory: .__bench_after__ 
+Directory exists: TRUE 
+Current working directory: /Users/a1234450/Documents/GitHub/tidyomicsBlog/posts/2025-10-25-tidySummarizedExperiment-optimization </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>res_after <span class="ot">&lt;-</span> <span class="fu">run_all_scenarios</span>(<span class="at">branch_label =</span> <span class="st">"after_optimization"</span>, <span class="at">reps =</span> <span class="dv">10</span>L)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">bind_rows</span>(res_before, res_after) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">operation =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^filter"</span>, scenario) <span class="sc">~</span> <span class="st">"filter"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^select"</span>, scenario) <span class="sc">~</span> <span class="st">"select"</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^distinct"</span>, scenario) <span class="sc">~</span> <span class="st">"distinct"</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"mutate"</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>summary_table <span class="ot">&lt;-</span> results <span class="sc">|&gt;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(branch, scenario) <span class="sc">|&gt;</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">median_ms =</span> <span class="fu">median</span>(elapsed_ms), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> branch, <span class="at">values_from =</span> median_ms) <span class="sc">|&gt;</span> </span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">speedup =</span> <span class="fu">round</span>(before_optimization <span class="sc">/</span> after_optimization, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-226268d0e09b28952dc5" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-226268d0e09b28952dc5">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"scenario":["assay_log","assay_plus_one","assay_simple_assignment","chained_mutates","coldata_arithmetic","coldata_concat","coldata_grouped_mean","coldata_simple_assignment","complex_conditional_coldata","complex_nested","distinct_assay_only","distinct_coldata_multiple","distinct_coldata_simple","distinct_coldata_wide","distinct_complex_expression","distinct_mixed_keys_counts","distinct_rowdata_simple","distinct_with_keep_all","filter_assay_nonrect","filter_coldata_numeric","filter_coldata_simple","mixed_assay_coldata","multiple_simple_assay","select_assay_only","select_coldata_simple","select_coldata_wide","select_mixed_keys_counts","select_rowdata_simple"],"after_optimization":[12.4554805,12.328708,11.681375,21.5625,11.0071665,11.0921455,93.9895835,11.321708,11.3674785,11.787646,183.6270415,104.3887705,103.090917,172.007979,108.229458,211.791104,102.567687,116.4211665,74.754,21.781209,22.755375,29.610208,25.965729,174.4993535,98.666563,102.3431045,115.9610005,97.5994795],"before_optimization":[289.085042,289.313729,288.7251875,548.727708,288.0155005,281.744729,88.8149785,291.0410415,271.0590425,274.0804585,197.556417,118.027792,116.40925,119.396937,117.7116455,199.8871875,114.4365215,118.1221665,104.8900625,25.817354,26.3123745,283.314792,299.2484995,181.386271,123.428688,113.5046455,117.837937,113.6867925],"speedup":[23.21,23.47,24.72,25.45,26.17,25.4,0.94,25.71,23.85,23.25,1.08,1.13,1.13,0.69,1.09,0.94,1.12,1.01,1.4,1.19,1.16,9.57,11.52,1.04,1.25,1.11,1.02,1.16]},"columns":[{"id":"scenario","name":"Scenario","type":"character","minWidth":220,"align":"left"},{"id":"after_optimization","name":"After (ms)","type":"numeric","minWidth":120,"align":"left","format":{"cell":{"digits":1},"aggregated":{"digits":1}}},{"id":"before_optimization","name":"Before (ms)","type":"numeric","minWidth":120,"align":"left","format":{"cell":{"digits":1},"aggregated":{"digits":1}}},{"id":"speedup","name":"Speedup (x)","type":"numeric","minWidth":120,"align":"left","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"filterable":true,"searchable":true,"defaultPageSize":10,"highlight":true,"bordered":true,"striped":true,"compact":true,"dataKey":"5e96953b8fc47c84831c51a6f5bf258f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="visualize-with-combined-performance-plots" class="level1">
+<h1>Visualize with combined performance plots</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dodge_w <span class="ot">&lt;-</span> <span class="fl">0.7</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>p_box <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(results, <span class="fu">aes</span>(<span class="at">x =</span> scenario, <span class="at">y =</span> elapsed_ms, <span class="at">fill =</span> branch)) <span class="sc">+</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> dodge_w), <span class="at">width =</span> <span class="fl">0.7</span>, <span class="at">outlier.shape =</span> <span class="cn">NA</span>) <span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add jittered points aligned with the dodged boxplots</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">position_jitterdodge</span>(<span class="at">jitter.width =</span> <span class="fl">0.1</span>, <span class="at">jitter.height =</span> <span class="dv">0</span>, <span class="at">dodge.width =</span> dodge_w), </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="fl">0.6</span>, </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="fl">0.5</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(operation <span class="sc">~</span> ., <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">space =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotation_logticks</span>(<span class="at">sides =</span> <span class="st">"b"</span>) <span class="sc">+</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Performance comparison: Before vs After optimization"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Scenario"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Elapsed (ms)"</span>) <span class="sc">+</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Angle x labels  </span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Speedup summary panel (median before/after ratio)</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>speedup_plot_data <span class="ot">&lt;-</span> summary_table <span class="sc">|&gt;</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">operation =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^filter"</span>, scenario) <span class="sc">~</span> <span class="st">"filter"</span>,</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^select"</span>, scenario) <span class="sc">~</span> <span class="st">"select"</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">"^distinct"</span>, scenario) <span class="sc">~</span> <span class="st">"distinct"</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"mutate"</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>p_speedup <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  speedup_plot_data,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> speedup, <span class="at">y =</span> <span class="fu">reorder</span>(scenario, speedup))</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.7</span>, <span class="at">fill =</span> <span class="st">"grey70"</span>, <span class="at">color =</span> <span class="st">"grey40"</span>) <span class="sc">+</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(operation <span class="sc">~</span> ., <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">space =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Median speedup by scenario"</span>,</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Speedup (before/after, x)"</span>,</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="cn">NULL</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>combined_plot <span class="ot">&lt;-</span> p_box <span class="sc">+</span> p_speedup <span class="sc">+</span> patchwork<span class="sc">::</span><span class="fu">plot_layout</span>(<span class="at">widths =</span> <span class="fu">c</span>(<span class="fl">2.3</span>, <span class="dv">1</span>))</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>combined_plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/plot-1.png" class="img-fluid figure-img" width="1344"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the combined figure</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"benchmark_plot.png"</span>, <span class="at">plot =</span> combined_plot, <span class="at">width =</span> <span class="dv">14</span>, <span class="at">height =</span> <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="interpreting-the-benchmark-results" class="level3">
+<h3 class="anchored" data-anchor-id="interpreting-the-benchmark-results">Interpreting the benchmark results</h3>
+<p>Across all scenarios, speedup ranges from <strong>0.69x</strong> to <strong>26.17x</strong>.</p>
+<p>Operations with the strongest gains are: <strong>coldata_arithmetic (26.17x), coldata_simple_assignment (25.71x), chained_mutates (25.45x)</strong>.</p>
+<p>Lower-gain outliers are: <strong>distinct_coldata_wide (0.69x), coldata_grouped_mean (0.94x), distinct_mixed_keys_counts (0.94x)</strong>.</p>
+<p>By operation family, median speedup is: <strong>mutate (23.66x), filter (1.19x), select (1.11x), distinct (1.08x)</strong>.</p>
+</section>
+</section>
+<section id="session-info" class="level1">
+<h1>Session Info</h1>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.5.3 (2026-03-11)
+Platform: x86_64-apple-darwin20
+Running under: macOS Sonoma 14.6.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Australia/Adelaide
+tzcode source: internal
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] tidySummarizedExperiment_1.19.7 tidyr_1.3.2                    
+ [3] testthat_3.3.2                  ttservice_0.5.3                
+ [5] patchwork_1.3.2                 reactable_0.4.5                
+ [7] rlang_1.1.7                     microbenchmark_1.5.0           
+ [9] airway_1.30.0                   SummarizedExperiment_1.40.0    
+[11] Biobase_2.70.0                  GenomicRanges_1.62.1           
+[13] Seqinfo_1.0.0                   IRanges_2.44.0                 
+[15] S4Vectors_0.48.0                BiocGenerics_0.56.0            
+[17] generics_0.1.4                  MatrixGenerics_1.22.0          
+[19] matrixStats_1.5.0               dplyr_1.2.0                    
+[21] ggplot2_4.0.2                   devtools_2.4.6                 
+[23] usethis_3.2.1                  
+
+loaded via a namespace (and not attached):
+ [1] tidyselect_1.2.1    viridisLite_0.4.3   farver_2.1.2       
+ [4] S7_0.2.1            fastmap_1.2.0       lazyeval_0.2.2     
+ [7] digest_0.6.39       plyxp_1.4.3         lifecycle_1.0.5    
+[10] ellipsis_0.3.2      magrittr_2.0.4      compiler_4.5.3     
+[13] tools_4.5.3         yaml_2.3.12         data.table_1.18.2.1
+[16] knitr_1.51          S4Arrays_1.10.1     labeling_0.4.3     
+[19] htmlwidgets_1.6.4   pkgbuild_1.4.8      DelayedArray_0.36.0
+[22] RColorBrewer_1.1-3  pkgload_1.5.0       abind_1.4-8        
+[25] withr_3.0.2         purrr_1.2.1         desc_1.4.3         
+[28] grid_4.5.3          fansi_1.0.7         scales_1.4.0       
+[31] cli_3.6.5           rmarkdown_2.30      ragg_1.5.1         
+[34] remotes_2.5.0       otel_0.2.0          rstudioapi_0.18.0  
+[37] httr_1.4.8          sessioninfo_1.2.3   cachem_1.1.0       
+[40] stringr_1.6.0       XVector_0.50.0      vctrs_0.7.1        
+[43] Matrix_1.7-4        jsonlite_2.0.0      systemfonts_1.3.2  
+[46] crosstalk_1.2.2     plotly_4.12.0       glue_1.8.0         
+[49] reactR_0.6.1        stringi_1.8.7       gtable_0.3.6       
+[52] tibble_3.3.1        pillar_1.11.1       htmltools_0.5.9    
+[55] brio_1.1.5          R6_2.6.1            textshaping_1.0.5  
+[58] rprojroot_2.1.1     evaluate_1.0.5      lattice_0.22-9     
+[61] memoise_2.0.1       SparseArray_1.10.9  xfun_0.56          
+[64] fs_1.6.7            pkgconfig_2.0.3    </code></pre>
+</div>
+</div>
+
+
+</section>
+
+<p>
+© 2025 tidyomics. Content is published under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons CC-BY-4.0 License</a> for the text and <a href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a> for any code. | <a href="https://www.r-bloggers.com">R-Bloggers</a>
+</p></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tidyomics\.github\.io\/tidyomicsBlog\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
