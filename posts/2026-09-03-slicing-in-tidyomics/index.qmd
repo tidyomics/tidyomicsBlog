@@ -1,0 +1,188 @@
+---
+title: "Slicing in tidyomics"
+author: "Michael Love"
+date: "2026-09-03"
+tags:
+  - tidyomics
+  - tidyseurat
+  - tidySingleCellExperiment
+  - tidySummarizedExperiment
+  - plyranges
+  - slice
+  - dplyr
+description: "How to use dplyr-style slice operations on omics data objects in the tidyomics project."
+image: slice.png
+format:
+  html:
+    toc: true
+    toc-float: true
+execute:
+  freeze: true
+---
+
+```{r}
+#| include: false
+Sys.setenv(NO_COLOR = "1")
+options(crayon.enabled = FALSE, cli.num_colors = 0)
+local({
+  hook <- knitr::knit_hooks$get("output")
+  knitr::knit_hooks$set(output = function(x, options) {
+    x <- gsub("\033\\[[0-9;]*m", "", x)
+    hook(x, options)
+  })
+})
+```
+
+# Introduction
+
+The tidyverse verb `slice()` lets you select observations by position, returning a subset of the data based on integer indices. There are also some related convenience functions, which return observations by:
+
+  - `slice_min()` and `slice_max()`: the smallest or largest values of a variable.
+  - `slice_head()` and `slice_tail()`: the first or last position(s).
+  - `slice_sample()`: a random subset, either by count or proportion, with optional weighted sampling.
+
+All of these support grouped operations, applying the selection within each group.
+
+In 2023, this family of `slice_*` functions was added to three core _tidyomics_ packages,
+[`tidySummarizedExperiment`](https://github.com/tidyomics/tidySummarizedExperiment) ([commit](https://github.com/tidyomics/tidySummarizedExperiment/commit/5e9bb5f98a650b0d1b42fa32c4593e6e2077a9b7)),
+[`tidyseurat`](https://github.com/stemangiola/tidyseurat) ([commit](https://github.com/stemangiola/tidyseurat/commit/1ff674d7aaee58f99265c8fb1fb8ce3f08efa2ea)), and
+[`tidySingleCellExperiment`](https://github.com/tidyomics/tidySingleCellExperiment) ([commit](https://github.com/tidyomics/tidySingleCellExperiment/commit/e6fc0abd561d6a660286057ae78d579cc7e58412)).
+More recently, in 2026, `slice()` was also introduced to
+[`plyranges`](https://github.com/tidyomics/plyranges) ([commit](https://github.com/tidyomics/plyranges/commit/41eb383b7643b5b03f1956f57c56119d645b3b9d))
+for genomic ranges objects.
+
+This post walks through how slicing works across _tidyomics_ packages.
+
+# Transcriptomics: tidyseurat, tidySCE and tidySE
+
+All three transcriptomics packages — `tidyseurat`, `tidySingleCellExperiment`,
+and `tidySummarizedExperiment` — implement `slice_*` in the same way, operating
+on cells or samples (i.e. columns of the underlying data matrix). We use
+`tidyseurat` here as a representative example; the same code patterns apply
+directly to the other two packages.
+
+## tidyseurat
+
+`tidyseurat` lets you work with Seurat objects using familiar tidyverse verbs.
+We'll use `pbmc_small`, a small PBMC dataset bundled with Seurat (80 cells, 230 genes).
+
+```{r}
+#| message: false
+#| warning: false
+library(Seurat)
+library(tidyseurat)
+
+data("pbmc_small")
+seurat_obj <- pbmc_small |>
+  mutate(cell_id = seq_along(.cell)) |>
+  select(-contains("ident")) |>
+  select(-starts_with("RNA"))
+```
+
+With `slice()` you can select cells by position, just as you would rows in a tibble.
+In Bioconductor packages, and in _Seurat_, cells are represented as columns in the counts matrix.
+
+```{r}
+# First 10 cells
+seurat_obj |> slice(1:5)
+```
+
+The `slice_*` helpers work as expected:
+
+```{r}
+# 20 randomly sampled cells
+seurat_obj |> slice_sample(n = 5)
+
+# Cells with the highest RNA count
+seurat_obj |> slice_max(nCount_RNA, n = 5)
+
+# Cells with the lowest RNA count
+seurat_obj |> slice_min(nCount_RNA, n = 5)
+```
+
+Grouping applies the slice within each group. Here, the top cell by count from
+each sample group:
+
+```{r}
+seurat_obj |>
+  group_by(groups) |>
+  slice_max(nCount_RNA, n=3) |>
+  select(-starts_with("PC"))
+```
+
+## tidySE and tidySCE
+
+`tidySummarizedExperiment` (tidySE) and `tidySingleCellExperiment` (tidySCE)
+also gained `slice_*` support in 2023.
+The functions operate on samples (columns) in the same way as
+`tidyseurat` operates on cells, so the patterns above transfer directly.
+
+# Genomics: plyranges
+
+`plyranges` extends dplyr-style verbs to Bioconductor `GRanges` objects.
+We construct a small ranges object to demonstrate slicing:
+
+```{r}
+#| message: false
+library(plyranges)
+
+set.seed(123)
+df <- data.frame(
+  start    = 1:50 * 1e6 + 1,
+  width    = 1e4,
+  seqnames = "chr5",
+  strand   = "*",
+  gc       = runif(50),
+  type = factor(sample(LETTERS[1:3], 50, replace = TRUE)),
+  rng_id = 1:50
+)
+rng <- as_granges(df)
+rng
+```
+
+`slice()` selects ranges by index; negative indices drop ranges:
+
+```{r}
+# First two ranges
+rng |> dplyr::slice(c(1,3,5))
+
+# Drop the last range
+rng |> dplyr::slice(-c(1:45))
+```
+
+The `slice_*` helpers work on metadata columns just as they do on data frames.
+The sampling can be in terms of `n` or `prop` (the proportion). Additionally,
+it can accept `weight_by` and a column to be used for weighted sampling.
+
+```{r}
+rng |> slice_head(n = 2)
+rng |> slice_tail(n = 2)
+rng |> slice_max(gc)
+rng |> slice_min(gc)
+rng |> slice_sample(prop = 0.3)
+```
+
+Grouping by type and then slicing:
+
+```{r}
+by_type <- rng |> group_by(type)
+
+# Last range for each type
+by_type |> slice_tail()
+
+# Range with highest GC content for each type
+by_type |> slice_max(gc)
+
+# One range from each type
+by_type |> slice_sample(n = 1)
+```
+
+# Session information
+
+```{r}
+info <- devtools::session_info()
+pkgs <- info$packages |> as_tibble()
+attached_pkgs <- pkgs |> filter(attached) |> select(package, version=loadedversion)
+# 4. Print directly to your HTML report
+knitr::kable(attached_pkgs, format = "html", row.names = FALSE)
+```
