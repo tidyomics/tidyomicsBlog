@@ -1,0 +1,350 @@
+---
+title: "sccomp now supports smooth effects"
+author: "Stefano Mangiola"
+contributors:
+  - Chen Zhan
+date: "2026-08-06"
+package: sccomp
+tags:
+  - tidyomics/tidyomicsBlog
+  - sccomp
+  - single-cell
+  - compositional-data
+  - splines
+  - pseudotime
+description: "Model non-linear changes in cell-type composition with smooth terms in sccomp."
+image: cellnexus-plasma-age-smooth.png
+format:
+  html:
+    toc: true
+    toc-float: true
+execute:
+  freeze: true
+  message: false
+  warning: false
+---
+
+Continuous biological processes are rarely perfectly linear. Cell-type proportions can rise, plateau, or peak along pseudotime, age, dose, or time since treatment. A straight-line effect can miss these patterns or describe them poorly.
+
+We are pleased to announce that [`sccomp`](https://mangiolalaboratory.github.io/sccomp/) now supports **smooth terms** for modelling non-linear effects on cell-type composition.
+
+To demonstrate the new functionality with real data, we use [`cellNexus`](https://github.com/MangiolaLaboratory/cellNexus) metadata to ask how immune-cell composition in blood changes across age.
+
+*The quality-control workflow was adapted from an analysis by contributor Chen Zhan.*
+
+The current public `cellNexus` metadata table used for this post does not expose a disease field. Therefore, unlike the source QC notebook, this reproducible example cannot apply `disease == "normal"` and should not be interpreted as a healthy-only analysis.
+
+# Prepare the CellNexus data
+
+`cellNexus::get_metadata()` returns a lazy table, so filtering happens before the result is collected into memory. We retain live singlets from blood, remove empty droplets, require age metadata, and keep a defined set of immune cell types.
+
+```{r}
+#| label: prepare-cellnexus-metadata
+
+library(cellNexus)
+library(tidyverse)
+library(purrr)
+library(sccomp)
+
+metadata <- get_metadata() |>
+  filter(
+    !empty_droplet,
+    alive,
+    scDblFinder.class == "singlet",
+    !is.na(age_days),
+    tissue_groups == "blood",
+    age_days > 365 * 10,
+    cell_type_unified_ensemble %in% c(
+      "cd8 naive", "cd16 mono", "cd4 tcm", "cd4 th17 em",
+      "granulocyte", "cd4 th1/th17 em", "treg", "b memory",
+      "b naive", "nk", "plasma", "cd4 th2 em", "mast",
+      "cd4 th1 em", "cd8 tem", "mait", "tgd", "cdc",
+      "cd4 fh em", "cd4 naive", "nkt", "macrophage",
+      "cd8 tcm", "cd14 mono", "pdc", "ilc"
+    )
+  ) |>
+  mutate(
+    age_days_scaled = age_days / sd(age_days),
+    sample = paste(dataset_id, donor_id, age_days, sep = "__")
+  )
+```
+
+# QC
+
+```{r}
+#| label: qc-cellnexus-metadata
+
+datasets_to_keep <- metadata |>
+  count(
+    dataset_id,
+    cell_type_unified_ensemble,
+    name = "n"
+  ) |>
+  collect() |>
+  group_by(dataset_id) |>
+  mutate(proportion = n / sum(n)) |>
+  summarise(
+    entropy = -sum(proportion * log(proportion)),
+    largest_cell_type_proportion = max(proportion),
+    .groups = "drop"
+  ) |>
+  filter(
+    entropy > 0,
+    largest_cell_type_proportion < 0.95
+  ) |>
+  pull(dataset_id)
+
+metadata <- metadata |>
+  filter(dataset_id %in% datasets_to_keep)
+```
+
+The entropy check follows the enrichment QC used in the source analysis: a dataset containing only one annotated cell type has zero entropy. We also exclude datasets in which a single cell type accounts for at least 95% of cells. This is an operational screen for targeted or strongly enriched data, not proof that every retained sample was generated without enrichment.
+
+We keep all donors that pass this screen, rather than subsampling, so that the blood age trend can use as much information as possible.
+
+# Fit a five-component smooth
+
+The new functionality uses the `s()` syntax familiar from [`mgcv`](https://cran.r-project.org/package=mgcv) and [`brms`](https://paulbuerkner.com/brms/). Restricting to blood lets us fit a single shared age smooth without tissue factor smooths. A dataset random intercept still accounts for study-level baseline differences across the many blood datasets.
+
+```{r}
+#| label: fit-age-smooth
+#| cache: true
+#| eval: false
+
+fit <- metadata |>
+  collect() |>
+  sccomp_estimate(
+    formula_composition =
+      ~ s(age_days_scaled, k = 5) +
+        (1 | dataset_id),
+    sample = "sample",
+    cell_group = "cell_type_unified_ensemble",
+    max_sampling_iterations = 1000,
+    inference_method = "hmc",
+    mcmc_seed = 42
+  )
+
+fit |> saveRDS("fit.rds")
+```
+
+```{r}
+#| label: load-fit
+
+fit <- readRDS("fit.rds")
+```
+
+```{r}
+#| label: prepare-fit-summary
+#| include: false
+
+model_counts <- attr(fit, "count_data")
+```
+
+This run included `r scales::comma(n_distinct(model_counts$sample))` blood samples from `r scales::comma(n_distinct(model_counts$dataset_id))` datasets. It modelled `r scales::comma(sum(model_counts$count))` immune cells, including `r scales::comma(sum(model_counts$count[model_counts$cell_type_unified_ensemble == "plasma"]))` plasma cells, `r scales::comma(sum(model_counts$count[model_counts$cell_type_unified_ensemble == "cd4 naive"]))` CD4 naïve cells, and `r scales::comma(sum(model_counts$count[model_counts$cell_type_unified_ensemble == "cd8 naive"]))` CD8 naïve cells.
+
+# Predict and visualise the curve
+
+We keep only the age smooth for visualisation: `sccomp_remove_unwanted_effects()` factors out dataset effects from the observed proportions, and `sccomp_predict()` draws the age-only curve over a simple sweep of scaled ages from the fitted data.
+
+```{r}
+#| label: predict-age-smooth
+
+adjusted <- fit |>
+  sccomp_remove_unwanted_effects(
+    formula_composition_keep = ~ s(age_days_scaled, k = 5)
+  ) |>
+  left_join(
+    model_counts |> distinct(sample, age_days_scaled),
+    by = "sample"
+  )
+
+prediction_grid <- tibble(
+  age_days_scaled = seq(
+    min(model_counts$age_days_scaled),
+    max(model_counts$age_days_scaled),
+    length.out = 80
+  ),
+  sample = paste0("grid_", 1:80)
+)
+
+curves <- fit |>
+  sccomp_predict(
+    formula_composition = ~ s(age_days_scaled, k = 5),
+    new_data = prediction_grid,
+    number_of_draws = 500,
+    summary_instead_of_draws = TRUE
+  ) |>
+  arrange(age_days_scaled)
+
+plasma_adjusted <- adjusted |>
+  filter(cell_type_unified_ensemble == "plasma")
+
+plasma_curve <- curves |>
+  filter(cell_type_unified_ensemble == "plasma")
+
+cd4_naive_adjusted <- adjusted |>
+  filter(cell_type_unified_ensemble == "cd4 naive")
+
+cd4_naive_curve <- curves |>
+  filter(cell_type_unified_ensemble == "cd4 naive")
+
+cd8_naive_adjusted <- adjusted |>
+  filter(cell_type_unified_ensemble == "cd8 naive")
+
+cd8_naive_curve <- curves |>
+  filter(cell_type_unified_ensemble == "cd8 naive")
+```
+
+```{r}
+#| label: plot-helpers
+#| include: false
+
+arcsine_sqrt_transform <- scales::new_transform(
+  name = "arcsine-sqrt",
+  transform = \(x) asin(sqrt(x)),
+  inverse = \(x) sin(x)^2,
+  domain = c(0, 1)
+)
+
+plot_age_smooth <- function(adjusted_data, curve_data, cell_label) {
+  ggplot() +
+    geom_point(
+      data = adjusted_data,
+      aes(age_days_scaled, adjusted_proportion),
+      colour = "#5B4B8A",
+      alpha = 0.25,
+      size = 1
+    ) +
+    geom_ribbon(
+      data = curve_data,
+      aes(
+        age_days_scaled,
+        ymin = proportion_lower,
+        ymax = proportion_upper,
+        group = 1
+      ),
+      fill = "#D9CBE8",
+      alpha = 0.75
+    ) +
+    geom_line(
+      data = curve_data,
+      aes(age_days_scaled, proportion_mean, group = 1),
+      colour = "#5B4B8A",
+      linewidth = 1
+    ) +
+    scale_y_continuous(
+      transform = arcsine_sqrt_transform,
+      labels = scales::label_percent()
+    ) +
+    labs(
+      x = "Scaled age",
+      y = paste0(
+        cell_label,
+        " proportion among blood immune cells (arcsine–square-root scale)"
+      ),
+      title = paste0(
+        cell_label,
+        " composition in blood across age"
+      ),
+      subtitle = "sccomp smooth (k = 5); dataset effects removed"
+    ) +
+    theme_minimal(base_size = 11)
+}
+```
+
+```{r}
+#| label: plot-age-smooth
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "Scatter plot of adjusted plasma-cell proportions against scaled age in blood. Points are sample proportions after removing dataset effects. A purple sccomp smooth shows the estimated non-linear age trend, with a light-purple uncertainty ribbon."
+
+plasma_plot <- plot_age_smooth(
+  plasma_adjusted,
+  plasma_curve,
+  "Plasma-cell"
+)
+
+plasma_plot
+```
+
+```{r}
+#| label: plot-cd4-naive-smooth
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "Scatter plot of adjusted CD4 naive proportions against scaled age in blood. Points are sample proportions after removing dataset effects. A purple sccomp smooth shows the estimated non-linear age trend, with a light-purple uncertainty ribbon."
+
+cd4_naive_plot <- plot_age_smooth(
+  cd4_naive_adjusted,
+  cd4_naive_curve,
+  "CD4 naïve"
+)
+
+cd4_naive_plot
+```
+
+```{r}
+#| label: plot-cd8-naive-smooth
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "Scatter plot of adjusted CD8 naive proportions against scaled age in blood. Points are sample proportions after removing dataset effects. A purple sccomp smooth shows the estimated non-linear age trend, with a light-purple uncertainty ribbon."
+
+cd8_naive_plot <- plot_age_smooth(
+  cd8_naive_adjusted,
+  cd8_naive_curve,
+  "CD8 naïve"
+)
+
+cd8_naive_plot
+```
+
+```{r}
+ggsave(
+  "cellnexus-plasma-age-smooth.png",
+  plasma_plot,
+  width = 8,
+  height = 5,
+  dpi = 180
+)
+
+ggsave(
+  "cellnexus-cd4-naive-age-smooth.png",
+  cd4_naive_plot,
+  width = 8,
+  height = 5,
+  dpi = 180
+)
+
+ggsave(
+  "cellnexus-cd8-naive-age-smooth.png",
+  cd8_naive_plot,
+  width = 8,
+  height = 5,
+  dpi = 180
+)
+```
+
+For plasma cells, the fitted age-only mean starts near `r scales::percent(first(plasma_curve$proportion_mean), accuracy = 0.1)`, reaches a maximum of `r scales::percent(max(plasma_curve$proportion_mean), accuracy = 0.1)`, and ends near `r scales::percent(last(plasma_curve$proportion_mean), accuracy = 0.1)`. For CD4 naïve cells, the corresponding values are `r scales::percent(first(cd4_naive_curve$proportion_mean), accuracy = 0.1)`, `r scales::percent(max(cd4_naive_curve$proportion_mean), accuracy = 0.1)`, and `r scales::percent(last(cd4_naive_curve$proportion_mean), accuracy = 0.1)`. For CD8 naïve cells, they are `r scales::percent(first(cd8_naive_curve$proportion_mean), accuracy = 0.1)`, `r scales::percent(max(cd8_naive_curve$proportion_mean), accuracy = 0.1)`, and `r scales::percent(last(cd8_naive_curve$proportion_mean), accuracy = 0.1)`. Points show sample proportions after removing dataset effects. This is an exploratory demonstration of the smooth interface, not evidence for a general biological age effect.
+
+# What the smooth is doing
+
+Under the hood, `sccomp` separates `s(age_days_scaled, k = 5)` into an unpenalised linear component and penalised non-linear basis components. Scaling age improves numerical stability without changing the shape shown on the original year scale. The individual basis coefficients are not usually meaningful on their own; the fitted curve is the quantity to interpret. Decreasing `k` produces a simpler curve, while increasing it gives the model more capacity to bend.
+
+# Learn more
+
+The complete [smooth-terms vignette](https://mangiolalaboratory.github.io/sccomp/articles/splines.html) walks through continuous smooths, basis-size choices, prediction and visualisation, the underlying basis decomposition, hierarchical factor smooths, and models containing multiple smooth and random-effect terms.
+
+We look forward to seeing how the community uses these capabilities to study pseudotime, ageing, treatment response, dose-response relationships, and other continuous biological processes.
+
+<details>
+<summary>Session information</summary>
+
+:::{.smaller}
+```{r}
+#| label: session-info
+#| echo: false
+
+sessionInfo()
+```
+:::
+
+</details>
