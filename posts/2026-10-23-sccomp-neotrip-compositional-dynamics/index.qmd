@@ -1,0 +1,931 @@
+---
+title: "Modelling cell-type proportions in repeated-measures designs with sccomp: a TMA case study"
+subtitle: "Mixed-effect models with random effects for tissue microarrays and other complex designs"
+author: "Stefano Mangiola"
+date: "2026-10-23"
+image: tma-cores.png
+image-alt: "Sixteen tissue microarray cores in four rows on one slide. M2 macrophages are bright magenta, PD-L1-positive antigen-presenting cells are bright yellow, other immune cells are bright green, and epithelium is cyan."
+tags:
+  - sccomp
+  - tidyomics
+  - repeated measures
+  - mixed-effect models
+  - random effects
+  - tissue microarrays
+  - complex design
+  - composition
+  - single-cell
+  - spatial
+  - CosMx
+  - Xenium
+  - Visium
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    fig-width: 7
+    fig-height: 5
+    code-fold: true
+    code-summary: "Show code"
+execute:
+  freeze: auto
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+#| code-summary: "Load cohort data and model summaries"
+knitr::opts_chunk$set(fig.align = "center", dpi = 150)
+
+suppressPackageStartupMessages({
+  library(data.table)
+  library(ggplot2)
+  library(fst)
+  library(here)
+  library(patchwork)
+  library(RColorBrewer)
+  library(readr)
+  library(dplyr)
+  library(tidyr)
+})
+
+post_dir <- tryCatch(
+  normalizePath(dirname(knitr::current_input()), winslash = "/"),
+  error = function(e) normalizePath(getwd(), winslash = "/")
+)
+# Local only. Git ignores this directory. An absolute path survives setwd().
+knitr::opts_chunk$set(cache.path = paste0(post_dir, "/knitr-cache/"))
+
+find_nt_public <- function() {
+  qmd_dir <- tryCatch(
+    normalizePath(dirname(knitr::current_input()), winslash = "/"),
+    error = function(e) NA_character_
+  )
+  cwd <- normalizePath(getwd(), winslash = "/")
+  candidates <- unique(na.omit(c(
+    Sys.getenv("NEOTRIP_NTPUBLIC", unset = NA_character_),
+    file.path(qmd_dir, "NTPublic"),
+    file.path(cwd, "NTPublic"),
+    path.expand("~/Documents/NTPublic"),
+    path.expand("~/Library/CloudStorage/Box-Box/breast_spatial_neoadjuvant/NTPublic"),
+    cwd
+  )))
+  for (d in candidates) {
+    if (is.character(d) && nzchar(d) &&
+        file.exists(file.path(d, "data", "derived", "clinical.fst"))) {
+      return(normalizePath(d, winslash = "/"))
+    }
+  }
+  stop(
+    "Could not find NTPublic/data/derived/clinical.fst. ",
+    "Set NEOTRIP_NTPUBLIC to the NTPublic directory."
+  )
+}
+nt_public <- find_nt_public()
+knitr::opts_knit$set(root.dir = nt_public)
+setwd(nt_public)
+here <- function(...) file.path(nt_public, ...)
+source(file.path(nt_public, "code", "UtilityFunctions.R"))
+
+theme_pub <- function() {
+  theme_classic(base_size = 11, base_family = "sans") +
+    theme(
+      plot.title = element_text(face = "bold", size = 12),
+      plot.subtitle = element_text(size = 10, colour = "grey25"),
+      axis.text.x = element_text(angle = 30, hjust = 1),
+      strip.text = element_text(face = "bold", size = 9),
+      strip.background = element_rect(fill = "grey96", colour = NA),
+      legend.position = "bottom",
+      panel.spacing = unit(0.9, "lines")
+    )
+}
+
+cols <- getNTColours()
+rhat_threshold <- 1.01
+hmc_stem <- "sccomp_tme_immune_comprehensive_hmc_patient_re"
+results_dir <- here("scratch", "sccomp_results")
+
+immune_labels <- sort(unique(getCellClusters()[["All"]][Type == "Immune", trimws(Label)]))
+
+marginal_pcr_path <- file.path(results_dir, paste0(hmc_stem, "_marginal_pcr_contrasts.csv"))
+baseline_contrasts_path <- file.path(results_dir, paste0(hmc_stem, "_baseline_anchored_contrasts.csv"))
+delta_baseline_path <- file.path(results_dir, paste0(hmc_stem, "_predict_delta_baseline.csv"))
+aligned_path <- file.path(results_dir, paste0(hmc_stem, "_predict_baseline_aligned.csv"))
+for (p in c(marginal_pcr_path, baseline_contrasts_path, delta_baseline_path, aligned_path)) {
+  if (!file.exists(p)) {
+    stop(
+      "Missing contrast/prediction file: ", p, "\n",
+      "Run run_marginal_pcr_contrasts.R, run_baseline_anchored_contrasts.R, ",
+      "and run_baseline_anchored_predictions.R (SCOMP_COMPARTMENT=TME_immune)."
+    )
+  }
+}
+
+hmc_test <- fread(file.path(results_dir, paste0(hmc_stem, "_results.csv")))
+hmc_marginal_pcr <- fread(marginal_pcr_path)
+hmc_did <- fread(baseline_contrasts_path)
+hmc_delta <- fread(delta_baseline_path)
+hmc_aligned <- fread(aligned_path)
+hmc_pred <- fread(file.path(results_dir, paste0(hmc_stem, "_predict_grid.csv")))
+hmc_pred_patient <- fread(file.path(results_dir, paste0(hmc_stem, "_predict_by_patient.csv")))
+
+for (dt in list(hmc_pred, hmc_pred_patient)) {
+  dt[, BiopsyPhase := factor(
+    BiopsyPhase,
+    levels = c("Baseline", "On-treatment", "Post-treatment")
+  )]
+  dt[, Arm := factor(Arm, levels = c("C", "C&I"))]
+  dt[, pCR := factor(pCR, levels = c("RD", "pCR"))]
+}
+for (dt in list(hmc_marginal_pcr, hmc_did, hmc_delta, hmc_aligned)) {
+  dt[, BiopsyPhase := factor(
+    BiopsyPhase,
+    levels = c("Baseline", "On-treatment", "Post-treatment")
+  )]
+  dt[, Arm := factor(Arm, levels = c("C", "C&I"))]
+  dt[, cell_group := trimws(as.character(cell_group))]
+}
+hmc_aligned[, pCR := factor(pCR, levels = c("RD", "pCR"))]
+
+hmc_rhat <- hmc_test[is.finite(c_rhat)]
+conv_summary <- hmc_rhat[, .(
+  n_contrasts = .N,
+  median_rhat = median(c_rhat),
+  max_rhat = max(c_rhat),
+  pct_above_threshold = round(100 * mean(c_rhat >= rhat_threshold), 2)
+)]
+
+hmc_response <- hmc_test[
+  grepl("pCR", parameter, fixed = TRUE) &
+    !grepl("___", parameter, fixed = TRUE)
+]
+top_pcr_groups <- hmc_response[
+  is.finite(c_FDR) & c_FDR < 0.05,
+  .(min_FDR = min(c_FDR)),
+  by = cell_group
+][order(min_FDR)][1:min(6, .N), cell_group]
+
+m2_row <- hmc_marginal_pcr[
+  cell_group == "M2 Mac" &
+    Arm == "C&I" &
+    BiopsyPhase == "On-treatment"
+]
+m2_ci_fdr <- if (nrow(m2_row)) m2_row$c_FDR[1] else NA_real_
+
+m2_did_fdr <- hmc_did[
+  contrast_family == "did" & cell_group == "M2 Mac" &
+    Arm == "C&I" & BiopsyPhase == "Post-treatment", c_FDR
+]
+pdl1_did_fdr <- hmc_did[
+  contrast_family == "did" & cell_group == "PD-L1^+APCs" &
+    Arm == "C&I" & BiopsyPhase == "Post-treatment", c_FDR
+]
+m2_did_ot_fdr <- hmc_did[
+  contrast_family == "did" & cell_group == "M2 Mac" &
+    Arm == "C&I" & BiopsyPhase == "On-treatment", c_FDR
+]
+n_did_pt_sig <- uniqueN(hmc_did[
+  contrast_family == "did" & BiopsyPhase == "Post-treatment" & c_FDR < 0.05, cell_group
+])
+n_did_ot_sig <- uniqueN(hmc_did[
+  contrast_family == "did" & BiopsyPhase == "On-treatment" & c_FDR < 0.05, cell_group
+])
+setwd(post_dir)
+```
+
+# Introduction
+
+Testing cell proportional differences from single-cell-resolved count data became essential in modern tissue analyses. This task, becomes a repeated-measures question as soon as several observation from the same tissue donor. For example, we might profile multiple tumor cores, such as is common in tissue microarrays (TMA). Time course profiling or such as serial biopsies add a further level of complexity.Averaging cores up to the patient, then testing one phenotype at a time, drops both the compositional constraint and the repeated-measures structure.
+
+[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a flexible Bayesian model for mixed-effect designs, able to identify outliers probabilistically, test for differential variability and remove unwanted effects. sccomp embraces the tidyomics philosophy, which is what makes a complex design practical to write down. Random effects, interactions, and custom contrasts share one formula. sccomp is flexible about that specification, and the hierarchical fit is robust enough that those contrasts come back as ordinary tibbles. sccomp accepts as input a long tibble, one row per sample and cell type, a count, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles for `dplyr`, `tidyr`, and `ggplot2`. The [reproducible pipeline](#reproducible-sccomp-pipeline) below is that workflow, reduced to the steps that define the model, the predictions, and the contrasts.
+
+
+# Source study and study design
+
+We showcase [sccomp](https://github.com/MangiolaLaboratory/sccomp) capabilities on the NeoTrip trial. [Wang *et al.* (2023)](https://www.nature.com/articles/s41586-023-06498-3) used imaging mass cytometry (IMC) to map how multicellular spatial organization in triple-negative breast cancer relates to neoadjuvant immunotherapy response. The work is based on the NeoTRIP phase III trial (NCT02620280): early high-risk TNBC patients were randomised 1:1 to carboplatin + nab-paclitaxel (C) or the same regimen plus atezolizumab (C&I), with eight 3-week neoadjuvant cycles before surgery. Research FFPE biopsies:
+
+- Baseline (*n* = 243)
+- On-treatment (first day of cycle 2; *n* = 207)
+- Post-treatment (surgical excision; *n* = 210)
+- Profiled with a 43-marker IMC panel at subcellular resolution
+- Deep-learning segmentation and semi-supervised clustering defined 17 epithelial and 20 TME cell phenotypes
+- Multiple regions of interest (ROIs) were imaged per biopsy
+
+Each patient contributes several samples. The biopsies are nested in the patient, and the regions of interest are nested in the biopsy. Patient NT193, in the chemotherapy arm with residual disease, was imaged at all three timepoints: 10 ROIs at baseline, 10 on-treatment, and 3 at surgery. In the model, each ROI is one compositional sample and the patient is the repeated-measures group.
+
+```{r fig-nesting}
+#| code-summary: "One patient, three timepoints, several ROIs"
+#| fig-width: 12
+#| fig-height: 5.4
+#| fig-alt: "Tree for patient NT193. The patient sits at the top and three biopsy timepoints branch underneath. Each timepoint ends in the imaged regions of interest, drawn as spatial tiles: magenta M2 macrophages, yellow PD-L1-positive antigen-presenting cells, and green other immune cells. There are 10 tiles at baseline, 10 on-treatment, and 3 post-treatment."
+
+mk_spatial_tile <- function(dat, square = TRUE) {
+  if (nrow(dat) == 0) {
+    dat <- data.table(
+      Location_Center_X = numeric(),
+      Location_Center_Y = numeric(),
+      draw = character()
+    )
+  }
+  tile <- ggplot(dat, aes(x = Location_Center_X, y = Location_Center_Y)) +
+    geom_point(data = dat[draw == "other"], colour = "#39FF14", size = 0.10) +
+    geom_point(data = dat[draw == "pdl1"], colour = "#FFFF00", size = 0.16) +
+    geom_point(data = dat[draw == "m2"], colour = "#FF00FF", size = 0.16) +
+    scale_x_continuous(labels = NULL, guide = "none", expand = c(0, 0)) +
+    scale_y_reverse(labels = NULL, guide = "none", expand = c(0, 0)) +
+    theme_void(base_size = 8) +
+    theme(
+      plot.background = element_rect(fill = "white", colour = NA),
+      panel.background = element_rect(fill = "black", colour = NA),
+      legend.position = "none",
+      plot.margin = margin(
+        if (square) 1 else 0, if (square) 1 else 0,
+        if (square) 1 else 0, if (square) 1 else 0,
+        unit = "pt"
+      )
+    )
+  if (square) tile <- tile + theme(aspect.ratio = 1)
+  tile
+}
+
+roi <- unique(fread(
+  file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
+  select = c("PatientID", "BiopsyPhase", "ImageID")
+)[PatientID == "NT193"])
+roi[, BiopsyPhase := factor(
+  BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment")
+)]
+setorder(roi, BiopsyPhase, ImageID)
+roi[, i := seq_len(.N), by = BiopsyPhase]
+n_phase <- roi[, .(n = .N), by = BiopsyPhase]
+n_phase[, x0 := cumsum(n + 2) - (n + 2)]
+roi[n_phase, x := i + x0, on = "BiopsyPhase"]
+
+cells_nt <- read_fst(file.path(post_dir, "nt193-cells.fst"), as.data.table = TRUE)
+dx <- 0.46
+pad <- 0.62
+xmin <- min(roi$x) - pad
+xmax <- max(roi$x) + pad
+fig_w <- 12
+fig_h <- 5.4
+target_in <- (2 * dx) / (xmax - xmin) * fig_w
+headroom <- 1.9
+tile_h <- target_in * headroom / (fig_h - target_in)
+
+phase <- roi[, .(x = mean(x), n = .N), by = BiopsyPhase]
+phase[, y := tile_h + 0.62]
+patient <- data.table(x = mean(phase$x), y = phase$y[1] + 0.95, label = "NT193")
+edges <- rbind(
+  phase[, .(x, y, xend = patient$x, yend = patient$y)],
+  roi[, .(
+    x, y = tile_h,
+    xend = phase$x[match(BiopsyPhase, phase$BiopsyPhase)],
+    yend = phase$y[1]
+  )]
+)
+phase_cols <- c(
+  Baseline = "#1B9E77",
+  `On-treatment` = "#D95F02",
+  `Post-treatment` = "#7570B3"
+)
+
+tree <- ggplot() +
+  geom_segment(
+    data = edges, aes(x = x, y = y, xend = xend, yend = yend),
+    colour = "grey70", linewidth = 0.4
+  ) +
+  geom_label(
+    data = phase,
+    aes(x, y, label = paste0(BiopsyPhase, "\n", n, " ROIs"), fill = BiopsyPhase),
+    colour = "white", fontface = "bold", size = 3, label.size = 0
+  ) +
+  geom_label(
+    data = patient, aes(x, y, label = label),
+    fill = "grey15", colour = "white", fontface = "bold", size = 3.6, label.size = 0
+  ) +
+  scale_fill_manual(values = phase_cols, guide = "none") +
+  coord_cartesian(
+    xlim = c(xmin, xmax),
+    ylim = c(-0.04, patient$y + 0.4),
+    clip = "off"
+  ) +
+  labs(title = "Patient NT193") +
+  theme_void(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 12),
+    plot.margin = margin(6, 6, 6, 6)
+  )
+
+for (i in seq_len(nrow(roi))) {
+  tree <- tree + annotation_custom(
+    ggplotGrob(mk_spatial_tile(cells_nt[ImageID == roi$ImageID[i]], square = FALSE)),
+    xmin = roi$x[i] - dx,
+    xmax = roi$x[i] + dx,
+    ymin = 0,
+    ymax = tile_h
+  )
+}
+tree
+```
+
+Wang *et al.* linked cell densities, spatial interactions, and proliferative fractions to pathological complete response (pCR), and showed that immunotherapy remodels tissue composition over time, with response-specific dynamics of immune infiltration (notably in their Fig. 5 compositional trajectory analysis).
+
+| Quantity | Value |
+|----------|------:|
+| Per-protocol patients | 257 |
+| ROI-level immune samples | 1,740 |
+| Immune cell phenotypes | 15 |
+| Median ROIs per patient | 7 |
+
+# sccomp mixed-effects compositional modelling
+
+**In the original publication**, longitudinal composition was summarised as mean phenotype proportions per patient and compared across arms, timepoints, and response groups using Wilcoxon tests and *Z*-scored trend plots (Fig. 5). Phenotypes were also tested individually with weighted binomial GLMs on tumour-level proportions. These approaches treat each phenotype separately, aggregate ROIs to the patient before inference, and do not jointly model compositional closure (proportions within a compartment sum to one) or hierarchical repeated measures (multiple biopsies and ROIs nested within the same patient).
+
+**Here** we reproduce and extend that compositional dynamics analysis using [sccomp](https://github.com/MangiolaLaboratory/sccomp). sccomp, directly modelling count data, parameterises composition on a latent log-ratio scale and fits mixed effects on the mean and variability structure. Each ROI (`ImageID`) is one compositional sample; a patient random intercept `(1 | PatientID)` absorbs baseline and trajectory differences across individuals and shrinkage across the cohort. 
+
+$$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR} + (1 \mid \text{PatientID})$$
+
+
+# sccomp analysis
+
+The blocks below are the minimal tidyverse code to reproduce the analysis locally from the parsed input (run top to bottom), using the immune TME compartment with ROI-level samples and a patient random intercept. The fit uses every available core. That chunk is cached on this machine, so a later render skips the sampler unless the chunk itself changes.
+
+## From long-format tidy input
+
+The input `long` is a tibble with one row per ROI × immune phenotype: a count plus the design columns (`Arm`, `BiopsyPhase`, `pCR`) and the grouping `PatientID`. Preview:
+
+```{r repro-long-preview}
+#| code-fold: show
+#| code-summary: "Load long-format input"
+#| cache: true
+library(readr)
+library(dplyr)
+
+long <- read_csv(file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
+                 show_col_types = FALSE) |>
+  mutate(
+    count = as.integer(count),
+    BiopsyPhase = factor(BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment")),
+    Arm = factor(Arm, c("C", "C&I")),
+    pCR = factor(pCR, c("RD", "pCR"))
+  )
+
+long |>
+  select(sample, cell_group, count, PatientID, BiopsyPhase, Arm, pCR) |>
+  slice_head(n = 8) |>
+  knitr::kable(caption = sprintf(
+    "Long-format sccomp input (%s ROIs x %s immune phenotypes = %s rows)",
+    format(n_distinct(long$sample), big.mark = ","),
+    n_distinct(long$cell_group),
+    format(nrow(long), big.mark = ",")
+  ))
+```
+
+## Fit the model
+
+```{r repro-sccomp-fit}
+#| code-fold: show
+#| code-summary: "Fit and test the model"
+#| cache: true
+#| cache.lazy: false
+#| dependson: "repro-long-preview"
+#| cache.extra: !expr as.character(packageVersion("sccomp"))
+library(sccomp)
+
+fit <- sccomp_estimate(
+  long,
+  formula_composition = ~ Arm * BiopsyPhase * pCR + (1 | PatientID),
+  formula_variability = ~ 1,
+  sample = "sample",
+  cell_group = "cell_group",
+  abundance = "count",
+  inference_method = "hmc",
+  cores = parallel::detectCores(),
+  verbose = FALSE
+) |>
+  sccomp_test()
+```
+
+```{r repro-fit-print-sccomp}
+#| echo: false
+fit
+```
+
+::: {.callout-note}
+## Model validation
+
+All `r conv_summary$n_contrasts` composition contrasts had median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). The model is well converged and suitable for inference and prediction.
+:::
+
+```{r repro-fit-print}
+#| echo: false
+hmc_test |>
+  as_tibble() |>
+  slice_head(n = 8) |>
+  transmute(
+    phenotype = cell_group,
+    parameter,
+    effect = round(c_effect, 3),
+    lower = round(c_lower, 3),
+    upper = round(c_upper, 3),
+    FDR = signif(c_FDR, 3)
+  ) |>
+  knitr::kable(caption = sprintf(
+    "Saved sccomp_test() result (first 8 of %s rows)",
+    format(nrow(hmc_test), big.mark = ",")
+  ))
+```
+
+## Hypothesis testing
+
+We pass contrasts to `sccomp_test()` as strings. 
+
+`marginal_CI_post` compares responders with residual disease at that visit alone. Any gap the two groups already had at baseline is still in this result.
+
+`did_CI_post` compares how far each group moved from its own baseline. A head start cancels, so the result is the difference in change.
+
+```{r repro-contrasts}
+#| code-fold: show
+#| code-summary: "Test two contrasts"
+#| cache: true
+#| dependson: "repro-sccomp-fit"
+# The strings are the rows of the same design matrix sccomp fits.
+grid <- expand.grid(
+  Arm = factor(c("C", "C&I"), c("C", "C&I")),
+  BiopsyPhase = factor(
+    c("Baseline", "On-treatment", "Post-treatment"),
+    c("Baseline", "On-treatment", "Post-treatment")
+  ),
+  pCR = factor(c("RD", "pCR"), c("RD", "pCR"))
+)
+mm <- model.matrix(~ Arm * BiopsyPhase * pCR, grid)
+row_of <- function(a, p, r) mm[grid$Arm == a & grid$BiopsyPhase == p & grid$pCR == r, ]
+to_expr <- function(v) {
+  v <- v[abs(v) > 1e-9]
+  paste(sprintf("%g * `%s`", v, names(v)), collapse = " + ")
+}
+
+contrasts <- c(
+  marginal_CI_post = to_expr(
+    row_of("C&I", "Post-treatment", "pCR") - row_of("C&I", "Post-treatment", "RD")
+  ),
+  did_CI_post = to_expr(
+    (row_of("C&I", "Post-treatment", "pCR") - row_of("C&I", "Baseline", "pCR")) -
+      (row_of("C&I", "Post-treatment", "RD") - row_of("C&I", "Baseline", "RD"))
+  )
+)
+
+res <- sccomp_test(fit, contrasts = contrasts)
+```
+
+`res` has one row per phenotype for each contrast, with the posterior effect and FDR. The table below is the full set of difference-in-differences, strongest first:
+
+```{r repro-did-preview}
+#| code-fold: show
+#| code-summary: "Preview difference-in-differences contrasts"
+as_tibble(hmc_did) |>
+  filter(contrast_family == "did") |>
+  arrange(c_FDR) |>
+  transmute(
+    phenotype = cell_group,
+    Arm, BiopsyPhase,
+    `DiD effect (logit)` = round(c_effect, 3),
+    FDR = signif(c_FDR, 3)
+  ) |>
+  slice_head(n = 8) |>
+  knitr::kable(caption = "Change from baseline (strongest by FDR)")
+```
+
+
+## Population and per-patient predictions
+
+```{r repro-predictions-population}
+#| code-fold: show
+#| code-summary: "Population prediction grid"
+#| cache: true
+library(tidyr)
+
+# Population grid: every Arm x BiopsyPhase x pCR combination
+pop <- expand_grid(
+  Arm = c("C", "C&I"),
+  BiopsyPhase = c("Baseline", "On-treatment", "Post-treatment"),
+  pCR = c("RD", "pCR")
+) |>
+  mutate(sample = paste0("pred_", row_number()),
+         PatientID = long$PatientID[1])
+
+knitr::kable(pop, caption = "Population grid passed to sccomp_predict()")
+```
+
+```{r repro-predict-population}
+#| code-fold: show
+#| code-summary: "Predict population proportions"
+#| cache: true
+#| dependson:
+#|   - repro-sccomp-fit
+#|   - repro-predictions-population
+pred_pop <- sccomp_predict(fit, new_data = pop)
+
+knitr::kable(pred_pop, caption = "Population predicted proportions") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  kableExtra::scroll_box(height = "400px")
+```
+
+```{r repro-predict-population-print}
+#| echo: false
+hmc_pred |>
+  as_tibble() |>
+  slice_head(n = 8) |>
+  transmute(
+    Arm, BiopsyPhase, pCR,
+    phenotype = cell_group,
+    proportion = round(proportion_mean, 3),
+    lower = round(proportion_lower, 3),
+    upper = round(proportion_upper, 3)
+  ) |>
+  knitr::kable(caption = sprintf(
+    "Population predicted proportions (first 8 of %s rows)",
+    format(nrow(hmc_pred), big.mark = ",")
+  ))
+```
+
+```{r repro-predictions-patient}
+#| code-fold: show
+#| code-summary: "Per-patient prediction grid"
+#| cache: true
+# Per-patient grid: one sample per patient x phase (uses the patient random intercept)
+pat <- long |>
+  distinct(PatientID, BiopsyPhase, Arm, pCR) |>
+  mutate(sample = paste0(PatientID, "_", BiopsyPhase))
+
+pat |>
+  slice_head(n = 8) |>
+  knitr::kable(caption = sprintf(
+    "Per-patient prediction grid (first 8 of %s rows)",
+    format(nrow(pat), big.mark = ",")
+  ))
+```
+
+```{r repro-predict-patient}
+#| code-fold: show
+#| code-summary: "Predict per-patient proportions"
+#| cache: true
+#| dependson:
+#|   - repro-sccomp-fit
+#|   - repro-predictions-patient
+pred_pat <- sccomp_predict(fit, new_data = pat)
+
+pred_pat
+```
+
+```{r repro-predict-patient-print}
+#| echo: false
+hmc_pred_patient |>
+  as_tibble() |>
+  slice_head(n = 8) |>
+  transmute(
+    PatientID, Arm, BiopsyPhase, pCR,
+    phenotype = cell_group,
+    proportion = round(proportion_mean, 3),
+    lower = round(proportion_lower, 3),
+    upper = round(proportion_upper, 3)
+  ) |>
+  knitr::kable(caption = sprintf(
+    "Per-patient predicted proportions (first 8 of %s rows)",
+    format(nrow(hmc_pred_patient), big.mark = ",")
+  ))
+```
+
+
+# Results
+
+## Predicted immune compositional trajectories
+
+**Figure 1** shows baseline-aligned predicted proportions (95% credible intervals) for all 15 immune TME phenotypes. Within each arm × cell-type facet, both response groups are shifted to a common average baseline (mean of the pCR and RD T0 predictions), so they start at the same point and any post-baseline divergence reflects the response × change-from-T0 effect rather than a pre-existing baseline imbalance. Panels are split by treatment arm (columns); colour denotes pathological response. Asterisks mark arm–time points with difference-in-differences FDR \< 0.05 (`sccomp_test()` custom contrasts; see next section).
+
+```{r repro-baseline-aligned}
+#| code-fold: true
+#| code-summary: "Align groups to a common baseline"
+#| cache: true
+#| dependson:
+#|   - repro-sccomp-fit
+#|   - repro-predictions-population
+# Baseline matching is a plot shift, not a new model. Responders and
+# non-responders can already differ at the first biopsy, so a later gap in
+# the raw proportions is ambiguous: treatment, or the gap they arrived with.
+# Shift both lines to the midpoint of their two baselines. A gap that was
+# only a head start disappears; a gap treatment opened stays. In the
+# chemoimmunotherapy arm, the on-treatment M2 difference was mostly already
+# at baseline and goes away after the shift; the post-treatment gap remains.
+# Posterior draws (not summaries) so the credible intervals stay valid.
+draws <- sccomp_predict(
+  fit, new_data = pop, number_of_draws = 500, summary_instead_of_draws = FALSE
+) |>
+  as_tibble() |>
+  mutate(across(c(Arm, BiopsyPhase, pCR), as.character))
+
+# Shift pCR and RD to their average baseline within each Arm x cell_group, per draw
+shifts <- draws |>
+  filter(BiopsyPhase == "Baseline") |>
+  select(Arm, cell_group, .draw, pCR, proportion) |>
+  pivot_wider(names_from = pCR, values_from = proportion) |>
+  mutate(shift_pCR = (pCR + RD) / 2 - pCR,
+         shift_RD  = (pCR + RD) / 2 - RD) |>
+  select(Arm, cell_group, .draw, shift_pCR, shift_RD)
+
+aligned_summary <- draws |>
+  left_join(shifts, by = c("Arm", "cell_group", ".draw")) |>
+  mutate(aligned_prop = proportion + if_else(pCR == "pCR", shift_pCR, shift_RD)) |>
+  summarise(
+    aligned_mean  = mean(aligned_prop),
+    aligned_lower = quantile(aligned_prop, 0.025),
+    aligned_upper = quantile(aligned_prop, 0.975),
+    .by = c(Arm, BiopsyPhase, pCR, cell_group)
+  )
+```
+
+```{r fig-main-trajectories}
+#| code-summary: "Baseline-aligned immune trajectories"
+#| fig-height: 18
+#| fig-width: 10
+#| dpi: 100
+#| fig-retina: 1
+#| fig-alt: "Line plots of baseline-aligned immune proportions across biopsy timepoints, faceted by cell type and treatment arm, with pathological complete response and residual disease in separate colours and asterisks where the difference-in-differences FDR is below 0.05."
+
+# Immune phenotypes in print order. Figure 2 uses the same vector.
+cell_order <- c(
+  "CD8^+T", "CD8^+GZMB^+T", "CD8^+TCF1^+T", "CD8^+PD1^+T_{Ex}",
+  "CD4^+TCF1^+T", "CD4^+PD1^+T", "Treg", "CD20^+B", "CD79a^+Plasma",
+  "CD56^+NK", "M2 Mac", "DCs", "Neutrophils", "PD-L1^+APCs", "PD-L1^+IDO^+APCs"
+)
+cols_response <- c(RD = "#377EB8", pCR = "#E41A1C")
+
+pred_main <- copy(hmc_aligned)
+pred_main[, cell_group := factor(cell_group, levels = cell_order)]
+# A few intervals sit just below zero after the baseline shift.
+pred_main[, aligned_mean := pmax(aligned_mean, 0)]
+pred_main[, aligned_lower := pmax(aligned_lower, 0)]
+
+# Asterisk just above the ribbon where the DiD FDR is below 0.05.
+did_sig_fig1 <- hmc_did[
+  contrast_family == "did" & is.finite(c_FDR) & c_FDR < 0.05,
+  .(cell_group, Arm, BiopsyPhase)
+]
+did_sig_fig1[, cell_group := factor(cell_group, levels = cell_order)]
+did_sig_fig1 <- pred_main[
+  , .(ymax = max(aligned_upper)), by = .(cell_group, Arm, BiopsyPhase)
+][did_sig_fig1, on = .(cell_group, Arm, BiopsyPhase), nomatch = NULL]
+
+ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = pCR)) +
+  geom_ribbon(
+    aes(ymin = aligned_lower, ymax = aligned_upper, fill = pCR),
+    alpha = 0.10, colour = NA
+  ) +
+  geom_line(linewidth = 0.75) +
+  geom_point(size = 1.2) +
+  geom_text(
+    data = did_sig_fig1,
+    aes(x = BiopsyPhase, y = ymax, label = "*"),
+    inherit.aes = FALSE,
+    size = 4.5, colour = "black", fontface = "bold", vjust = -0.2
+  ) +
+  facet_grid(cell_group ~ Arm, scales = "free_y") +
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.01)) +
+  coord_cartesian(clip = "off") +
+  scale_colour_manual(values = cols_response, name = "Response") +
+  scale_fill_manual(values = cols_response, name = "Response") +
+  labs(
+    title = "Baseline-aligned immune compositional trajectories",
+    x = NULL,
+    y = "Baseline-aligned predicted proportion"
+  ) +
+  theme_pub() +
+  theme(strip.text.y = element_text(size = 7))
+```
+
+
+## Change from baseline
+
+For each cell type and treatment arm, the hypothesis is that responders and patients with residual disease changed by a different amount from baseline. **Figure 2** show that difference at two time points: the on-treatment and post-treatment. Bordered tiles have FDR \< 0.05.
+
+```{r fig-did-heatmap}
+#| code-summary: "Difference-in-differences heatmap"
+#| fig-height: 7
+#| fig-width: 8
+#| fig-alt: "Heatmap of difference-in-differences effects on the logit scale for each immune phenotype, treatment arm, and post-baseline visit. Black borders mark FDR below 0.05."
+
+did_hm <- hmc_did[contrast_family == "did"]
+did_hm[, cell_group := factor(cell_group, levels = rev(cell_order))]
+did_hm <- did_hm[!is.na(cell_group)]
+did_hm[, BiopsyPhase := factor(BiopsyPhase, levels = c("On-treatment", "Post-treatment"))]
+did_hm[, Arm := factor(Arm, levels = c("C", "C&I"))]
+did_hm[, sig := is.finite(c_FDR) & c_FDR < 0.05]
+did_hm[, facet_lab := paste0(Arm, " · ", BiopsyPhase)]
+did_hm[, facet_lab := factor(facet_lab, levels = c(
+  "C · On-treatment", "C · Post-treatment",
+  "C&I · On-treatment", "C&I · Post-treatment"
+))]
+
+lim <- max(abs(did_hm$c_effect), na.rm = TRUE)
+
+ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
+  geom_tile(colour = "grey90", linewidth = 0.3) +
+  geom_tile(
+    data = did_hm[sig == TRUE],
+    colour = "black", linewidth = 0.7, fill = NA
+  ) +
+  geom_text(
+    aes(label = ifelse(sig, sprintf("%.2f", c_effect), "")),
+    size = 2.6
+  ) +
+  scale_fill_gradient2(
+    low = cols_response[["RD"]], mid = "white", high = cols_response[["pCR"]],
+    midpoint = 0, limits = c(-lim, lim), name = "DiD effect\n(logit)"
+  ) +
+  labs(
+    title = "Response-associated change from baseline (difference-in-differences)",
+    x = NULL, y = NULL
+  ) +
+  theme_pub() +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid = element_blank()
+  )
+```
+
+**Most of the signal is at post-treatment:** `r n_did_pt_sig` immune phenotypes show a significant DiD at post-treatment vs `r n_did_ot_sig` on-treatment. Notably, M2 Mac in C&I is *not* significant on-treatment once baseline is accounted for (DiD FDR `r sprintf("%.2f", m2_did_ot_fdr)`), but becomes significant post-treatment (DiD FDR `r sprintf("%.3f", m2_did_fdr)`) — the apparent on-treatment effect in the marginal analysis largely reflected a baseline difference.
+
+## M2 macrophage changes by response
+
+**Figure 3** compares pCR versus residual disease at each visit with the change from baseline. Points above the dotted line are FDR \< 0.05.
+
+```{r fig-volcano}
+#| code-summary: "M2 macrophage changes by response"
+#| fig-height: 4.5
+#| fig-width: 7
+#| fig-alt: "Scatter plot of M2 macrophage response contrasts, with the logit effect on the x-axis and minus log10 FDR on the y-axis, comparing pCR versus residual disease at each visit with the change from baseline."
+
+m2_marg <- hmc_marginal_pcr[
+  cell_group == "M2 Mac", .(Arm, BiopsyPhase, c_effect, c_FDR)
+]
+m2_marg[, family := "Marginal pCR vs RD"]
+m2_did_v <- hmc_did[
+  contrast_family == "did" & cell_group == "M2 Mac",
+  .(Arm, BiopsyPhase, c_effect, c_FDR)
+]
+m2_did_v[, family := "DiD (change from T0)"]
+m2_volcano <- rbind(m2_marg, m2_did_v)
+m2_volcano[, label := paste0(Arm, " · ", BiopsyPhase)]
+
+ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey70") +
+  geom_hline(yintercept = -log10(0.05), linetype = 3, colour = "grey55") +
+  geom_point(aes(colour = family, shape = BiopsyPhase), size = 2.8) +
+  geom_text(aes(label = label), size = 2.3, vjust = -0.9, colour = "grey25") +
+  scale_colour_manual(values = c(
+    "Marginal pCR vs RD" = "#999999",
+    "DiD (change from T0)" = "#d73027"
+  )) +
+  labs(
+    title = "M2 Mac: visit contrast and change from baseline",
+    x = "Composition effect (logit contrast)",
+    y = expression(-log[10](FDR)),
+    colour = NULL, shape = NULL
+  ) +
+  theme_pub()
+```
+
+## Between-patient heterogeneity in M2 Mac
+
+Normally we are interested in the population effect (fix effects). However, we might want to understand what is the erogenous patients. Patient random intercepts capture baseline and trajectory differences across individuals. **Figure 3** overlays per-patient predicted M2 Mac trajectories.
+
+```{r fig-patient-heterogeneity}
+#| code-summary: "Between-patient M2 trajectories"
+#| fig-height: 4
+#| fig-width: 8
+#| fig-alt: "Line plots of predicted M2 macrophage proportion for each patient across biopsy timepoints, faceted by treatment arm and pathological response."
+
+show_groups <- "M2 Mac"
+pred_pat <- hmc_pred_patient[cell_group %in% show_groups]
+pred_pat[, cell_group := factor(cell_group, levels = show_groups)]
+
+pcr_cols <- c("RD" = "#4575b4", "pCR" = "#d73027")
+
+ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, colour = pCR)) +
+  geom_line(linewidth = 0.4, alpha = 0.5) +
+  facet_grid(cell_group ~ Arm + pCR, scales = "free_y") +
+  scale_colour_manual(values = pcr_cols, name = "Response") +
+  labs(
+    title = "Between-patient variation in predicted M2 Mac proportion",
+    x = NULL,
+    y = "Predicted proportion"
+  ) +
+  theme_pub() +
+  theme(legend.position = "bottom", strip.text = element_text(size = 8))
+```
+
+## Visualise results in spatial context.
+
+**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases from baseline more in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`, positive), while PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`, negative). **Figure 4** overlays both on the tissue for 20 representative patients in each group (those closest to each group's median post-treatment M2, rather than the M2-rich tail), with all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME). The cohort difference in absolute M2 density is modest; the response signal is primarily in the *change from baseline* (**Figure 2**), not the post-treatment level shown here.
+
+```{r fig-m2-spatial-prep}
+#| include: false
+#| code-summary: "Prepare the spatial exemplar"
+#| cache: true
+#| dependson: "repro-long-preview"
+
+# Proportions come from the long count table already loaded above.
+# The spatial figure itself reads the local core list and cell coordinates.
+roi <- as.data.table(long)[Arm == "C&I" & BiopsyPhase == "Post-treatment"]
+immune <- roi[, .(
+  immune = sum(count),
+  PatientID = PatientID[1],
+  pCR = as.character(pCR[1])
+), by = sample]
+m2_counts <- roi[cell_group == "M2 Mac", .(sample, m2 = count)]
+roi_m2 <- merge(immune, m2_counts, by = "sample", all.x = TRUE)
+roi_m2[is.na(m2), m2 := 0]
+roi_m2[, proportion := m2 / immune]
+
+pat_m2 <- roi_m2[, .(mean_m2 = mean(proportion)), by = .(PatientID, pCR)]
+m2_pcr_mean <- roi_m2[pCR == "pCR", mean(proportion)]
+m2_rd_mean <- roi_m2[pCR == "RD", mean(proportion)]
+
+shown <- unique(fread(file.path(post_dir, "spatial-cores.csv"))[, .(PatientID, pCR)])
+sel <- pat_m2[shown, on = .(PatientID, pCR), nomatch = NULL]
+sel_pcr_m2 <- sel[pCR == "pCR", mean(mean_m2)]
+sel_rd_m2 <- sel[pCR == "RD", mean(mean_m2)]
+```
+
+```{r fig-m2-spatial}
+#| code-summary: "Spatial maps of post-treatment cores"
+#| fig-width: 16
+#| fig-height: 28
+#| dpi: 100
+#| fig-retina: 1
+#| fig-alt: "Spatial maps of representative post-treatment tumours in the chemoimmunotherapy arm. M2 macrophages are bright magenta, PD-L1-positive antigen-presenting cells are bright yellow, and other immune cells are bright green, with pathological complete response on the left and residual disease on the right."
+
+cores <- fread(file.path(post_dir, "spatial-cores.csv"))
+cells <- read_fst(file.path(post_dir, "spatial-cells.fst"), as.data.table = TRUE)
+
+mk_roi <- function(image_id) {
+  if (is.na(image_id)) return(patchwork::plot_spacer())
+  mk_spatial_tile(cells[ImageID == image_id])
+}
+
+mk_row <- function(pid) {
+  image_ids <- cores[PatientID == pid][order(roi), ImageID]
+  ids <- c(image_ids, rep(NA_character_, 3L - length(image_ids)))
+  patchwork::wrap_plots(
+    ggplot() +
+      annotate("text", x = 0.5, y = 0.5, label = pid, fontface = "bold", size = 2.8) +
+      scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+      scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+      theme_void(),
+    patchwork::wrap_plots(lapply(ids, mk_roi), nrow = 1, ncol = 3),
+    ncol = 1,
+    heights = c(0.16, 1)
+  )
+}
+
+mk_block <- function(response, title) {
+  one_column <- function(which_side) {
+    pids <- cores[pCR == response & side == which_side][order(patient), unique(PatientID)]
+    patchwork::wrap_plots(lapply(pids, mk_row), ncol = 1)
+  }
+  patchwork::wrap_plots(one_column("left"), one_column("right"), ncol = 2) +
+    patchwork::plot_annotation(
+      title = title,
+      theme = theme(
+        plot.title = element_text(face = "bold", size = 12, hjust = 0.5, margin = margin(b = 4))
+      )
+    )
+}
+
+divider <- ggplot() +
+  annotate("segment", x = 0.5, xend = 0.5, y = 0, yend = 1, linewidth = 0.7, colour = "grey35") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme_void()
+
+patchwork::wrap_plots(
+  mk_block("pCR", "pCR (responder)"),
+  divider,
+  mk_block("RD", "RD (non-responder)"),
+  ncol = 3,
+  widths = c(1, 0.03, 1)
+) +
+  patchwork::plot_annotation(
+    title = "Opposite-direction immune remodelling — C&I post-treatment",
+    theme = theme(plot.title = element_text(face = "bold", size = 13))
+  )
+```
+
+The two markers move in opposite directions from baseline by response (**Figure 2**): M2 Mac (magenta) has a positive DiD in C&I post-treatment (FDR `r sprintf("%.3f", m2_did_fdr)`), while PD-L1+APCs (yellow) has a strong negative DiD (FDR `r sprintf("%.3f", pdl1_did_fdr)`). The tumours in the figure have similar M2 levels in the two response groups (shown patients `r sprintf("%.1f%%", 100 * sel_pcr_m2)` pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` RD; the cohort is `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)`), so the two sides look alike on purpose. What differs by response is the change from baseline (**Figure 2**), which this picture is not trying to show.
+
+---
+
+```{r}
+sessionInfo()
+```
