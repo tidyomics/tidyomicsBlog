@@ -86,7 +86,6 @@ nt_public <- find_nt_public()
 knitr::opts_knit$set(root.dir = nt_public)
 setwd(nt_public)
 here <- function(...) file.path(nt_public, ...)
-source(file.path(nt_public, "code", "UtilityFunctions.R"))
 
 theme_pub <- function() {
   theme_classic(base_size = 11, base_family = "sans") +
@@ -101,44 +100,29 @@ theme_pub <- function() {
     )
 }
 
-cols <- getNTColours()
-rhat_threshold <- 1.01
 hmc_stem <- "sccomp_tme_immune_comprehensive_hmc_patient_re"
 results_dir <- here("scratch", "sccomp_results")
 
-immune_labels <- sort(unique(getCellClusters()[["All"]][Type == "Immune", trimws(Label)]))
-
 marginal_pcr_path <- file.path(results_dir, paste0(hmc_stem, "_marginal_pcr_contrasts.csv"))
 baseline_contrasts_path <- file.path(results_dir, paste0(hmc_stem, "_baseline_anchored_contrasts.csv"))
-delta_baseline_path <- file.path(results_dir, paste0(hmc_stem, "_predict_delta_baseline.csv"))
-aligned_path <- file.path(results_dir, paste0(hmc_stem, "_predict_baseline_aligned.csv"))
-for (p in c(marginal_pcr_path, baseline_contrasts_path, delta_baseline_path, aligned_path)) {
+for (p in c(marginal_pcr_path, baseline_contrasts_path)) {
   if (!file.exists(p)) {
-    stop(
-      "Missing contrast/prediction file: ", p, "\n",
-      "Run run_marginal_pcr_contrasts.R, run_baseline_anchored_contrasts.R, ",
-      "and run_baseline_anchored_predictions.R (SCOMP_COMPARTMENT=TME_immune)."
-    )
+    stop("Missing contrast file: ", p)
   }
 }
 
 hmc_test <- fread(file.path(results_dir, paste0(hmc_stem, "_results.csv")))
 hmc_marginal_pcr <- fread(marginal_pcr_path)
 hmc_did <- fread(baseline_contrasts_path)
-hmc_delta <- fread(delta_baseline_path)
-hmc_aligned <- fread(aligned_path)
-hmc_pred <- fread(file.path(results_dir, paste0(hmc_stem, "_predict_grid.csv")))
 hmc_pred_patient <- fread(file.path(results_dir, paste0(hmc_stem, "_predict_by_patient.csv")))
 
-for (dt in list(hmc_pred, hmc_pred_patient)) {
-  dt[, BiopsyPhase := factor(
-    BiopsyPhase,
-    levels = c("Baseline", "On-treatment", "Post-treatment")
-  )]
-  dt[, Arm := factor(Arm, levels = c("C", "C&I"))]
-  dt[, pCR := factor(pCR, levels = c("RD", "pCR"))]
-}
-for (dt in list(hmc_marginal_pcr, hmc_did, hmc_delta, hmc_aligned)) {
+hmc_pred_patient[, BiopsyPhase := factor(
+  BiopsyPhase,
+  levels = c("Baseline", "On-treatment", "Post-treatment")
+)]
+hmc_pred_patient[, Arm := factor(Arm, levels = c("C", "C&I"))]
+hmc_pred_patient[, pCR := factor(pCR, levels = c("RD", "pCR"))]
+for (dt in list(hmc_marginal_pcr, hmc_did)) {
   dt[, BiopsyPhase := factor(
     BiopsyPhase,
     levels = c("Baseline", "On-treatment", "Post-treatment")
@@ -146,32 +130,13 @@ for (dt in list(hmc_marginal_pcr, hmc_did, hmc_delta, hmc_aligned)) {
   dt[, Arm := factor(Arm, levels = c("C", "C&I"))]
   dt[, cell_group := trimws(as.character(cell_group))]
 }
-hmc_aligned[, pCR := factor(pCR, levels = c("RD", "pCR"))]
 
 hmc_rhat <- hmc_test[is.finite(c_rhat)]
 conv_summary <- hmc_rhat[, .(
   n_contrasts = .N,
   median_rhat = median(c_rhat),
-  max_rhat = max(c_rhat),
-  pct_above_threshold = round(100 * mean(c_rhat >= rhat_threshold), 2)
+  max_rhat = max(c_rhat)
 )]
-
-hmc_response <- hmc_test[
-  grepl("pCR", parameter, fixed = TRUE) &
-    !grepl("___", parameter, fixed = TRUE)
-]
-top_pcr_groups <- hmc_response[
-  is.finite(c_FDR) & c_FDR < 0.05,
-  .(min_FDR = min(c_FDR)),
-  by = cell_group
-][order(min_FDR)][1:min(6, .N), cell_group]
-
-m2_row <- hmc_marginal_pcr[
-  cell_group == "M2 Mac" &
-    Arm == "C&I" &
-    BiopsyPhase == "On-treatment"
-]
-m2_ci_fdr <- if (nrow(m2_row)) m2_row$c_FDR[1] else NA_real_
 
 m2_did_fdr <- hmc_did[
   contrast_family == "did" & cell_group == "M2 Mac" &
@@ -196,9 +161,9 @@ setwd(post_dir)
 
 # Introduction
 
-Testing cell proportional differences from single-cell-resolved count data became essential in modern tissue analyses. This task, becomes a repeated-measures question as soon as several observation from the same tissue donor. For example, we might profile multiple tumor cores, such as is common in tissue microarrays (TMA). Time course profiling or such as serial biopsies add a further level of complexity.Averaging cores up to the patient, then testing one phenotype at a time, drops both the compositional constraint and the repeated-measures structure.
+Testing cell proportional differences from single-cell-resolved count data became essential in modern tissue analyses. This task, becomes a repeated-measures question as soon as several observation from the same tissue donor. For example, we might profile multiple tumor cores, such as is common in tissue microarrays (TMA). Time course profiling or such as serial biopsies add a further level of complexity. Averaging cores up to the patient, then testing one phenotype at a time, drops both the compositional constraint and the repeated-measures structure.
 
-[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a flexible Bayesian model for mixed-effect designs, able to identify outliers probabilistically, test for differential variability and remove unwanted effects. sccomp embraces the tidyomics philosophy, which is what makes a complex design practical to write down. Random effects, interactions, and custom contrasts share one formula. sccomp is flexible about that specification, and the hierarchical fit is robust enough that those contrasts come back as ordinary tibbles. sccomp accepts as input a long tibble, one row per sample and cell type, a count, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles for `dplyr`, `tidyr`, and `ggplot2`. The [reproducible pipeline](#reproducible-sccomp-pipeline) below is that workflow, reduced to the steps that define the model, the predictions, and the contrasts.
+[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a flexible Bayesian model for mixed-effect designs, able to identify outliers probabilistically, test for differential variability and remove unwanted effects. sccomp accepts a long tibble, one row per sample and cell type, a count, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles for `dplyr`, `tidyr`, and `ggplot2`. 
 
 
 # Source study and study design
@@ -349,7 +314,7 @@ $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR}
 
 # sccomp analysis
 
-The blocks below are the minimal tidyverse code to reproduce the analysis locally from the parsed input (run top to bottom), using the immune TME compartment with ROI-level samples and a patient random intercept. The fit uses every available core. That chunk is cached on this machine, so a later render skips the sampler unless the chunk itself changes.
+The blocks below are the minimal tidyverse code to reproduce the analysis locally from the parsed input (run top to bottom), using the immune TME compartment with ROI-level samples and a patient random intercept. 
 
 ## From long-format tidy input
 
@@ -415,27 +380,8 @@ fit
 ::: {.callout-note}
 ## Model validation
 
-All `r conv_summary$n_contrasts` composition contrasts had median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). The model is well converged and suitable for inference and prediction.
+All `r conv_summary$n_contrasts` composition contrasts had median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). The model has converged.
 :::
-
-```{r repro-fit-print}
-#| echo: false
-hmc_test |>
-  as_tibble() |>
-  slice_head(n = 8) |>
-  transmute(
-    phenotype = cell_group,
-    parameter,
-    effect = round(c_effect, 3),
-    lower = round(c_lower, 3),
-    upper = round(c_upper, 3),
-    FDR = signif(c_FDR, 3)
-  ) |>
-  knitr::kable(caption = sprintf(
-    "Saved sccomp_test() result (first 8 of %s rows)",
-    format(nrow(hmc_test), big.mark = ",")
-  ))
-```
 
 ## Hypothesis testing
 
@@ -479,7 +425,7 @@ contrasts <- c(
 res <- sccomp_test(fit, contrasts = contrasts)
 ```
 
-`res` has one row per phenotype for each contrast, with the posterior effect and FDR. The table below is the full set of difference-in-differences, strongest first:
+`res` holds those two contrasts, one row per phenotype. The table is the full set of difference-in-differences, strongest first:
 
 ```{r repro-did-preview}
 #| code-fold: show
@@ -506,11 +452,12 @@ as_tibble(hmc_did) |>
 #| cache: true
 library(tidyr)
 
-# Population grid: every Arm x BiopsyPhase x pCR combination
+# Same factor levels as the fit. Character columns are recoded, and the
+# response contrast is then dropped, so RD and pCR come out identical.
 pop <- expand_grid(
-  Arm = c("C", "C&I"),
-  BiopsyPhase = c("Baseline", "On-treatment", "Post-treatment"),
-  pCR = c("RD", "pCR")
+  Arm = factor(levels(long$Arm), levels = levels(long$Arm)),
+  BiopsyPhase = factor(levels(long$BiopsyPhase), levels = levels(long$BiopsyPhase)),
+  pCR = factor(levels(long$pCR), levels = levels(long$pCR))
 ) |>
   mutate(sample = paste0("pred_", row_number()),
          PatientID = long$PatientID[1])
@@ -530,24 +477,6 @@ pred_pop <- sccomp_predict(fit, new_data = pop)
 knitr::kable(pred_pop, caption = "Population predicted proportions") %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
   kableExtra::scroll_box(height = "400px")
-```
-
-```{r repro-predict-population-print}
-#| echo: false
-hmc_pred |>
-  as_tibble() |>
-  slice_head(n = 8) |>
-  transmute(
-    Arm, BiopsyPhase, pCR,
-    phenotype = cell_group,
-    proportion = round(proportion_mean, 3),
-    lower = round(proportion_lower, 3),
-    upper = round(proportion_upper, 3)
-  ) |>
-  knitr::kable(caption = sprintf(
-    "Population predicted proportions (first 8 of %s rows)",
-    format(nrow(hmc_pred), big.mark = ",")
-  ))
 ```
 
 ```{r repro-predictions-patient}
@@ -579,30 +508,12 @@ pred_pat <- sccomp_predict(fit, new_data = pat)
 pred_pat
 ```
 
-```{r repro-predict-patient-print}
-#| echo: false
-hmc_pred_patient |>
-  as_tibble() |>
-  slice_head(n = 8) |>
-  transmute(
-    PatientID, Arm, BiopsyPhase, pCR,
-    phenotype = cell_group,
-    proportion = round(proportion_mean, 3),
-    lower = round(proportion_lower, 3),
-    upper = round(proportion_upper, 3)
-  ) |>
-  knitr::kable(caption = sprintf(
-    "Per-patient predicted proportions (first 8 of %s rows)",
-    format(nrow(hmc_pred_patient), big.mark = ",")
-  ))
-```
-
 
 # Results
 
 ## Predicted immune compositional trajectories
 
-**Figure 1** shows baseline-aligned predicted proportions (95% credible intervals) for all 15 immune TME phenotypes. Within each arm × cell-type facet, both response groups are shifted to a common average baseline (mean of the pCR and RD T0 predictions), so they start at the same point and any post-baseline divergence reflects the response × change-from-T0 effect rather than a pre-existing baseline imbalance. Panels are split by treatment arm (columns); colour denotes pathological response. Asterisks mark arm–time points with difference-in-differences FDR \< 0.05 (`sccomp_test()` custom contrasts; see next section).
+**Figure 1** shows baseline-aligned predicted proportions (95% credible intervals) for all 15 immune TME phenotypes. Within each arm × cell-type facet, both response groups are shifted to the mean of their baseline predictions. Panels are split by treatment arm (columns); colour denotes pathological response. Asterisks mark arm–time points with difference-in-differences FDR \< 0.05.
 
 ```{r repro-baseline-aligned}
 #| code-fold: true
@@ -611,14 +522,8 @@ hmc_pred_patient |>
 #| dependson:
 #|   - repro-sccomp-fit
 #|   - repro-predictions-population
-# Baseline matching is a plot shift, not a new model. Responders and
-# non-responders can already differ at the first biopsy, so a later gap in
-# the raw proportions is ambiguous: treatment, or the gap they arrived with.
-# Shift both lines to the midpoint of their two baselines. A gap that was
-# only a head start disappears; a gap treatment opened stays. In the
-# chemoimmunotherapy arm, the on-treatment M2 difference was mostly already
-# at baseline and goes away after the shift; the post-treatment gap remains.
-# Posterior draws (not summaries) so the credible intervals stay valid.
+# Plot shift. Within each arm and cell type, move pCR and RD to the mean of
+# their baseline predictions, on the posterior draws.
 draws <- sccomp_predict(
   fit, new_data = pop, number_of_draws = 500, summary_instead_of_draws = FALSE
 ) |>
@@ -661,7 +566,10 @@ cell_order <- c(
 )
 cols_response <- c(RD = "#377EB8", pCR = "#E41A1C")
 
-pred_main <- copy(hmc_aligned)
+pred_main <- as.data.table(aligned_summary)
+pred_main[, BiopsyPhase := factor(BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment"))]
+pred_main[, Arm := factor(Arm, c("C", "C&I"))]
+pred_main[, pCR := factor(pCR, c("RD", "pCR"))]
 pred_main[, cell_group := factor(cell_group, levels = cell_order)]
 # A few intervals sit just below zero after the baseline shift.
 pred_main[, aligned_mean := pmax(aligned_mean, 0)]
@@ -707,7 +615,7 @@ ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = p
 
 ## Change from baseline
 
-For each cell type and treatment arm, the hypothesis is that responders and patients with residual disease changed by a different amount from baseline. **Figure 2** show that difference at two time points: the on-treatment and post-treatment. Bordered tiles have FDR \< 0.05.
+For each cell type and treatment arm, the hypothesis is that responders and patients with residual disease changed by a different amount from baseline. **Figure 2** shows that difference at two time points: the on-treatment and post-treatment. Bordered tiles have FDR \< 0.05.
 
 ```{r fig-did-heatmap}
 #| code-summary: "Difference-in-differences heatmap"
@@ -754,7 +662,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
   )
 ```
 
-**Most of the signal is at post-treatment:** `r n_did_pt_sig` immune phenotypes show a significant DiD at post-treatment vs `r n_did_ot_sig` on-treatment. Notably, M2 Mac in C&I is *not* significant on-treatment once baseline is accounted for (DiD FDR `r sprintf("%.2f", m2_did_ot_fdr)`), but becomes significant post-treatment (DiD FDR `r sprintf("%.3f", m2_did_fdr)`) — the apparent on-treatment effect in the marginal analysis largely reflected a baseline difference.
+**Most of the signal is at post-treatment:** `r n_did_pt_sig` immune phenotypes have a significant DiD at post-treatment, and `r n_did_ot_sig` on-treatment. For M2 Mac in the C&I arm, the on-treatment DiD FDR is `r sprintf("%.2f", m2_did_ot_fdr)` and the post-treatment DiD FDR is `r sprintf("%.3f", m2_did_fdr)`. The on-treatment marginal contrast largely repeats a baseline difference.
 
 ## M2 macrophage changes by response
 
@@ -798,7 +706,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
 
 ## Between-patient heterogeneity in M2 Mac
 
-Normally we are interested in the population effect (fix effects). However, we might want to understand what is the erogenous patients. Patient random intercepts capture baseline and trajectory differences across individuals. **Figure 3** overlays per-patient predicted M2 Mac trajectories.
+The fixed effect is the population estimate. Patient random intercepts describe individual baselines and trajectories. **Figure 4** shows the per-patient predicted M2 Mac trajectories.
 
 ```{r fig-patient-heterogeneity}
 #| code-summary: "Between-patient M2 trajectories"
@@ -827,7 +735,7 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 ## Visualise results in spatial context.
 
-**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases from baseline more in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`, positive), while PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`, negative). **Figure 4** overlays both on the tissue for 20 representative patients in each group (those closest to each group's median post-treatment M2, rather than the M2-rich tail), with all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME). The cohort difference in absolute M2 density is modest; the response signal is primarily in the *change from baseline* (**Figure 2**), not the post-treatment level shown here.
+**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases from baseline more in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`, positive), while PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`, negative). **Figure 5** overlays both on the tissue for 20 representative patients in each group (those closest to each group's median post-treatment M2), with all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME). The cohort difference in absolute M2 density is modest. The response association is the change from baseline (**Figure 2**).
 
 ```{r fig-m2-spatial-prep}
 #| include: false
@@ -922,7 +830,7 @@ patchwork::wrap_plots(
   )
 ```
 
-The two markers move in opposite directions from baseline by response (**Figure 2**): M2 Mac (magenta) has a positive DiD in C&I post-treatment (FDR `r sprintf("%.3f", m2_did_fdr)`), while PD-L1+APCs (yellow) has a strong negative DiD (FDR `r sprintf("%.3f", pdl1_did_fdr)`). The tumours in the figure have similar M2 levels in the two response groups (shown patients `r sprintf("%.1f%%", 100 * sel_pcr_m2)` pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` RD; the cohort is `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)`), so the two sides look alike on purpose. What differs by response is the change from baseline (**Figure 2**), which this picture is not trying to show.
+The two markers move in opposite directions from baseline by response (**Figure 2**): M2 Mac (magenta) has a positive DiD in C&I post-treatment (FDR `r sprintf("%.3f", m2_did_fdr)`), while PD-L1+APCs (yellow) has a strong negative DiD (FDR `r sprintf("%.3f", pdl1_did_fdr)`). The tumours in the figure have similar M2 levels in the two response groups (shown patients `r sprintf("%.1f%%", 100 * sel_pcr_m2)` pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` RD; the cohort is `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)`). The response association is the change from baseline in **Figure 2**.
 
 ---
 
