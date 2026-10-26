@@ -28,7 +28,6 @@ format:
     code-fold: true
     code-summary: "Show code"
 execute:
-  freeze: auto
   warning: false
   message: false
 ---
