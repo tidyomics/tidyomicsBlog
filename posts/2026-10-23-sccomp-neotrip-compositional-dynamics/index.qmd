@@ -183,14 +183,14 @@ setwd(post_dir)
 
 # Introduction
 
-Testing cell proportional differences from single-cell-resolved count data became essential in modern tissue analyses. This task, becomes a repeated-measures question as soon as several observation from the same tissue donor. For example, we might profile multiple tumor cores, such as is common in tissue microarrays (TMA). Time course profiling or such as serial biopsies add a further level of complexity. Averaging cores up to the patient, then testing one phenotype at a time, drops both the compositional constraint and the repeated-measures structure.
+Testing cell proportional differences from single-cell-resolved count data is central to modern tissue analyses. It becomes a repeated-measures problem as soon as several observations come from the same donor, such as multiple tumour cores in a tissue microarray (TMA) or serial biopsies over a time course. Averaging cores up to the patient and testing one phenotype at a time drops both the compositional constraint and the repeated-measures structure.
 
-[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a flexible Bayesian model for mixed-effect designs, able to identify outliers probabilistically, test for differential variability and remove unwanted effects. sccomp accepts a long tibble, one row per sample and cell type, a count, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles for `dplyr`, `tidyr`, and `ggplot2`. 
+[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a Bayesian model for mixed-effect compositional designs that identifies outliers probabilistically, tests for differential variability, and removes unwanted effects. It takes a long tibble with one row per sample and cell type, a count column, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles ready for `dplyr`, `tidyr`, and `ggplot2`.
 
 
 # Source study and study design
 
-We showcase [sccomp](https://github.com/MangiolaLaboratory/sccomp) capabilities on the NeoTrip trial. [Wang *et al.* (2023)](https://www.nature.com/articles/s41586-023-06498-3) used imaging mass cytometry (IMC) to map how multicellular spatial organization in triple-negative breast cancer relates to neoadjuvant immunotherapy response. The work is based on the NeoTRIP phase III trial (NCT02620280): early high-risk TNBC patients were randomised 1:1 to carboplatin + nab-paclitaxel (C) or the same regimen plus atezolizumab (C&I), with eight 3-week neoadjuvant cycles before surgery. Research FFPE biopsies:
+We apply [sccomp](https://github.com/MangiolaLaboratory/sccomp) to the NeoTRIP trial. [Wang *et al.* (2023)](https://www.nature.com/articles/s41586-023-06498-3) used imaging mass cytometry (IMC) to map how multicellular spatial organization in triple-negative breast cancer relates to neoadjuvant immunotherapy response. In the phase III NeoTRIP trial (NCT02620280), early high-risk TNBC patients were randomised 1:1 to carboplatin + nab-paclitaxel (C) or the same regimen plus atezolizumab (C&I) for eight 3-week neoadjuvant cycles before surgery. Research FFPE biopsies:
 
 - Baseline (*n* = 243)
 - On-treatment (first day of cycle 2; *n* = 207)
@@ -271,7 +271,7 @@ phase <- roi |>
   summarise(x = mean(x), n = n(), .by = BiopsyPhase) |>
   mutate(y = tile_h + 0.62)
 patient <- tibble::tibble(
-  x = mean(phase$x), y = phase$y[1] + 0.95, label = "NT193"
+  x = mean(phase$x), y = phase$y[1] + 0.95, label = "Donor"
 )
 edges <- bind_rows(
   phase |> transmute(x, y, xend = patient$x, yend = patient$y),
@@ -338,9 +338,9 @@ Wang *et al.* linked cell densities, spatial interactions, and proliferative fra
 
 # sccomp mixed-effects compositional modelling
 
-**In the original publication**, longitudinal composition was summarised as mean phenotype proportions per patient and compared across arms, timepoints, and response groups using Wilcoxon tests and *Z*-scored trend plots (Fig. 5). Phenotypes were also tested individually with weighted binomial GLMs on tumour-level proportions. These approaches treat each phenotype separately, aggregate ROIs to the patient before inference, and do not jointly model compositional closure (proportions within a compartment sum to one) or hierarchical repeated measures (multiple biopsies and ROIs nested within the same patient).
+Wang *et al.* summarised longitudinal composition as mean phenotype proportions per patient and compared arms, timepoints, and response groups with Wilcoxon tests, *Z*-scored trend plots (their Fig. 5), and per-phenotype weighted binomial GLMs on tumour-level proportions. Those tests treat each phenotype in isolation and average ROIs to the patient before inference, setting aside compositional closure (proportions sum to one) and the nesting of biopsies and ROIs within patients.
 
-**Here** we reproduce and extend that compositional dynamics analysis using [sccomp](https://github.com/MangiolaLaboratory/sccomp). sccomp, directly modelling count data, parameterises composition on a latent log-ratio scale and fits mixed effects on the mean and variability structure. Each ROI is one compositional unit, in the column `ROI_id`. `sccomp_estimate()` is given that column with `sample = "ROI_id"`. `BiopsyPhase` is the biopsy timepoint, and several ROIs share one timepoint, nested in the patient. A patient random intercept `(1 | PatientID)` absorbs baseline and trajectory differences across individuals and shrinkage across the cohort. 
+With [sccomp](https://github.com/MangiolaLaboratory/sccomp), we model the ROI-level cell counts directly on a latent log-ratio scale with mixed effects on the mean and variability. Each ROI is one compositional sample (`sample = "ROI_id"` in `sccomp_estimate()`), several ROIs share a biopsy timepoint (`BiopsyPhase`), and a patient random intercept `(1 | PatientID)` accounts for baseline differences across individuals and shrinkage across the cohort:
 
 $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR} + (1 \mid \text{PatientID})$$
 
@@ -523,8 +523,7 @@ as_tibble(hmc_did) |>
 #| code-fold: true
 #| code-summary: "Population prediction grid"
 #| cache: true
-# Factors, with these levels. Character columns are recoded, and the
-# response contrast is then dropped, so RD and pCR come out identical.
+# One row per arm, timepoint, and response group.
 pop <- tibble::tribble(
   ~Arm,  ~BiopsyPhase,     ~pCR,
   "C",   "Baseline",       "RD",
@@ -704,7 +703,7 @@ ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = p
 
 ## Change from baseline
 
-For each cell type and treatment arm, the hypothesis is that responders and patients with residual disease changed by a different amount from baseline. **Figure 2** shows that difference at two time points: the on-treatment and post-treatment. Bordered tiles have FDR \< 0.05.
+For each cell type and treatment arm, we test whether responders and patients with residual disease changed by different amounts from baseline. **Figure 2** shows that difference at the on-treatment and post-treatment visits. Bordered tiles have FDR \< 0.05.
 
 ```{r fig-did-heatmap}
 #| code-fold: true
@@ -830,9 +829,9 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
   theme(legend.position = "bottom", strip.text = element_text(size = 8))
 ```
 
-## Visualise results in spatial context.
+## Visualise results in spatial context
 
-**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases from baseline more in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`, positive), while PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`, negative). **Figure 5** overlays both on the tissue for 20 representative patients in each group (those closest to each group's median post-treatment M2), with all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME). The cohort difference in absolute M2 density is modest. The response association is the change from baseline (**Figure 2**).
+**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases more from baseline in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`), whereas PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`). **Figure 5** plots both markers on the tissue for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion), showing all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME).
 
 ```{r fig-m2-spatial-prep}
 #| include: false
@@ -932,12 +931,12 @@ patchwork::wrap_plots(
   widths = c(1, 0.03, 1)
 ) +
   patchwork::plot_annotation(
-    title = "Opposite-direction immune remodelling — C&I post-treatment",
+    title = "Opposite-direction immune remodelling: C&I post-treatment",
     theme = theme(plot.title = element_text(face = "bold", size = 13))
   )
 ```
 
-The two markers move in opposite directions from baseline by response (**Figure 2**): M2 Mac (magenta) has a positive DiD in C&I post-treatment (FDR `r sprintf("%.3f", m2_did_fdr)`), while PD-L1+APCs (yellow) has a strong negative DiD (FDR `r sprintf("%.3f", pdl1_did_fdr)`). The tumours in the figure have similar M2 levels in the two response groups (shown patients `r sprintf("%.1f%%", 100 * sel_pcr_m2)` pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` RD; the cohort is `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)`). The response association is the change from baseline in **Figure 2**.
+Post-treatment M2 levels alone look similar between the two groups (`r sprintf("%.1f%%", 100 * sel_pcr_m2)` in pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` in RD among the displayed patients; `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)` across the cohort). The signal is in the change from baseline (**Figure 2**) rather than the single-visit cross-section.
 
 ---
 
