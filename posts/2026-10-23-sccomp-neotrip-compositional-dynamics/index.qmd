@@ -38,12 +38,10 @@ execute:
 knitr::opts_chunk$set(fig.align = "center", dpi = 150)
 
 suppressPackageStartupMessages({
-  library(data.table)
   library(ggplot2)
   library(fst)
   library(here)
   library(patchwork)
-  library(RColorBrewer)
   library(readr)
   library(dplyr)
   library(tidyr)
@@ -104,57 +102,82 @@ results_dir <- here("scratch", "sccomp_results")
 
 marginal_pcr_path <- file.path(results_dir, paste0(hmc_stem, "_marginal_pcr_contrasts.csv"))
 baseline_contrasts_path <- file.path(results_dir, paste0(hmc_stem, "_baseline_anchored_contrasts.csv"))
-for (p in c(marginal_pcr_path, baseline_contrasts_path)) {
-  if (!file.exists(p)) {
-    stop("Missing contrast file: ", p)
-  }
+missing_contrasts <- c(marginal_pcr_path, baseline_contrasts_path)
+missing_contrasts <- missing_contrasts[!file.exists(missing_contrasts)]
+if (length(missing_contrasts)) {
+  stop("Missing contrast file: ", paste(missing_contrasts, collapse = ", "))
 }
 
-hmc_test <- fread(file.path(results_dir, paste0(hmc_stem, "_results.csv")))
-hmc_marginal_pcr <- fread(marginal_pcr_path)
-hmc_did <- fread(baseline_contrasts_path)
-hmc_pred_patient <- fread(file.path(results_dir, paste0(hmc_stem, "_predict_by_patient.csv")))
+phase_levels <- c("Baseline", "On-treatment", "Post-treatment")
+arm_levels <- c("C", "C&I")
 
-hmc_pred_patient[, BiopsyPhase := factor(
-  BiopsyPhase,
-  levels = c("Baseline", "On-treatment", "Post-treatment")
-)]
-hmc_pred_patient[, Arm := factor(Arm, levels = c("C", "C&I"))]
-hmc_pred_patient[, pCR := factor(pCR, levels = c("RD", "pCR"))]
-for (dt in list(hmc_marginal_pcr, hmc_did)) {
-  dt[, BiopsyPhase := factor(
-    BiopsyPhase,
-    levels = c("Baseline", "On-treatment", "Post-treatment")
-  )]
-  dt[, Arm := factor(Arm, levels = c("C", "C&I"))]
-  dt[, cell_group := trimws(as.character(cell_group))]
+hmc_test <- read_csv(
+  file.path(results_dir, paste0(hmc_stem, "_results.csv")),
+  show_col_types = FALSE
+)
+hmc_marginal_pcr <- read_csv(marginal_pcr_path, show_col_types = FALSE) |>
+  mutate(
+    BiopsyPhase = factor(BiopsyPhase, phase_levels),
+    Arm = factor(Arm, arm_levels),
+    cell_group = trimws(cell_group)
+  )
+hmc_did <- read_csv(baseline_contrasts_path, show_col_types = FALSE) |>
+  mutate(
+    BiopsyPhase = factor(BiopsyPhase, phase_levels),
+    Arm = factor(Arm, arm_levels),
+    cell_group = trimws(cell_group)
+  )
+hmc_pred_patient <- read_csv(
+  file.path(results_dir, paste0(hmc_stem, "_predict_by_patient.csv")),
+  show_col_types = FALSE
+) |>
+  mutate(
+    BiopsyPhase = factor(BiopsyPhase, phase_levels),
+    Arm = factor(Arm, arm_levels),
+    pCR = factor(pCR, c("RD", "pCR"))
+  )
+
+conv_summary <- hmc_test |>
+  filter(is.finite(c_rhat)) |>
+  summarise(
+    n_parameters = n(),
+    median_rhat = median(c_rhat),
+    max_rhat = max(c_rhat),
+    min_ess_bulk = min(c_ess_bulk),
+    median_ess_bulk = median(c_ess_bulk),
+    min_ess_tail = min(c_ess_tail),
+    median_ess_tail = median(c_ess_tail)
+  )
+conv_var <- hmc_test |>
+  filter(is.finite(v_rhat)) |>
+  summarise(
+    n = n(),
+    max_rhat = max(v_rhat),
+    min_ess_bulk = min(v_ess_bulk),
+    min_ess_tail = min(v_ess_tail)
+  )
+
+did_fdr <- function(phenotype, phase) {
+  hmc_did |>
+    filter(
+      contrast_family == "did",
+      cell_group == phenotype,
+      Arm == "C&I",
+      BiopsyPhase == phase
+    ) |>
+    pull(c_FDR)
 }
-
-hmc_rhat <- hmc_test[is.finite(c_rhat)]
-conv_summary <- hmc_rhat[, .(
-  n_contrasts = .N,
-  median_rhat = median(c_rhat),
-  max_rhat = max(c_rhat)
-)]
-
-m2_did_fdr <- hmc_did[
-  contrast_family == "did" & cell_group == "M2 Mac" &
-    Arm == "C&I" & BiopsyPhase == "Post-treatment", c_FDR
-]
-pdl1_did_fdr <- hmc_did[
-  contrast_family == "did" & cell_group == "PD-L1^+APCs" &
-    Arm == "C&I" & BiopsyPhase == "Post-treatment", c_FDR
-]
-m2_did_ot_fdr <- hmc_did[
-  contrast_family == "did" & cell_group == "M2 Mac" &
-    Arm == "C&I" & BiopsyPhase == "On-treatment", c_FDR
-]
-n_did_pt_sig <- uniqueN(hmc_did[
-  contrast_family == "did" & BiopsyPhase == "Post-treatment" & c_FDR < 0.05, cell_group
-])
-n_did_ot_sig <- uniqueN(hmc_did[
-  contrast_family == "did" & BiopsyPhase == "On-treatment" & c_FDR < 0.05, cell_group
-])
+m2_did_fdr <- did_fdr("M2 Mac", "Post-treatment")
+pdl1_did_fdr <- did_fdr("PD-L1^+APCs", "Post-treatment")
+m2_did_ot_fdr <- did_fdr("M2 Mac", "On-treatment")
+n_did_sig <- function(phase) {
+  hmc_did |>
+    filter(contrast_family == "did", BiopsyPhase == phase, c_FDR < 0.05) |>
+    distinct(cell_group) |>
+    nrow()
+}
+n_did_pt_sig <- n_did_sig("Post-treatment")
+n_did_ot_sig <- n_did_sig("On-treatment")
 setwd(post_dir)
 ```
 
@@ -179,6 +202,7 @@ We showcase [sccomp](https://github.com/MangiolaLaboratory/sccomp) capabilities 
 Each patient contributes several samples. The biopsies are nested in the patient, and the regions of interest are nested in the biopsy. Patient NT193, in the chemotherapy arm with residual disease, was imaged at all three timepoints: 10 ROIs at baseline, 10 on-treatment, and 3 at surgery. In the model, each ROI is one compositional sample and the patient is the repeated-measures group.
 
 ```{r fig-nesting}
+#| code-fold: true
 #| code-summary: "One patient, three timepoints, several ROIs"
 #| fig-width: 12
 #| fig-height: 5.4
@@ -186,16 +210,16 @@ Each patient contributes several samples. The biopsies are nested in the patient
 
 mk_spatial_tile <- function(dat, square = TRUE) {
   if (nrow(dat) == 0) {
-    dat <- data.table(
+    dat <- tibble::tibble(
       Location_Center_X = numeric(),
       Location_Center_Y = numeric(),
       draw = character()
     )
   }
   tile <- ggplot(dat, aes(x = Location_Center_X, y = Location_Center_Y)) +
-    geom_point(data = dat[draw == "other"], colour = "#39FF14", size = 0.10) +
-    geom_point(data = dat[draw == "pdl1"], colour = "#FFFF00", size = 0.16) +
-    geom_point(data = dat[draw == "m2"], colour = "#FF00FF", size = 0.16) +
+    geom_point(data = filter(dat, draw == "other"), colour = "#39FF14", size = 0.10) +
+    geom_point(data = filter(dat, draw == "pdl1"), colour = "#FFFF00", size = 0.16) +
+    geom_point(data = filter(dat, draw == "m2"), colour = "#FF00FF", size = 0.16) +
     scale_x_continuous(labels = NULL, guide = "none", expand = c(0, 0)) +
     scale_y_reverse(labels = NULL, guide = "none", expand = c(0, 0)) +
     theme_void(base_size = 8) +
@@ -213,20 +237,26 @@ mk_spatial_tile <- function(dat, square = TRUE) {
   tile
 }
 
-roi <- unique(fread(
+roi <- read_csv(
   file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
-  select = c("PatientID", "BiopsyPhase", "ImageID")
-)[PatientID == "NT193"])
-roi[, BiopsyPhase := factor(
-  BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment")
-)]
-setorder(roi, BiopsyPhase, ImageID)
-roi[, i := seq_len(.N), by = BiopsyPhase]
-n_phase <- roi[, .(n = .N), by = BiopsyPhase]
-n_phase[, x0 := cumsum(n + 2) - (n + 2)]
-roi[n_phase, x := i + x0, on = "BiopsyPhase"]
+  col_select = c(PatientID, BiopsyPhase, ImageID),
+  show_col_types = FALSE
+) |>
+  filter(PatientID == "NT193") |>
+  distinct() |>
+  mutate(BiopsyPhase = factor(BiopsyPhase, phase_levels)) |>
+  arrange(BiopsyPhase, ImageID) |>
+  mutate(i = row_number(), .by = BiopsyPhase)
 
-cells_nt <- read_fst(file.path(post_dir, "nt193-cells.fst"), as.data.table = TRUE)
+n_phase <- roi |>
+  summarise(n = n(), .by = BiopsyPhase) |>
+  mutate(x0 = cumsum(n + 2) - (n + 2))
+roi <- roi |>
+  left_join(n_phase, by = "BiopsyPhase") |>
+  mutate(x = i + x0)
+
+cells_nt <- read_fst(file.path(post_dir, "nt193-cells.fst")) |>
+  as_tibble()
 dx <- 0.46
 pad <- 0.62
 xmin <- min(roi$x) - pad
@@ -237,16 +267,20 @@ target_in <- (2 * dx) / (xmax - xmin) * fig_w
 headroom <- 1.9
 tile_h <- target_in * headroom / (fig_h - target_in)
 
-phase <- roi[, .(x = mean(x), n = .N), by = BiopsyPhase]
-phase[, y := tile_h + 0.62]
-patient <- data.table(x = mean(phase$x), y = phase$y[1] + 0.95, label = "NT193")
-edges <- rbind(
-  phase[, .(x, y, xend = patient$x, yend = patient$y)],
-  roi[, .(
-    x, y = tile_h,
+phase <- roi |>
+  summarise(x = mean(x), n = n(), .by = BiopsyPhase) |>
+  mutate(y = tile_h + 0.62)
+patient <- tibble::tibble(
+  x = mean(phase$x), y = phase$y[1] + 0.95, label = "NT193"
+)
+edges <- bind_rows(
+  phase |> transmute(x, y, xend = patient$x, yend = patient$y),
+  roi |> transmute(
+    x,
+    y = tile_h,
     xend = phase$x[match(BiopsyPhase, phase$BiopsyPhase)],
     yend = phase$y[1]
-  )]
+  )
 )
 phase_cols <- c(
   Baseline = "#1B9E77",
@@ -283,7 +317,7 @@ tree <- ggplot() +
 
 for (i in seq_len(nrow(roi))) {
   tree <- tree + annotation_custom(
-    ggplotGrob(mk_spatial_tile(cells_nt[ImageID == roi$ImageID[i]], square = FALSE)),
+    ggplotGrob(mk_spatial_tile(filter(cells_nt, ImageID == roi$ImageID[i]), square = FALSE)),
     xmin = roi$x[i] - dx,
     xmax = roi$x[i] + dx,
     ymin = 0,
@@ -306,7 +340,7 @@ Wang *et al.* linked cell densities, spatial interactions, and proliferative fra
 
 **In the original publication**, longitudinal composition was summarised as mean phenotype proportions per patient and compared across arms, timepoints, and response groups using Wilcoxon tests and *Z*-scored trend plots (Fig. 5). Phenotypes were also tested individually with weighted binomial GLMs on tumour-level proportions. These approaches treat each phenotype separately, aggregate ROIs to the patient before inference, and do not jointly model compositional closure (proportions within a compartment sum to one) or hierarchical repeated measures (multiple biopsies and ROIs nested within the same patient).
 
-**Here** we reproduce and extend that compositional dynamics analysis using [sccomp](https://github.com/MangiolaLaboratory/sccomp). sccomp, directly modelling count data, parameterises composition on a latent log-ratio scale and fits mixed effects on the mean and variability structure. Each ROI (`ImageID`) is one compositional sample; a patient random intercept `(1 | PatientID)` absorbs baseline and trajectory differences across individuals and shrinkage across the cohort. 
+**Here** we reproduce and extend that compositional dynamics analysis using [sccomp](https://github.com/MangiolaLaboratory/sccomp). sccomp, directly modelling count data, parameterises composition on a latent log-ratio scale and fits mixed effects on the mean and variability structure. Each ROI is one compositional unit, in the column `ROI_id`. `sccomp_estimate()` is given that column with `sample = "ROI_id"`. `BiopsyPhase` is the biopsy timepoint, and several ROIs share one timepoint, nested in the patient. A patient random intercept `(1 | PatientID)` absorbs baseline and trajectory differences across individuals and shrinkage across the cohort. 
 
 $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR} + (1 \mid \text{PatientID})$$
 
@@ -317,7 +351,7 @@ The blocks below are the minimal tidyverse code to reproduce the analysis locall
 
 ## From long-format tidy input
 
-The input `long` is a tibble with one row per ROI × immune phenotype: a count plus the design columns (`Arm`, `BiopsyPhase`, `pCR`) and the grouping `PatientID`. Preview:
+The input `long` is a tibble with one row per ROI × immune phenotype: `ROI_id`, a count, the design columns (`Arm`, `BiopsyPhase`, `pCR`), and the grouping `PatientID`. Several ROIs share one `BiopsyPhase`. Preview:
 
 ```{r repro-long-preview}
 #| code-fold: show
@@ -328,6 +362,7 @@ library(dplyr)
 
 long <- read_csv(file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
                  show_col_types = FALSE) |>
+  rename(ROI_id = sample) |>
   mutate(
     count = as.integer(count),
     BiopsyPhase = factor(BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment")),
@@ -336,17 +371,24 @@ long <- read_csv(file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
   )
 
 long |>
-  select(sample, cell_group, count, PatientID, BiopsyPhase, Arm, pCR) |>
+  select(ROI_id, cell_group, count, PatientID, BiopsyPhase, Arm, pCR) |>
   slice_head(n = 8) |>
   knitr::kable(caption = sprintf(
     "Long-format sccomp input (%s ROIs x %s immune phenotypes = %s rows)",
-    format(n_distinct(long$sample), big.mark = ","),
+    format(n_distinct(long$ROI_id), big.mark = ","),
     n_distinct(long$cell_group),
     format(nrow(long), big.mark = ",")
   ))
 ```
 
 ## Fit the model
+
+```{r repro-sccomp-fit-code}
+#| ref.label: repro-sccomp-fit
+#| eval: false
+#| echo: true
+#| code-fold: false
+```
 
 ```{r repro-sccomp-fit}
 #| code-fold: show
@@ -361,7 +403,7 @@ fit <- sccomp_estimate(
   long,
   formula_composition = ~ Arm * BiopsyPhase * pCR + (1 | PatientID),
   formula_variability = ~ 1,
-  sample = "sample",
+  sample = "ROI_id",
   cell_group = "cell_group",
   abundance = "count",
   inference_method = "hmc",
@@ -376,11 +418,54 @@ fit <- sccomp_estimate(
 fit
 ```
 
-::: {.callout-note}
-## Model validation
+## Model checks
 
-All `r conv_summary$n_contrasts` composition contrasts had median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). The model has converged.
-:::
+**Convergence.** All `r format(conv_summary$n_parameters, big.mark = ",")` composition parameters have median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). Bulk effective sample size has median `r format(round(conv_summary$median_ess_bulk), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_bulk), big.mark = ",")`). Tail effective sample size has median `r format(round(conv_summary$median_ess_tail), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_tail), big.mark = ",")`).
+
+Variability is an intercept for each phenotype. Those `r conv_var$n` coefficients have maximum $\hat{R}$ = `r sprintf("%.3f", conv_var$max_rhat)`, minimum bulk ESS `r format(round(conv_var$min_ess_bulk), big.mark = ",")`, and minimum tail ESS `r format(round(conv_var$min_ess_tail), big.mark = ",")`. The composition parameters with the smallest bulk ESS:
+
+```{r repro-convergence}
+#| code-fold: show
+#| code-summary: "Smallest bulk effective sample sizes"
+fit |>
+  filter(is.finite(c_ess_bulk)) |>
+  slice_min(c_ess_bulk, n = 6, with_ties = FALSE) |>
+  mutate(
+    c_rhat = round(c_rhat, 3),
+    c_ess_bulk = round(c_ess_bulk),
+    c_ess_tail = round(c_ess_tail)
+  ) |>
+  knitr::kable(
+    caption = "Composition parameters with the smallest bulk effective sample size"
+  )
+```
+
+**Posterior predictive check.** `remove_unwanted_effects = TRUE` removes variation other than biopsy timepoint, so the black boxes are adjusted proportions and the blue boxes are posterior predictive replicates. Fill marks a timepoint contrast with FDR below 0.05.
+
+```{r repro-ppc}
+#| code-fold: false
+#| code-summary: "Posterior predictive check"
+#| results: hide
+#| cache: true
+#| dependson: "repro-sccomp-fit"
+#| fig-height: 12
+#| fig-width: 10
+#| dpi: 100
+#| fig-retina: 1
+#| fig-alt: "Boxplots of immune-cell proportions by biopsy timepoint, faceted by cell type, after removing variation other than biopsy timepoint. Black boxes are adjusted proportions and blue boxes are posterior predictive replicates. Filled boxes mark a timepoint contrast with FDR below 0.05."
+fit |> 
+  sccomp_boxplot(
+  factor = "BiopsyPhase",
+  significance_statistic = "FDR",
+  remove_unwanted_effects = TRUE
+  ) +
+  labs(
+    title = "Posterior predictive check",
+    subtitle = "Black: adjusted proportions. Blue: replicates from the fitted model.",
+    x = "Biopsy timepoint"
+  ) +
+  guides(colour = "none", shape = "none") 
+```
 
 ## Hypothesis testing
 
@@ -395,29 +480,18 @@ We pass contrasts to `sccomp_test()` as strings.
 #| code-summary: "Test two contrasts"
 #| cache: true
 #| dependson: "repro-sccomp-fit"
-# The strings are the rows of the same design matrix sccomp fits.
-grid <- expand.grid(
-  Arm = factor(c("C", "C&I"), c("C", "C&I")),
-  BiopsyPhase = factor(
-    c("Baseline", "On-treatment", "Post-treatment"),
-    c("Baseline", "On-treatment", "Post-treatment")
-  ),
-  pCR = factor(c("RD", "pCR"), c("RD", "pCR"))
-)
-mm <- model.matrix(~ Arm * BiopsyPhase * pCR, grid)
-row_of <- function(a, p, r) mm[grid$Arm == a & grid$BiopsyPhase == p & grid$pCR == r, ]
-to_expr <- function(v) {
-  v <- v[abs(v) > 1e-9]
-  paste(sprintf("%g * `%s`", v, names(v)), collapse = " + ")
-}
-
 contrasts <- c(
-  marginal_CI_post = to_expr(
-    row_of("C&I", "Post-treatment", "pCR") - row_of("C&I", "Post-treatment", "RD")
+  marginal_CI_post = paste(
+    "`pCRpCR`",                                  # pCR versus RD in chemotherapy at baseline
+    "`ArmC&I:pCRpCR`",                           # additional pCR versus RD gap in the C&I arm
+    "`BiopsyPhasePost-treatment:pCRpCR`",        # additional pCR versus RD gap at post-treatment
+    "`ArmC&I:BiopsyPhasePost-treatment:pCRpCR`", # additional pCR versus RD gap for C&I at post-treatment
+    sep = " + "
   ),
-  did_CI_post = to_expr(
-    (row_of("C&I", "Post-treatment", "pCR") - row_of("C&I", "Baseline", "pCR")) -
-      (row_of("C&I", "Post-treatment", "RD") - row_of("C&I", "Baseline", "RD"))
+  did_CI_post = paste(
+    "`BiopsyPhasePost-treatment:pCRpCR`",        # change from baseline in the pCR contrast
+    "`ArmC&I:BiopsyPhasePost-treatment:pCRpCR`", # further change from baseline in the C&I arm
+    sep = " + "
   )
 )
 
@@ -435,7 +509,7 @@ as_tibble(hmc_did) |>
   transmute(
     phenotype = cell_group,
     Arm, BiopsyPhase,
-    `DiD effect (logit)` = round(c_effect, 3),
+    `center_log_ratio` = round(c_effect, 3),
     FDR = signif(c_FDR, 3)
   ) |>
   slice_head(n = 8) |>
@@ -446,20 +520,33 @@ as_tibble(hmc_did) |>
 ## Population and per-patient predictions
 
 ```{r repro-predictions-population}
-#| code-fold: show
+#| code-fold: true
 #| code-summary: "Population prediction grid"
 #| cache: true
-library(tidyr)
-
-# Same factor levels as the fit. Character columns are recoded, and the
+# Factors, with these levels. Character columns are recoded, and the
 # response contrast is then dropped, so RD and pCR come out identical.
-pop <- expand_grid(
-  Arm = factor(levels(long$Arm), levels = levels(long$Arm)),
-  BiopsyPhase = factor(levels(long$BiopsyPhase), levels = levels(long$BiopsyPhase)),
-  pCR = factor(levels(long$pCR), levels = levels(long$pCR))
+pop <- tibble::tribble(
+  ~Arm,  ~BiopsyPhase,     ~pCR,
+  "C",   "Baseline",       "RD",
+  "C",   "Baseline",       "pCR",
+  "C",   "On-treatment",   "RD",
+  "C",   "On-treatment",   "pCR",
+  "C",   "Post-treatment", "RD",
+  "C",   "Post-treatment", "pCR",
+  "C&I", "Baseline",       "RD",
+  "C&I", "Baseline",       "pCR",
+  "C&I", "On-treatment",   "RD",
+  "C&I", "On-treatment",   "pCR",
+  "C&I", "Post-treatment", "RD",
+  "C&I", "Post-treatment", "pCR"
 ) |>
-  mutate(sample = paste0("pred_", row_number()),
-         PatientID = long$PatientID[1])
+  mutate(
+    Arm = factor(Arm, c("C", "C&I")),
+    BiopsyPhase = factor(BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment")),
+    pCR = factor(pCR, c("RD", "pCR")),
+    ROI_id = paste0("pred_", row_number()),
+    PatientID = "NT031"
+  )
 
 knitr::kable(pop, caption = "Population grid passed to sccomp_predict()")
 ```
@@ -479,13 +566,13 @@ knitr::kable(pred_pop, caption = "Population predicted proportions") %>%
 ```
 
 ```{r repro-predictions-patient}
-#| code-fold: show
+#| code-fold: true
 #| code-summary: "Per-patient prediction grid"
 #| cache: true
-# Per-patient grid: one sample per patient x phase (uses the patient random intercept)
+# Per-patient grid: one row per patient and timepoint (uses the patient random intercept)
 pat <- long |>
   distinct(PatientID, BiopsyPhase, Arm, pCR) |>
-  mutate(sample = paste0(PatientID, "_", BiopsyPhase))
+  mutate(ROI_id = paste0(PatientID, "_", BiopsyPhase))
 
 pat |>
   slice_head(n = 8) |>
@@ -550,6 +637,7 @@ aligned_summary <- draws |>
 ```
 
 ```{r fig-main-trajectories}
+#| code-fold: true
 #| code-summary: "Baseline-aligned immune trajectories"
 #| fig-height: 18
 #| fig-width: 10
@@ -557,7 +645,6 @@ aligned_summary <- draws |>
 #| fig-retina: 1
 #| fig-alt: "Line plots of baseline-aligned immune proportions across biopsy timepoints, faceted by cell type and treatment arm, with pathological complete response and residual disease in separate colours and asterisks where the difference-in-differences FDR is below 0.05."
 
-# Immune phenotypes in print order. Figure 2 uses the same vector.
 cell_order <- c(
   "CD8^+T", "CD8^+GZMB^+T", "CD8^+TCF1^+T", "CD8^+PD1^+T_{Ex}",
   "CD4^+TCF1^+T", "CD4^+PD1^+T", "Treg", "CD20^+B", "CD79a^+Plasma",
@@ -565,24 +652,27 @@ cell_order <- c(
 )
 cols_response <- c(RD = "#377EB8", pCR = "#E41A1C")
 
-pred_main <- as.data.table(aligned_summary)
-pred_main[, BiopsyPhase := factor(BiopsyPhase, c("Baseline", "On-treatment", "Post-treatment"))]
-pred_main[, Arm := factor(Arm, c("C", "C&I"))]
-pred_main[, pCR := factor(pCR, c("RD", "pCR"))]
-pred_main[, cell_group := factor(cell_group, levels = cell_order)]
-# A few intervals sit just below zero after the baseline shift.
-pred_main[, aligned_mean := pmax(aligned_mean, 0)]
-pred_main[, aligned_lower := pmax(aligned_lower, 0)]
+pred_main <- aligned_summary |>
+  mutate(
+    BiopsyPhase = factor(BiopsyPhase, phase_levels),
+    Arm = factor(Arm, arm_levels),
+    pCR = factor(pCR, c("RD", "pCR")),
+    cell_group = factor(cell_group, levels = cell_order),
+    # A few intervals sit just below zero after the baseline shift.
+    aligned_mean = pmax(aligned_mean, 0),
+    aligned_lower = pmax(aligned_lower, 0)
+  )
 
 # Asterisk just above the ribbon where the DiD FDR is below 0.05.
-did_sig_fig1 <- hmc_did[
-  contrast_family == "did" & is.finite(c_FDR) & c_FDR < 0.05,
-  .(cell_group, Arm, BiopsyPhase)
-]
-did_sig_fig1[, cell_group := factor(cell_group, levels = cell_order)]
-did_sig_fig1 <- pred_main[
-  , .(ymax = max(aligned_upper)), by = .(cell_group, Arm, BiopsyPhase)
-][did_sig_fig1, on = .(cell_group, Arm, BiopsyPhase), nomatch = NULL]
+did_sig_fig1 <- hmc_did |>
+  filter(contrast_family == "did", is.finite(c_FDR), c_FDR < 0.05) |>
+  distinct(cell_group, Arm, BiopsyPhase) |>
+  mutate(cell_group = factor(cell_group, levels = cell_order)) |>
+  inner_join(
+    pred_main |>
+      summarise(ymax = max(aligned_upper), .by = c(cell_group, Arm, BiopsyPhase)),
+    by = c("cell_group", "Arm", "BiopsyPhase")
+  )
 
 ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = pCR)) +
   geom_ribbon(
@@ -617,38 +707,46 @@ ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = p
 For each cell type and treatment arm, the hypothesis is that responders and patients with residual disease changed by a different amount from baseline. **Figure 2** shows that difference at two time points: the on-treatment and post-treatment. Bordered tiles have FDR \< 0.05.
 
 ```{r fig-did-heatmap}
+#| code-fold: true
 #| code-summary: "Difference-in-differences heatmap"
 #| fig-height: 7
 #| fig-width: 8
-#| fig-alt: "Heatmap of difference-in-differences effects on the logit scale for each immune phenotype, treatment arm, and post-baseline visit. Black borders mark FDR below 0.05."
+#| fig-alt: "Heatmap of difference-in-differences effects, on the centered log-ratio scale, for each immune phenotype, treatment arm, and post-baseline visit. Black borders mark FDR below 0.05."
 
-did_hm <- hmc_did[contrast_family == "did"]
-did_hm[, cell_group := factor(cell_group, levels = rev(cell_order))]
-did_hm <- did_hm[!is.na(cell_group)]
-did_hm[, BiopsyPhase := factor(BiopsyPhase, levels = c("On-treatment", "Post-treatment"))]
-did_hm[, Arm := factor(Arm, levels = c("C", "C&I"))]
-did_hm[, sig := is.finite(c_FDR) & c_FDR < 0.05]
-did_hm[, facet_lab := paste0(Arm, " · ", BiopsyPhase)]
-did_hm[, facet_lab := factor(facet_lab, levels = c(
-  "C · On-treatment", "C · Post-treatment",
-  "C&I · On-treatment", "C&I · Post-treatment"
-))]
+did_hm <- hmc_did |>
+  filter(contrast_family == "did") |>
+  mutate(
+    cell_group = factor(cell_group, levels = rev(cell_order)),
+    BiopsyPhase = factor(BiopsyPhase, levels = c("On-treatment", "Post-treatment")),
+    Arm = factor(Arm, arm_levels)
+  ) |>
+  filter(!is.na(cell_group)) |>
+  mutate(
+    sig = is.finite(c_FDR) & c_FDR < 0.05,
+    facet_lab = factor(
+      paste(Arm, BiopsyPhase, sep = " · "),
+      levels = c(
+        "C · On-treatment", "C · Post-treatment",
+        "C&I · On-treatment", "C&I · Post-treatment"
+      )
+    )
+  )
 
 lim <- max(abs(did_hm$c_effect), na.rm = TRUE)
 
 ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
   geom_tile(colour = "grey90", linewidth = 0.3) +
   geom_tile(
-    data = did_hm[sig == TRUE],
+    data = filter(did_hm, sig),
     colour = "black", linewidth = 0.7, fill = NA
   ) +
   geom_text(
-    aes(label = ifelse(sig, sprintf("%.2f", c_effect), "")),
+    aes(label = if_else(sig, sprintf("%.2f", c_effect), "")),
     size = 2.6
   ) +
   scale_fill_gradient2(
     low = cols_response[["RD"]], mid = "white", high = cols_response[["pCR"]],
-    midpoint = 0, limits = c(-lim, lim), name = "DiD effect\n(logit)"
+    midpoint = 0, limits = c(-lim, lim), name = "center_log_ratio"
   ) +
   labs(
     title = "Response-associated change from baseline (difference-in-differences)",
@@ -668,26 +766,25 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
 **Figure 3** compares pCR versus residual disease at each visit with the change from baseline. Points above the dotted line are FDR \< 0.05.
 
 ```{r fig-volcano}
+#| code-fold: true
 #| code-summary: "M2 macrophage changes by response"
 #| fig-height: 4.5
 #| fig-width: 7
-#| fig-alt: "Scatter plot of M2 macrophage response contrasts, with the logit effect on the x-axis and minus log10 FDR on the y-axis, comparing pCR versus residual disease at each visit with the change from baseline."
+#| fig-alt: "Scatter plot of M2 macrophage response contrasts, with the centered log-ratio effect on the x-axis and minus log10 FDR on the y-axis, comparing pCR versus residual disease at each visit with the change from baseline."
 
-m2_marg <- hmc_marginal_pcr[
-  cell_group == "M2 Mac", .(Arm, BiopsyPhase, c_effect, c_FDR)
-]
-m2_marg[, family := "Marginal pCR vs RD"]
-m2_did_v <- hmc_did[
-  contrast_family == "did" & cell_group == "M2 Mac",
-  .(Arm, BiopsyPhase, c_effect, c_FDR)
-]
-m2_did_v[, family := "DiD (change from T0)"]
-m2_volcano <- rbind(m2_marg, m2_did_v)
-m2_volcano[, label := paste0(Arm, " · ", BiopsyPhase)]
+m2_volcano <- bind_rows(
+  hmc_marginal_pcr |>
+    filter(cell_group == "M2 Mac") |>
+    transmute(Arm, BiopsyPhase, c_effect, c_FDR, family = "Marginal pCR vs RD"),
+  hmc_did |>
+    filter(contrast_family == "did", cell_group == "M2 Mac") |>
+    transmute(Arm, BiopsyPhase, c_effect, c_FDR, family = "DiD (change from T0)")
+) |>
+  mutate(label = paste(Arm, BiopsyPhase, sep = " · "))
 
 ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
   geom_vline(xintercept = 0, linetype = 2, colour = "grey70") +
-  geom_hline(yintercept = -log10(0.05), linetype = 3, colour = "grey55") +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, colour = "grey70") +
   geom_point(aes(colour = family, shape = BiopsyPhase), size = 2.8) +
   geom_text(aes(label = label), size = 2.3, vjust = -0.9, colour = "grey25") +
   scale_colour_manual(values = c(
@@ -696,7 +793,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
   )) +
   labs(
     title = "M2 Mac: visit contrast and change from baseline",
-    x = "Composition effect (logit contrast)",
+    x = "center_log_ratio",
     y = expression(-log[10](FDR)),
     colour = NULL, shape = NULL
   ) +
@@ -708,14 +805,15 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
 The fixed effect is the population estimate. Patient random intercepts describe individual baselines and trajectories. **Figure 4** shows the per-patient predicted M2 Mac trajectories.
 
 ```{r fig-patient-heterogeneity}
+#| code-fold: true
 #| code-summary: "Between-patient M2 trajectories"
 #| fig-height: 4
 #| fig-width: 8
 #| fig-alt: "Line plots of predicted M2 macrophage proportion for each patient across biopsy timepoints, faceted by treatment arm and pathological response."
 
-show_groups <- "M2 Mac"
-pred_pat <- hmc_pred_patient[cell_group %in% show_groups]
-pred_pat[, cell_group := factor(cell_group, levels = show_groups)]
+pred_pat <- hmc_pred_patient |>
+  filter(cell_group == "M2 Mac") |>
+  mutate(cell_group = factor(cell_group))
 
 pcr_cols <- c("RD" = "#4575b4", "pCR" = "#d73027")
 
@@ -744,28 +842,31 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 # Proportions come from the long count table already loaded above.
 # The spatial figure itself reads the local core list and cell coordinates.
-roi <- as.data.table(long)[Arm == "C&I" & BiopsyPhase == "Post-treatment"]
-immune <- roi[, .(
-  immune = sum(count),
-  PatientID = PatientID[1],
-  pCR = as.character(pCR[1])
-), by = sample]
-m2_counts <- roi[cell_group == "M2 Mac", .(sample, m2 = count)]
-roi_m2 <- merge(immune, m2_counts, by = "sample", all.x = TRUE)
-roi_m2[is.na(m2), m2 := 0]
-roi_m2[, proportion := m2 / immune]
+roi_m2 <- long |>
+  filter(Arm == "C&I", BiopsyPhase == "Post-treatment") |>
+  summarise(
+    immune = sum(count),
+    PatientID = first(PatientID),
+    pCR = as.character(first(pCR)),
+    m2 = sum(count[cell_group == "M2 Mac"]),
+    .by = ROI_id
+  ) |>
+  mutate(proportion = m2 / immune)
 
-pat_m2 <- roi_m2[, .(mean_m2 = mean(proportion)), by = .(PatientID, pCR)]
-m2_pcr_mean <- roi_m2[pCR == "pCR", mean(proportion)]
-m2_rd_mean <- roi_m2[pCR == "RD", mean(proportion)]
+pat_m2 <- roi_m2 |>
+  summarise(mean_m2 = mean(proportion), .by = c(PatientID, pCR))
+m2_pcr_mean <- roi_m2 |> filter(pCR == "pCR") |> pull(proportion) |> mean()
+m2_rd_mean <- roi_m2 |> filter(pCR == "RD") |> pull(proportion) |> mean()
 
-shown <- unique(fread(file.path(post_dir, "spatial-cores.csv"))[, .(PatientID, pCR)])
-sel <- pat_m2[shown, on = .(PatientID, pCR), nomatch = NULL]
-sel_pcr_m2 <- sel[pCR == "pCR", mean(mean_m2)]
-sel_rd_m2 <- sel[pCR == "RD", mean(mean_m2)]
+shown <- read_csv(file.path(post_dir, "spatial-cores.csv"), show_col_types = FALSE) |>
+  distinct(PatientID, pCR)
+sel <- pat_m2 |> inner_join(shown, by = c("PatientID", "pCR"))
+sel_pcr_m2 <- sel |> filter(pCR == "pCR") |> pull(mean_m2) |> mean()
+sel_rd_m2 <- sel |> filter(pCR == "RD") |> pull(mean_m2) |> mean()
 ```
 
 ```{r fig-m2-spatial}
+#| code-fold: true
 #| code-summary: "Spatial maps of post-treatment cores"
 #| fig-width: 16
 #| fig-height: 28
@@ -773,16 +874,19 @@ sel_rd_m2 <- sel[pCR == "RD", mean(mean_m2)]
 #| fig-retina: 1
 #| fig-alt: "Spatial maps of representative post-treatment tumours in the chemoimmunotherapy arm. M2 macrophages are bright magenta, PD-L1-positive antigen-presenting cells are bright yellow, and other immune cells are bright green, with pathological complete response on the left and residual disease on the right."
 
-cores <- fread(file.path(post_dir, "spatial-cores.csv"))
-cells <- read_fst(file.path(post_dir, "spatial-cells.fst"), as.data.table = TRUE)
+cores <- read_csv(file.path(post_dir, "spatial-cores.csv"), show_col_types = FALSE)
+cells <- read_fst(file.path(post_dir, "spatial-cells.fst")) |> as_tibble()
 
 mk_roi <- function(image_id) {
   if (is.na(image_id)) return(patchwork::plot_spacer())
-  mk_spatial_tile(cells[ImageID == image_id])
+  mk_spatial_tile(filter(cells, ImageID == image_id))
 }
 
 mk_row <- function(pid) {
-  image_ids <- cores[PatientID == pid][order(roi), ImageID]
+  image_ids <- cores |>
+    filter(PatientID == pid) |>
+    arrange(roi) |>
+    pull(ImageID)
   ids <- c(image_ids, rep(NA_character_, 3L - length(image_ids)))
   patchwork::wrap_plots(
     ggplot() +
@@ -798,7 +902,11 @@ mk_row <- function(pid) {
 
 mk_block <- function(response, title) {
   one_column <- function(which_side) {
-    pids <- cores[pCR == response & side == which_side][order(patient), unique(PatientID)]
+    pids <- cores |>
+      filter(pCR == response, side == which_side) |>
+      arrange(patient) |>
+      distinct(PatientID) |>
+      pull(PatientID)
     patchwork::wrap_plots(lapply(pids, mk_row), ncol = 1)
   }
   patchwork::wrap_plots(one_column("left"), one_column("right"), ncol = 2) +
