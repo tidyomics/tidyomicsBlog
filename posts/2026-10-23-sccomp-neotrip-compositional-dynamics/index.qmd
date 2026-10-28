@@ -418,6 +418,28 @@ fit <- sccomp_estimate(
 fit
 ```
 
+`sccomp_proportional_fold_change()` reports how fitted proportions change between two conditions. The result is descriptive; significance still comes from `sccomp_test()`. Here, chemoimmunotherapy at surgery, residual disease versus pathological complete response:
+
+```{r repro-proportional-fold-change}
+#| code-fold: show
+#| code-summary: "Proportional fold change"
+#| cache: true
+#| dependson: "repro-sccomp-fit"
+fit |>
+  sccomp_proportional_fold_change(
+    formula_composition = ~ Arm * BiopsyPhase * pCR,
+    from = "C&I:Post-treatment:RD",  # chemoimmunotherapy, surgery, residual disease
+    to = "C&I:Post-treatment:pCR"    # same arm and visit, pathological complete response
+  ) |>
+#  mutate(
+#    proportion_fold_change = round(proportion_fold_change, 2),
+#    average_uncertainty = round(average_uncertainty, 2)
+#  ) |>
+  knitr::kable(
+    caption = "Proportional fold change: C&I post-treatment, pCR versus residual disease"
+  )
+```
+
 ## Model checks
 
 **Convergence.** All `r format(conv_summary$n_parameters, big.mark = ",")` composition parameters have median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). Bulk effective sample size has median `r format(round(conv_summary$median_ess_bulk), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_bulk), big.mark = ",")`). Tail effective sample size has median `r format(round(conv_summary$median_ess_tail), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_tail), big.mark = ",")`).
