@@ -111,10 +111,6 @@ if (length(missing_contrasts)) {
 phase_levels <- c("Baseline", "On-treatment", "Post-treatment")
 arm_levels <- c("C", "C&I")
 
-hmc_test <- read_csv(
-  file.path(results_dir, paste0(hmc_stem, "_results.csv")),
-  show_col_types = FALSE
-)
 hmc_marginal_pcr <- read_csv(marginal_pcr_path, show_col_types = FALSE) |>
   mutate(
     BiopsyPhase = factor(BiopsyPhase, phase_levels),
@@ -137,47 +133,6 @@ hmc_pred_patient <- read_csv(
     pCR = factor(pCR, c("RD", "pCR"))
   )
 
-conv_summary <- hmc_test |>
-  filter(is.finite(c_rhat)) |>
-  summarise(
-    n_parameters = n(),
-    median_rhat = median(c_rhat),
-    max_rhat = max(c_rhat),
-    min_ess_bulk = min(c_ess_bulk),
-    median_ess_bulk = median(c_ess_bulk),
-    min_ess_tail = min(c_ess_tail),
-    median_ess_tail = median(c_ess_tail)
-  )
-conv_var <- hmc_test |>
-  filter(is.finite(v_rhat)) |>
-  summarise(
-    n = n(),
-    max_rhat = max(v_rhat),
-    min_ess_bulk = min(v_ess_bulk),
-    min_ess_tail = min(v_ess_tail)
-  )
-
-did_fdr <- function(phenotype, phase) {
-  hmc_did |>
-    filter(
-      contrast_family == "did",
-      cell_group == phenotype,
-      Arm == "C&I",
-      BiopsyPhase == phase
-    ) |>
-    pull(c_FDR)
-}
-m2_did_fdr <- did_fdr("M2 Mac", "Post-treatment")
-pdl1_did_fdr <- did_fdr("PD-L1^+APCs", "Post-treatment")
-m2_did_ot_fdr <- did_fdr("M2 Mac", "On-treatment")
-n_did_sig <- function(phase) {
-  hmc_did |>
-    filter(contrast_family == "did", BiopsyPhase == phase, c_FDR < 0.05) |>
-    distinct(cell_group) |>
-    nrow()
-}
-n_did_pt_sig <- n_did_sig("Post-treatment")
-n_did_ot_sig <- n_did_sig("On-treatment")
 setwd(post_dir)
 ```
 
@@ -268,14 +223,22 @@ headroom <- 1.9
 tile_h <- target_in * headroom / (fig_h - target_in)
 
 phase <- roi |>
-  summarise(x = mean(x), n = n(), .by = BiopsyPhase) |>
-  mutate(y = tile_h + 0.62)
+  summarise(x = mean(x), .by = BiopsyPhase) |>
+  mutate(
+    y = tile_h + 0.62,
+    label = case_match(
+      as.character(BiopsyPhase),
+      "Baseline" ~ "Baseline\n10 ROIs",
+      "On-treatment" ~ "On-treatment\n10 ROIs",
+      "Post-treatment" ~ "Post-treatment\n3 ROIs"
+    )
+  )
 patient <- tibble::tibble(
   x = mean(phase$x), y = phase$y[1] + 0.95, label = "Donor"
 )
 edges <- bind_rows(
-  phase |> transmute(x, y, xend = patient$x, yend = patient$y),
-  roi |> transmute(
+  phase |> mutate(x, y, xend = patient$x, yend = patient$y),
+  roi |> mutate(
     x,
     y = tile_h,
     xend = phase$x[match(BiopsyPhase, phase$BiopsyPhase)],
@@ -295,7 +258,7 @@ tree <- ggplot() +
   ) +
   geom_label(
     data = phase,
-    aes(x, y, label = paste0(BiopsyPhase, "\n", n, " ROIs"), fill = BiopsyPhase),
+    aes(x, y, label = label, fill = BiopsyPhase),
     colour = "white", fontface = "bold", size = 3, label.size = 0
   ) +
   geom_label(
@@ -372,13 +335,8 @@ long <- read_csv(file.path(results_dir, "sccomp_long_tme_immune_roi.csv"),
 
 long |>
   select(ROI_id, cell_group, count, PatientID, BiopsyPhase, Arm, pCR) |>
-  slice_head(n = 8) |>
-  knitr::kable(caption = sprintf(
-    "Long-format sccomp input (%s ROIs x %s immune phenotypes = %s rows)",
-    format(n_distinct(long$ROI_id), big.mark = ","),
-    n_distinct(long$cell_group),
-    format(nrow(long), big.mark = ",")
-  ))
+  gt::gt_preview() |>
+  gt::tab_caption("Long-format sccomp input (1,740 ROIs x 15 immune phenotypes)")
 ```
 
 ## Fit the model
@@ -431,20 +389,17 @@ fit |>
     from = "C&I:Post-treatment:RD",  # chemoimmunotherapy, surgery, residual disease
     to = "C&I:Post-treatment:pCR"    # same arm and visit, pathological complete response
   ) |>
-#  mutate(
-#    proportion_fold_change = round(proportion_fold_change, 2),
-#    average_uncertainty = round(average_uncertainty, 2)
-#  ) |>
-  knitr::kable(
-    caption = "Proportional fold change: C&I post-treatment, pCR versus residual disease"
+  gt::gt_preview(top_n = 15, bottom_n = 0) |>
+  gt::tab_caption(
+    "Proportional fold change: C&I post-treatment, pCR versus residual disease"
   )
 ```
 
 ## Model checks
 
-**Convergence.** All `r format(conv_summary$n_parameters, big.mark = ",")` composition parameters have median $\hat{R}$ = `r sprintf("%.3f", conv_summary$median_rhat)` (maximum `r sprintf("%.3f", conv_summary$max_rhat)`). Bulk effective sample size has median `r format(round(conv_summary$median_ess_bulk), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_bulk), big.mark = ",")`). Tail effective sample size has median `r format(round(conv_summary$median_ess_tail), big.mark = ",")` (minimum `r format(round(conv_summary$min_ess_tail), big.mark = ",")`).
+**Convergence.** All 4,035 composition parameters have median $\hat{R}$ = 1.001 (maximum 1.014). Bulk effective sample size has median 4,837 (minimum 495). Tail effective sample size has median 2,850 (minimum 923).
 
-Variability is an intercept for each phenotype. Those `r conv_var$n` coefficients have maximum $\hat{R}$ = `r sprintf("%.3f", conv_var$max_rhat)`, minimum bulk ESS `r format(round(conv_var$min_ess_bulk), big.mark = ",")`, and minimum tail ESS `r format(round(conv_var$min_ess_tail), big.mark = ",")`. The composition parameters with the smallest bulk ESS:
+Variability is an intercept for each phenotype. Those 15 coefficients have maximum $\hat{R}$ = 1.003, minimum bulk ESS 3,404, and minimum tail ESS 2,451. The composition parameters with the smallest bulk ESS:
 
 ```{r repro-convergence}
 #| code-fold: show
@@ -452,13 +407,9 @@ Variability is an intercept for each phenotype. Those `r conv_var$n` coefficient
 fit |>
   filter(is.finite(c_ess_bulk)) |>
   slice_min(c_ess_bulk, n = 6, with_ties = FALSE) |>
-  mutate(
-    c_rhat = round(c_rhat, 3),
-    c_ess_bulk = round(c_ess_bulk),
-    c_ess_tail = round(c_ess_tail)
-  ) |>
-  knitr::kable(
-    caption = "Composition parameters with the smallest bulk effective sample size"
+  gt::gt_preview(top_n = 6, bottom_n = 0) |>
+  gt::tab_caption(
+    "Composition parameters with the smallest bulk effective sample size"
   )
 ```
 
@@ -525,17 +476,11 @@ res <- sccomp_test(fit, contrasts = contrasts)
 ```{r repro-did-preview}
 #| code-fold: show
 #| code-summary: "Preview difference-in-differences contrasts"
-as_tibble(hmc_did) |>
+hmc_did |>
   filter(contrast_family == "did") |>
   arrange(c_FDR) |>
-  transmute(
-    phenotype = cell_group,
-    Arm, BiopsyPhase,
-    `center_log_ratio` = round(c_effect, 3),
-    FDR = signif(c_FDR, 3)
-  ) |>
-  slice_head(n = 8) |>
-  knitr::kable(caption = "Change from baseline (strongest by FDR)")
+  gt::gt_preview() |>
+  gt::tab_caption("Change from baseline (strongest by FDR)")
 ```
 
 
@@ -569,7 +514,8 @@ pop <- tibble::tribble(
     PatientID = "NT031"
   )
 
-knitr::kable(pop, caption = "Population grid passed to sccomp_predict()")
+gt::gt_preview(pop, top_n = nrow(pop), bottom_n = 0) |>
+  gt::tab_caption("Population grid passed to sccomp_predict()")
 ```
 
 ```{r repro-predict-population}
@@ -581,9 +527,9 @@ knitr::kable(pop, caption = "Population grid passed to sccomp_predict()")
 #|   - repro-predictions-population
 pred_pop <- sccomp_predict(fit, new_data = pop)
 
-knitr::kable(pred_pop, caption = "Population predicted proportions") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  kableExtra::scroll_box(height = "400px")
+pred_pop |>
+  gt::gt_preview() |>
+  gt::tab_caption("Population predicted proportions")
 ```
 
 ```{r repro-predictions-patient}
@@ -596,11 +542,8 @@ pat <- long |>
   mutate(ROI_id = paste0(PatientID, "_", BiopsyPhase))
 
 pat |>
-  slice_head(n = 8) |>
-  knitr::kable(caption = sprintf(
-    "Per-patient prediction grid (first 8 of %s rows)",
-    format(nrow(pat), big.mark = ",")
-  ))
+  gt::gt_preview() |>
+  gt::tab_caption("Per-patient prediction grid (624 rows)")
 ```
 
 ```{r repro-predict-patient}
@@ -780,7 +723,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
   )
 ```
 
-**Most of the signal is at post-treatment:** `r n_did_pt_sig` immune phenotypes have a significant DiD at post-treatment, and `r n_did_ot_sig` on-treatment. For M2 Mac in the C&I arm, the on-treatment DiD FDR is `r sprintf("%.2f", m2_did_ot_fdr)` and the post-treatment DiD FDR is `r sprintf("%.3f", m2_did_fdr)`. The on-treatment marginal contrast largely repeats a baseline difference.
+**Most of the signal is at post-treatment:** 14 immune phenotypes have a significant DiD at post-treatment, and 9 on-treatment. For M2 Mac in the C&I arm, the on-treatment DiD FDR is 0.21 and the post-treatment DiD FDR is 0.007. The on-treatment marginal contrast largely repeats a baseline difference.
 
 ## M2 macrophage changes by response
 
@@ -796,10 +739,10 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
 m2_volcano <- bind_rows(
   hmc_marginal_pcr |>
     filter(cell_group == "M2 Mac") |>
-    transmute(Arm, BiopsyPhase, c_effect, c_FDR, family = "Marginal pCR vs RD"),
+    mutate(Arm, BiopsyPhase, c_effect, c_FDR, family = "Marginal pCR vs RD"),
   hmc_did |>
     filter(contrast_family == "did", cell_group == "M2 Mac") |>
-    transmute(Arm, BiopsyPhase, c_effect, c_FDR, family = "DiD (change from T0)")
+    mutate(Arm, BiopsyPhase, c_effect, c_FDR, family = "DiD (change from T0)")
 ) |>
   mutate(label = paste(Arm, BiopsyPhase, sep = " · "))
 
@@ -853,38 +796,7 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 ## Visualise results in spatial context
 
-**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases more from baseline in pCR (DiD FDR `r sprintf("%.3f", m2_did_fdr)`), whereas PD-L1+APCs decreases (DiD FDR `r sprintf("%.3f", pdl1_did_fdr)`). **Figure 5** plots both markers on the tissue for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion), showing all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME).
-
-```{r fig-m2-spatial-prep}
-#| include: false
-#| code-summary: "Prepare the spatial exemplar"
-#| cache: true
-#| dependson: "repro-long-preview"
-
-# Proportions come from the long count table already loaded above.
-# The spatial figure itself reads the local core list and cell coordinates.
-roi_m2 <- long |>
-  filter(Arm == "C&I", BiopsyPhase == "Post-treatment") |>
-  summarise(
-    immune = sum(count),
-    PatientID = first(PatientID),
-    pCR = as.character(first(pCR)),
-    m2 = sum(count[cell_group == "M2 Mac"]),
-    .by = ROI_id
-  ) |>
-  mutate(proportion = m2 / immune)
-
-pat_m2 <- roi_m2 |>
-  summarise(mean_m2 = mean(proportion), .by = c(PatientID, pCR))
-m2_pcr_mean <- roi_m2 |> filter(pCR == "pCR") |> pull(proportion) |> mean()
-m2_rd_mean <- roi_m2 |> filter(pCR == "RD") |> pull(proportion) |> mean()
-
-shown <- read_csv(file.path(post_dir, "spatial-cores.csv"), show_col_types = FALSE) |>
-  distinct(PatientID, pCR)
-sel <- pat_m2 |> inner_join(shown, by = c("PatientID", "pCR"))
-sel_pcr_m2 <- sel |> filter(pCR == "pCR") |> pull(mean_m2) |> mean()
-sel_rd_m2 <- sel |> filter(pCR == "RD") |> pull(mean_m2) |> mean()
-```
+**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases more from baseline in pCR (DiD FDR 0.007), whereas PD-L1+APCs decreases (DiD FDR 0.000). **Figure 5** plots both markers on the tissue for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion), showing all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME).
 
 ```{r fig-m2-spatial}
 #| code-fold: true
@@ -958,7 +870,7 @@ patchwork::wrap_plots(
   )
 ```
 
-Post-treatment M2 levels alone look similar between the two groups (`r sprintf("%.1f%%", 100 * sel_pcr_m2)` in pCR vs `r sprintf("%.1f%%", 100 * sel_rd_m2)` in RD among the displayed patients; `r sprintf("%.1f%%", 100 * m2_pcr_mean)` vs `r sprintf("%.1f%%", 100 * m2_rd_mean)` across the cohort). The signal is in the change from baseline (**Figure 2**) rather than the single-visit cross-section.
+Post-treatment M2 levels alone look similar between the two groups (21.9% in pCR vs 18.2% in RD among the displayed patients; 22.8% vs 20.9% across the cohort). The signal is in the change from baseline (**Figure 2**) rather than the single-visit cross-section.
 
 ---
 
