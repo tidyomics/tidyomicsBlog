@@ -1,8 +1,15 @@
 ---
 title: "Modelling cell-type proportions in repeated-measures designs with sccomp: a TMA case study"
 subtitle: "Mixed-effect models with random effects for tissue microarrays and other complex designs"
-author: "Stefano Mangiola"
-date: "2026-10-23"
+author:
+  - name: Stefano Mangiola
+    affiliation:
+      - "SAiGENCI, Adelaide University, Australia"
+contributors:
+  - name: Pierre-Paul Axisa
+    affiliation:
+      - "CBMR, Copenhagen, Denmark"
+date: "2026-10-29"
 image: tma-cores.png
 image-alt: "Sixteen tissue microarray cores in four rows on one slide. M2 macrophages are bright magenta, PD-L1-positive antigen-presenting cells are bright yellow, other immune cells are bright green, and epithelium is cyan."
 tags:
@@ -135,6 +142,10 @@ hmc_pred_patient <- read_csv(
 
 setwd(post_dir)
 ```
+
+::: {.small}
+Contributor: Pierre-Paul Axisa, Researcher, CBMR, Copenhagen, Denmark.
+:::
 
 # Introduction
 
@@ -389,7 +400,7 @@ fit |>
     from = "C&I:Post-treatment:RD",  # chemoimmunotherapy, surgery, residual disease
     to = "C&I:Post-treatment:pCR"    # same arm and visit, pathological complete response
   ) |>
-  gt::gt_preview(top_n = 15, bottom_n = 0) |>
+  gt::gt_preview() |>
   gt::tab_caption(
     "Proportional fold change: C&I post-treatment, pCR versus residual disease"
   )
@@ -407,7 +418,7 @@ Variability is an intercept for each phenotype. Those 15 coefficients have maxim
 fit |>
   filter(is.finite(c_ess_bulk)) |>
   slice_min(c_ess_bulk, n = 6, with_ties = FALSE) |>
-  gt::gt_preview(top_n = 6, bottom_n = 0) |>
+  gt::gt_preview() |>
   gt::tab_caption(
     "Composition parameters with the smallest bulk effective sample size"
   )
@@ -514,7 +525,7 @@ pop <- tibble::tribble(
     PatientID = "NT031"
   )
 
-gt::gt_preview(pop, top_n = nrow(pop), bottom_n = 0) |>
+gt::gt_preview(pop) |>
   gt::tab_caption("Population grid passed to sccomp_predict()")
 ```
 
