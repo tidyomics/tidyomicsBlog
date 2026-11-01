@@ -143,10 +143,6 @@ hmc_pred_patient <- read_csv(
 setwd(post_dir)
 ```
 
-::: {.small}
-Contributor: Pierre-Paul Axisa, CBMR, Copenhagen, Denmark.
-:::
-
 # Introduction
 
 Testing cell proportional differences from single-cell-resolved count data is central to modern tissue analyses. It becomes a repeated-measures problem as soon as several observations come from the same donor, such as multiple tumour cores in a tissue microarray (TMA) or serial biopsies over a time course. Averaging cores up to the patient and testing one phenotype at a time drops both the compositional constraint and the repeated-measures structure.
@@ -886,6 +882,10 @@ patchwork::wrap_plots(
 ```
 
 Post-treatment M2 levels alone look similar between the two groups (21.9% in pCR vs 18.2% in RD among the displayed patients; 22.8% vs 20.9% across the cohort). That is why the visit-only contrast is a poor summary, and why the difference-in-differences contrast was used.
+
+# Acknowledgements
+
+We thank Pierre-Paul Axisa (CBMR, Copenhagen, Denmark), for the helpful feedback which improved the post substantially.
 
 ---
 
