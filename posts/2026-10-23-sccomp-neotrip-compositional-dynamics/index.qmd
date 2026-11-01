@@ -145,9 +145,9 @@ setwd(post_dir)
 
 # Introduction
 
-Testing cell proportional differences from single-cell-resolved count data is central to modern tissue analyses. It becomes a repeated-measures problem as soon as several observations come from the same donor, such as multiple tumour cores in a tissue microarray (TMA) or serial biopsies over a time course. Averaging cores up to the patient and testing one phenotype at a time drops both the compositional constraint and the repeated-measures structure.
+Cell proportions are often measured more than once in the same donor, across tumour cores or serial biopsies. The resulting observations are correlated. Averaging the cores removes ROI-level variation, while testing each phenotype separately ignores that the proportions must sum to one.
 
-[sccomp](https://github.com/MangiolaLaboratory/sccomp) is a Bayesian model for mixed-effect compositional designs that identifies outliers probabilistically, tests for differential variability, and removes unwanted effects. It takes a long tibble with one row per sample and cell type, a count column, and the design columns, and `sccomp_estimate()`, `sccomp_test()`, and `sccomp_predict()` return tibbles ready for `dplyr`, `tidyr`, and `ggplot2`.
+We use [sccomp](https://github.com/MangiolaLaboratory/sccomp), a Bayesian compositional model that accepts mixed-effects designs. Its input is a long tibble of cell counts, with one row per sample and cell type. The fitted model can then be tested with contrasts and used to predict cell-type proportions.
 
 
 # Source study and study design
@@ -170,7 +170,7 @@ Each patient contributes several samples. The biopsies are nested in the patient
 #| fig-height: 5.4
 #| fig-alt: "Tree for patient NT193. The patient sits at the top and three biopsy timepoints branch underneath. Each timepoint ends in the imaged regions of interest, drawn as spatial tiles: magenta M2 macrophages, yellow PD-L1-positive antigen-presenting cells, and green other immune cells. There are 10 tiles at baseline, 10 on-treatment, and 3 post-treatment."
 
-mk_spatial_tile <- function(dat, square = TRUE) {
+mk_spatial_tile <- function(dat, square = TRUE, pt = c(other = 0.10, pdl1 = 0.16, m2 = 0.16)) {
   if (nrow(dat) == 0) {
     dat <- tibble::tibble(
       Location_Center_X = numeric(),
@@ -179,9 +179,9 @@ mk_spatial_tile <- function(dat, square = TRUE) {
     )
   }
   tile <- ggplot(dat, aes(x = Location_Center_X, y = Location_Center_Y)) +
-    geom_point(data = filter(dat, draw == "other"), colour = "#39FF14", size = 0.10) +
-    geom_point(data = filter(dat, draw == "pdl1"), colour = "#FFFF00", size = 0.16) +
-    geom_point(data = filter(dat, draw == "m2"), colour = "#FF00FF", size = 0.16) +
+    geom_point(data = filter(dat, draw == "other"), colour = "#39FF14", size = pt[["other"]]) +
+    geom_point(data = filter(dat, draw == "pdl1"), colour = "#FFFF00", size = pt[["pdl1"]]) +
+    geom_point(data = filter(dat, draw == "m2"), colour = "#FF00FF", size = pt[["m2"]]) +
     scale_x_continuous(labels = NULL, guide = "none", expand = c(0, 0)) +
     scale_y_reverse(labels = NULL, guide = "none", expand = c(0, 0)) +
     theme_void(base_size = 8) +
@@ -317,7 +317,7 @@ $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR}
 
 # sccomp analysis
 
-The blocks below are the minimal tidyverse code to reproduce the analysis locally from the parsed input (run top to bottom), using the immune TME compartment with ROI-level samples and a patient random intercept. 
+The analysis uses the immune TME compartment, treats each ROI as a sample, and includes a patient random intercept. The code can be run from top to bottom from the parsed input.
 
 ## From long-format tidy input
 
@@ -453,7 +453,7 @@ We pass contrasts to `sccomp_test()` as strings.
 
 `marginal_CI_post` compares responders with residual disease at that visit alone. Any gap the two groups already had at baseline is still in this result.
 
-`did_CI_post` compares how far each group moved from its own baseline. A head start cancels, so the contrast is the difference in change. We use this contrast because a visit-only comparison still carries the baseline gap. Post-treatment M2 proportions are similar in the two response groups, so that snapshot does not describe the change.
+`did_CI_post` compares the change from baseline in responders with the change from baseline in patients with residual disease. Subtracting each group's baseline removes the baseline difference between them. We use this contrast because a visit-only comparison retains that difference. Post-treatment M2 proportions are similar in the two response groups, so the post-treatment snapshot alone does not describe the change.
 
 ```{r repro-contrasts}
 #| code-fold: show
@@ -570,7 +570,7 @@ pred_pat
 
 ## Predicted immune compositional trajectories
 
-**Figure 1** shows baseline-aligned predicted proportions (95% credible intervals) for all 15 immune TME phenotypes. Within each arm × cell-type facet, both response groups are shifted to the mean of their baseline predictions. Panels are split by treatment arm (columns); colour denotes pathological response. Asterisks mark arm–time points with difference-in-differences FDR \< 0.05.
+In **Figure 1**, the predicted proportions and 95% credible intervals are aligned to a common baseline for all 15 immune TME phenotypes. Within each treatment arm and cell type, both response groups are shifted to the mean of their baseline predictions. Columns separate the treatment arms, colours separate the response groups, and asterisks mark difference-in-differences with FDR \< 0.05.
 
 ```{r repro-baseline-aligned}
 #| code-fold: true
@@ -675,7 +675,7 @@ ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = p
 
 ## Change from baseline
 
-For each cell type and treatment arm, we test whether responders and patients with residual disease changed by different amounts from baseline. **Figure 2** shows that difference at the on-treatment and post-treatment visits. Bordered tiles have FDR \< 0.05.
+For each cell type and treatment arm, we test whether responders and patients with residual disease changed by different amounts from baseline. The heatmap in **Figure 2** gives these contrasts at the on-treatment and post-treatment visits; borders mark FDR \< 0.05.
 
 ```{r fig-did-heatmap}
 #| code-fold: true
@@ -738,7 +738,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
 
 ## M2 macrophage changes by response
 
-**Figure 3** compares pCR versus residual disease at each visit with the change from baseline. Points above the dotted line are FDR \< 0.05.
+The M2 macrophage contrasts are collected in **Figure 3**. Grey points compare pCR with residual disease at a single visit, whereas red points compare their changes from baseline. Points above the dotted line have FDR \< 0.05.
 
 ```{r fig-volcano}
 #| code-fold: true
@@ -777,7 +777,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
 
 ## Between-patient heterogeneity in M2 Mac
 
-The fixed effect is the population estimate. Patient random intercepts describe individual baselines and trajectories. **Figure 4** shows the per-patient predicted M2 Mac trajectories.
+The fixed effects estimate the population trajectories. The patient random intercept shifts a patient's predictions up or down by the same amount at every visit; it does not estimate a separate patient-specific slope. **Figure 4** plots the resulting per-patient M2 macrophage predictions.
 
 ```{r fig-patient-heterogeneity}
 #| code-fold: true
@@ -805,87 +805,120 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
   theme(legend.position = "bottom", strip.text = element_text(size = 8))
 ```
 
-## Visualise results in spatial context
+## The change on the tissue
 
-**Figure 5** shows the two chemoimmunotherapy post-treatment phenotypes from the findings above on the tissue, for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion). All post-treatment regions of interest are shown for each patient (pathological complete response on the left, residual disease on the right; magenta = M2 macrophages, yellow = PD-L1-positive antigen-presenting cells, green = other immune cells).
+**Figure 5** provides a spatial illustration rather than a cohort summary. We selected two responders with large M2 increases (the largest and fourth-largest among 47 responders with paired biopsies), then paired each with a residual-disease patient who had a similar baseline M2 proportion and little subsequent change. The examples therefore make the direction of the contrast visible but should not be read as its typical magnitude.
+
+Baseline regions are on the left and regions from the surgical specimen are on the right. Because they are different pieces of tissue, the comparison concerns cell-type proportions rather than spatial registration or the number of cells imaged. In these selected examples, the responders gain M2 macrophages and lose PD-L1-positive antigen-presenting cells, whereas the residual-disease patients change little. Magenta marks M2 macrophages, yellow marks PD-L1-positive antigen-presenting cells, and green marks other immune cells.
 
 ```{r fig-m2-spatial}
 #| code-fold: true
-#| code-summary: "Spatial maps of post-treatment cores"
-#| fig-width: 16
-#| fig-height: 28
-#| dpi: 100
+#| code-summary: "Baseline and post-treatment maps for four patients"
+#| fig-width: 11
+#| fig-height: 8.6
+#| dpi: 130
 #| fig-retina: 1
-#| fig-alt: "Spatial maps of representative post-treatment tumours in the chemoimmunotherapy arm. M2 macrophages are bright magenta, PD-L1-positive antigen-presenting cells are bright yellow, and other immune cells are bright green, with pathological complete response on the left and residual disease on the right."
+#| fig-alt: "Four chemoimmunotherapy patients, each shown at baseline and at post-treatment. Two responders gain magenta M2 macrophages and lose yellow PD-L1-positive antigen-presenting cells. Two patients with residual disease, matched to a similar baseline M2 level, look about the same at both visits. Green marks other immune cells."
 
-cores <- read_csv(file.path(post_dir, "spatial-cores.csv"), show_col_types = FALSE)
-cells <- read_fst(file.path(post_dir, "spatial-cells.fst")) |> as_tibble()
+cells <- read_fst(file.path(post_dir, "did-example-cells.fst")) |> as_tibble()
 
-mk_roi <- function(image_id) {
-  if (is.na(image_id)) return(patchwork::plot_spacer())
-  mk_spatial_tile(filter(cells, ImageID == image_id))
+examples <- tibble::tribble(
+  ~PatientID, ~response, ~BiopsyPhase,       ~ImageID,    ~prop,
+  "NT218",    "pCR",     "Baseline",         "NTImg1578", "M2 4.0%\nPD-L1+ APCs 12.3%",
+  "NT218",    "pCR",     "Baseline",         "NTImg1579", "M2 4.0%\nPD-L1+ APCs 12.3%",
+  "NT218",    "pCR",     "Baseline",         "NTImg1580", "M2 4.0%\nPD-L1+ APCs 12.3%",
+  "NT218",    "pCR",     "Post-treatment",   "NTImg0491", "M2 42.4%\nPD-L1+ APCs 0.7%",
+  "NT218",    "pCR",     "Post-treatment",   "NTImg0493", "M2 42.4%\nPD-L1+ APCs 0.7%",
+  "NT215",    "pCR",     "Baseline",         "NTImg1181", "M2 11.1%\nPD-L1+ APCs 10.2%",
+  "NT215",    "pCR",     "Baseline",         "NTImg1182", "M2 11.1%\nPD-L1+ APCs 10.2%",
+  "NT215",    "pCR",     "Baseline",         "NTImg1183", "M2 11.1%\nPD-L1+ APCs 10.2%",
+  "NT215",    "pCR",     "Post-treatment",   "NTImg0366", "M2 45.8%\nPD-L1+ APCs 0.4%",
+  "NT215",    "pCR",     "Post-treatment",   "NTImg0372", "M2 45.8%\nPD-L1+ APCs 0.4%",
+  "NT215",    "pCR",     "Post-treatment",   "NTImg0378", "M2 45.8%\nPD-L1+ APCs 0.4%",
+  "NT174",    "RD",      "Baseline",         "NTImg1824", "M2 2.0%\nPD-L1+ APCs 2.1%",
+  "NT174",    "RD",      "Baseline",         "NTImg1825", "M2 2.0%\nPD-L1+ APCs 2.1%",
+  "NT174",    "RD",      "Baseline",         "NTImg1826", "M2 2.0%\nPD-L1+ APCs 2.1%",
+  "NT174",    "RD",      "Post-treatment",   "NTImg0540", "M2 1.6%\nPD-L1+ APCs 0.8%",
+  "NT174",    "RD",      "Post-treatment",   "NTImg0542", "M2 1.6%\nPD-L1+ APCs 0.8%",
+  "NT028",    "RD",      "Baseline",         "NTImg1317", "M2 12.3%\nPD-L1+ APCs 1.8%",
+  "NT028",    "RD",      "Baseline",         "NTImg1318", "M2 12.3%\nPD-L1+ APCs 1.8%",
+  "NT028",    "RD",      "Baseline",         "NTImg1319", "M2 12.3%\nPD-L1+ APCs 1.8%",
+  "NT028",    "RD",      "Post-treatment",   "NTImg0385", "M2 12.6%\nPD-L1+ APCs 1.9%",
+  "NT028",    "RD",      "Post-treatment",   "NTImg0387", "M2 12.6%\nPD-L1+ APCs 1.9%"
+)
+
+tile_pt <- c(other = 0.22, pdl1 = 0.40, m2 = 0.40)
+
+mk_note <- function(text, size = 2.7, face = "plain") {
+  ggplot() +
+    annotate(
+      "text", x = 0.5, y = 0.5, label = text,
+      fontface = face, size = size, lineheight = 0.95
+    ) +
+    scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    theme_void()
 }
 
-mk_row <- function(pid) {
-  image_ids <- cores |>
-    filter(PatientID == pid) |>
-    arrange(roi) |>
+mk_phase <- function(pid, phase) {
+  ids <- examples |>
+    filter(PatientID == pid, BiopsyPhase == phase) |>
     pull(ImageID)
-  ids <- c(image_ids, rep(NA_character_, 3L - length(image_ids)))
+  ids <- c(ids, rep(NA_character_, 3L - length(ids)))
+  tiles <- lapply(ids, function(id) {
+    if (is.na(id)) return(patchwork::plot_spacer())
+    mk_spatial_tile(filter(cells, ImageID == id), pt = tile_pt)
+  })
+  prop <- examples$prop[examples$PatientID == pid & examples$BiopsyPhase == phase][1]
   patchwork::wrap_plots(
-    ggplot() +
-      annotate("text", x = 0.5, y = 0.5, label = pid, fontface = "bold", size = 2.8) +
-      scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
-      scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-      theme_void(),
-    patchwork::wrap_plots(lapply(ids, mk_roi), nrow = 1, ncol = 3),
+    mk_note(prop, size = 2.5),
+    patchwork::wrap_plots(tiles, nrow = 1),
     ncol = 1,
-    heights = c(0.16, 1)
+    heights = c(0.22, 1)
   )
 }
 
-mk_block <- function(response, title) {
-  one_column <- function(which_side) {
-    pids <- cores |>
-      filter(pCR == response, side == which_side) |>
-      arrange(patient) |>
-      distinct(PatientID) |>
-      pull(PatientID)
-    patchwork::wrap_plots(lapply(pids, mk_row), ncol = 1)
-  }
-  patchwork::wrap_plots(one_column("left"), one_column("right"), ncol = 2) +
-    patchwork::plot_annotation(
-      title = title,
-      theme = theme(
-        plot.title = element_text(face = "bold", size = 12, hjust = 0.5, margin = margin(b = 4))
-      )
-    )
+mk_patient <- function(pid) {
+  response <- examples$response[examples$PatientID == pid][1]
+  patchwork::wrap_plots(
+    mk_note(paste0(pid, "\n", response), size = 3.1, face = "bold"),
+    mk_phase(pid, "Baseline"),
+    mk_phase(pid, "Post-treatment"),
+    nrow = 1,
+    widths = c(0.55, 3, 3)
+  )
 }
 
-divider <- ggplot() +
-  annotate("segment", x = 0.5, xend = 0.5, y = 0, yend = 1, linewidth = 0.7, colour = "grey35") +
-  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme_void()
+header <- patchwork::wrap_plots(
+  patchwork::plot_spacer(),
+  mk_note("Baseline", size = 3.4, face = "bold"),
+  mk_note("Post-treatment", size = 3.4, face = "bold"),
+  nrow = 1,
+  widths = c(0.55, 3, 3)
+)
 
 patchwork::wrap_plots(
-  mk_block("pCR", "pCR (responder)"),
-  divider,
-  mk_block("RD", "RD (non-responder)"),
-  ncol = 3,
-  widths = c(1, 0.03, 1)
+  header,
+  mk_patient("NT218"),
+  mk_patient("NT215"),
+  mk_patient("NT174"),
+  mk_patient("NT028"),
+  ncol = 1,
+  heights = c(0.28, 1, 1, 1, 1)
 ) +
   patchwork::plot_annotation(
-    title = "Opposite-direction immune remodelling: C&I post-treatment",
-    theme = theme(plot.title = element_text(face = "bold", size = 13))
+    title = "Change from baseline in four chemoimmunotherapy patients",
+    subtitle = "Magenta: M2 macrophages.  Yellow: PD-L1-positive APCs.  Green: other immune cells.",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 13),
+      plot.subtitle = element_text(size = 10, colour = "grey25")
+    )
   )
 ```
 
-Post-treatment M2 levels alone look similar between the two groups (21.9% in pCR vs 18.2% in RD among the displayed patients; 22.8% vs 20.9% across the cohort). That is why the visit-only contrast is a poor summary, and why the difference-in-differences contrast was used.
-
 # Acknowledgements
 
-We thank Pierre-Paul Axisa (CBMR, Copenhagen, Denmark), for the helpful feedback which improved the post substantially.
+We thank Pierre-Paul Axisa (CBMR, Copenhagen, Denmark) for comments on an earlier draft.
 
 ---
 
