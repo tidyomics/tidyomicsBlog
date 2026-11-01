@@ -144,7 +144,7 @@ setwd(post_dir)
 ```
 
 ::: {.small}
-Contributor: Pierre-Paul Axisa, Researcher, CBMR, Copenhagen, Denmark.
+Contributor: Pierre-Paul Axisa, CBMR, Copenhagen, Denmark.
 :::
 
 # Introduction
@@ -457,7 +457,7 @@ We pass contrasts to `sccomp_test()` as strings.
 
 `marginal_CI_post` compares responders with residual disease at that visit alone. Any gap the two groups already had at baseline is still in this result.
 
-`did_CI_post` compares how far each group moved from its own baseline. A head start cancels, so the result is the difference in change.
+`did_CI_post` compares how far each group moved from its own baseline. A head start cancels, so the contrast is the difference in change. We use this contrast because a visit-only comparison still carries the baseline gap. Post-treatment M2 proportions are similar in the two response groups, so that snapshot does not describe the change.
 
 ```{r repro-contrasts}
 #| code-fold: show
@@ -734,7 +734,11 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
   )
 ```
 
-**Most of the signal is at post-treatment:** 14 immune phenotypes have a significant DiD at post-treatment, and 9 on-treatment. For M2 Mac in the C&I arm, the on-treatment DiD FDR is 0.21 and the post-treatment DiD FDR is 0.007. The on-treatment marginal contrast largely repeats a baseline difference.
+**Finding:** Under the difference-in-differences contrast, 14 immune phenotypes change from baseline at post-treatment, and 9 at the on-treatment visit.
+
+**Finding:** In the chemoimmunotherapy arm at post-treatment, M2 macrophages increase more from baseline in patients who reach pathological complete response (FDR 0.007), while PD-L1-positive antigen-presenting cells decrease (FDR < 0.0002).
+
+**Finding:** The M2 macrophage change is not detected at the on-treatment visit (FDR 0.21).
 
 ## M2 macrophage changes by response
 
@@ -807,7 +811,7 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 ## Visualise results in spatial context
 
-**Figure 2** identifies two C&I post-treatment phenotypes that move in opposite directions by response: M2 Mac increases more from baseline in pCR (DiD FDR 0.007), whereas PD-L1+APCs decreases (DiD FDR 0.000). **Figure 5** plots both markers on the tissue for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion), showing all post-treatment ROIs per patient (pCR left, RD right; magenta = M2 Mac, yellow = PD-L1+APCs, green = other immune TME).
+**Figure 5** shows the two chemoimmunotherapy post-treatment phenotypes from the findings above on the tissue, for 20 representative patients per response group (those closest to each group's median post-treatment M2 proportion). All post-treatment regions of interest are shown for each patient (pathological complete response on the left, residual disease on the right; magenta = M2 macrophages, yellow = PD-L1-positive antigen-presenting cells, green = other immune cells).
 
 ```{r fig-m2-spatial}
 #| code-fold: true
@@ -881,7 +885,7 @@ patchwork::wrap_plots(
   )
 ```
 
-Post-treatment M2 levels alone look similar between the two groups (21.9% in pCR vs 18.2% in RD among the displayed patients; 22.8% vs 20.9% across the cohort). The signal is in the change from baseline (**Figure 2**) rather than the single-visit cross-section.
+Post-treatment M2 levels alone look similar between the two groups (21.9% in pCR vs 18.2% in RD among the displayed patients; 22.8% vs 20.9% across the cohort). That is why the visit-only contrast is a poor summary, and why the difference-in-differences contrast was used.
 
 ---
 
