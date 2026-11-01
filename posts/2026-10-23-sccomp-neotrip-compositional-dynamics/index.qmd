@@ -918,7 +918,7 @@ patchwork::wrap_plots(
 
 # Acknowledgements
 
-We thank Pierre-Paul Axisa (CBMR, Copenhagen, Denmark) for comments on an earlier draft.
+We thank Pierre-Paul Axisa (CBMR, Copenhagen, Denmark), for the helpful feedback which improved the post substantially.
 
 ---
 
