@@ -317,7 +317,7 @@ $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR}
 
 # sccomp analysis
 
-We analysed the immune TME compartment, treated each ROI as a sample, and included a patient random intercept. The code can be run from top to bottom from the parsed input.
+To retain the information from individual ROIs while accounting for repeated samples from the same patient, we analysed the immune TME compartment with each ROI as a sample and included a patient random intercept. The code can be run from top to bottom from the parsed input.
 
 ## From long-format tidy input
 
@@ -347,6 +347,8 @@ long |>
 ```
 
 ## Fit the model
+
+To estimate response-associated changes across treatment arms and biopsy timepoints, we fitted the mixed-effects compositional model specified above.
 
 ```{r repro-sccomp-fit-code}
 #| ref.label: repro-sccomp-fit
@@ -404,7 +406,7 @@ fit |>
 
 ## Model checks
 
-**Convergence.** All 4,035 composition parameters have median $\hat{R}$ = 1.001 (maximum 1.014). Bulk effective sample size has median 4,837 (minimum 495). Tail effective sample size has median 2,850 (minimum 923).
+**Convergence.** To check the HMC sampling, we inspected $\hat{R}$ and effective sample sizes. All 4,035 composition parameters have median $\hat{R}$ = 1.001 (maximum 1.014). Bulk effective sample size has median 4,837 (minimum 495). Tail effective sample size has median 2,850 (minimum 923).
 
 Variability is an intercept for each phenotype. Those 15 coefficients have maximum $\hat{R}$ = 1.003, minimum bulk ESS 3,404, and minimum tail ESS 2,451. The composition parameters with the smallest bulk ESS:
 
@@ -420,7 +422,7 @@ fit |>
   )
 ```
 
-**Posterior predictive check.** We set `remove_unwanted_effects = TRUE` to retain variation associated with biopsy timepoint. The black boxes are adjusted proportions, the blue boxes are posterior predictive replicates, and fill marks a timepoint contrast with FDR below 0.05.
+**Posterior predictive check.** To check whether the fitted model reproduces the observed distributions, we compared adjusted proportions with posterior predictive replicates. We set `remove_unwanted_effects = TRUE` to retain variation associated with biopsy timepoint. The black boxes are adjusted proportions, the blue boxes are posterior predictive replicates, and fill marks a timepoint contrast with FDR below 0.05.
 
 ```{r repro-ppc}
 #| code-fold: false
@@ -492,6 +494,8 @@ hmc_did |>
 
 
 ## Population and per-patient predictions
+
+To visualise both the average treatment-response patterns and the variation among patients, we generated population-level and per-patient predictions.
 
 ```{r repro-predictions-population}
 #| code-fold: true
@@ -570,7 +574,7 @@ pred_pat
 
 ## Predicted immune compositional trajectories
 
-For **Figure 1**, we aligned both response groups to the mean of their baseline predictions for each treatment arm and cell type. We plot the predicted proportions and 95% credible intervals for all 15 immune TME phenotypes. Columns separate the treatment arms, colours separate the response groups, and asterisks mark difference-in-differences with FDR \< 0.05.
+To compare the trajectories from a common starting point, we aligned both response groups to the mean of their baseline predictions for each treatment arm and cell type. We plot the predicted proportions and 95% credible intervals for all 15 immune TME phenotypes. Columns separate the treatment arms, colours separate the response groups, and asterisks mark difference-in-differences with FDR \< 0.05.
 
 ```{r repro-baseline-aligned}
 #| code-fold: true
@@ -738,7 +742,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
 
 ## M2 macrophage changes by response
 
-In **Figure 3**, we compared the visit-specific and change-from-baseline M2 macrophage contrasts. Grey points compare pCR with residual disease at a single visit, whereas red points compare their changes from baseline. Points above the dotted line have FDR \< 0.05.
+To show how the visit-specific comparison differs from the change-from-baseline analysis, we compared both M2 macrophage contrasts. Grey points compare pCR with residual disease at a single visit, whereas red points compare their changes from baseline. Points above the dotted line have FDR \< 0.05.
 
 ```{r fig-volcano}
 #| code-fold: true
@@ -777,7 +781,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
 
 ## Between-patient heterogeneity in M2 Mac
 
-We estimated population trajectories using fixed effects and allowed each patient's predictions to shift up or down using a random intercept. We did not estimate separate patient-specific slopes. We plotted the resulting per-patient M2 macrophage predictions in **Figure 4**.
+To show how patients vary around the population trajectory, we estimated the population pattern using fixed effects and allowed each patient's predictions to shift up or down using a random intercept. We did not estimate separate patient-specific slopes. We plot the resulting per-patient M2 macrophage predictions below.
 
 ```{r fig-patient-heterogeneity}
 #| code-fold: true
@@ -807,7 +811,7 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 ## The change on the tissue
 
-For **Figure 5**, we selected four patients to illustrate the spatial changes. We chose two responders with large M2 increases (the largest and fourth-largest among 47 responders with paired biopsies), then paired each with a residual-disease patient who had a similar baseline M2 proportion and little subsequent change. These examples show the direction of the contrast; the cohort estimates above give its magnitude.
+As examples of the estimated effects, we selected four patients with paired biopsies. These examples show the direction of the contrast; the cohort estimates above give its magnitude.
 
 Baseline regions are on the left and regions from the surgical specimen are on the right. Because they are different pieces of tissue, we compare cell-type proportions across biopsies. In these selected examples, the responders gain M2 macrophages and lose PD-L1-positive antigen-presenting cells, whereas the residual-disease patients change little. Magenta marks M2 macrophages, yellow marks PD-L1-positive antigen-presenting cells, and green marks other immune cells.
 
