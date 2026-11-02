@@ -721,7 +721,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
   ) +
   scale_fill_gradient2(
     low = cols_response[["RD"]], mid = "white", high = cols_response[["pCR"]],
-    midpoint = 0, limits = c(-lim, lim), name = "center_log_ratio"
+    midpoint = 0, limits = c(-lim, lim), name = "Effect on\ncentered log-ratio scale"
   ) +
   labs(
     title = "Response-associated change from baseline (difference-in-differences)",
@@ -772,7 +772,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
   )) +
   labs(
     title = "M2 Mac: visit contrast and change from baseline",
-    x = "center_log_ratio",
+    x = "Effect on centered log-ratio scale",
     y = expression(-log[10](FDR)),
     colour = NULL, shape = NULL
   ) +
