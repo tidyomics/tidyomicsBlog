@@ -147,7 +147,7 @@ setwd(post_dir)
 
 Cell proportions are often measured more than once in the same donor, across tumour cores or serial biopsies. The resulting observations are correlated. Averaging the cores removes ROI-level variation, while testing each phenotype separately ignores that the proportions must sum to one.
 
-We use [sccomp](https://github.com/MangiolaLaboratory/sccomp), a Bayesian compositional model that accepts mixed-effects designs. Its input is a long tibble of cell counts, with one row per sample and cell type. The fitted model can then be tested with contrasts and used to predict cell-type proportions.
+We use [sccomp](https://github.com/MangiolaLaboratory/sccomp), a Bayesian compositional model that accepts mixed-effects designs. We fitted sccomp to a long tibble of cell counts, with one row per sample and cell type, tested the fitted model with contrasts, and predicted cell-type proportions.
 
 
 # Source study and study design
@@ -317,7 +317,7 @@ $$\text{composition} \sim \text{Arm} \times \text{BiopsyPhase} \times \text{pCR}
 
 # sccomp analysis
 
-The analysis uses the immune TME compartment, treats each ROI as a sample, and includes a patient random intercept. The code can be run from top to bottom from the parsed input.
+We analysed the immune TME compartment, treated each ROI as a sample, and included a patient random intercept. The code can be run from top to bottom from the parsed input.
 
 ## From long-format tidy input
 
@@ -383,7 +383,7 @@ fit <- sccomp_estimate(
 fit
 ```
 
-`sccomp_proportional_fold_change()` reports how fitted proportions change between two conditions. The result is descriptive; significance still comes from `sccomp_test()`. Here, chemoimmunotherapy at surgery, residual disease versus pathological complete response:
+We used `sccomp_proportional_fold_change()` to calculate how the fitted proportions changed between two conditions. We treated this as a descriptive result and used `sccomp_test()` for significance. Here, we compare residual disease with pathological complete response after chemoimmunotherapy at surgery:
 
 ```{r repro-proportional-fold-change}
 #| code-fold: show
@@ -420,7 +420,7 @@ fit |>
   )
 ```
 
-**Posterior predictive check.** `remove_unwanted_effects = TRUE` removes variation other than biopsy timepoint, so the black boxes are adjusted proportions and the blue boxes are posterior predictive replicates. Fill marks a timepoint contrast with FDR below 0.05.
+**Posterior predictive check.** We set `remove_unwanted_effects = TRUE` to retain variation associated with biopsy timepoint. The black boxes are adjusted proportions, the blue boxes are posterior predictive replicates, and fill marks a timepoint contrast with FDR below 0.05.
 
 ```{r repro-ppc}
 #| code-fold: false
@@ -451,9 +451,9 @@ fit |>
 
 We pass contrasts to `sccomp_test()` as strings. 
 
-`marginal_CI_post` compares responders with residual disease at that visit alone. Any gap the two groups already had at baseline is still in this result.
+With `marginal_CI_post`, we compared responders with patients with residual disease at the post-treatment visit. This comparison retains any difference already present at baseline.
 
-`did_CI_post` compares the change from baseline in responders with the change from baseline in patients with residual disease. Subtracting each group's baseline removes the baseline difference between them. We use this contrast because a visit-only comparison retains that difference. Post-treatment M2 proportions are similar in the two response groups, so the post-treatment snapshot alone does not describe the change.
+With `did_CI_post`, we compared their changes from baseline, thereby accounting for the difference already present at baseline. We use this contrast because a visit-only comparison retains that difference. Post-treatment M2 proportions are similar in the two response groups, so the post-treatment snapshot alone does not describe the change.
 
 ```{r repro-contrasts}
 #| code-fold: show
@@ -478,7 +478,7 @@ contrasts <- c(
 res <- sccomp_test(fit, contrasts = contrasts)
 ```
 
-`res` holds those two contrasts, one row per phenotype. The table is the full set of difference-in-differences, strongest first:
+We stored both contrasts in `res`, with one row per phenotype. Below, we list the full set of difference-in-differences, strongest first:
 
 ```{r repro-did-preview}
 #| code-fold: show
@@ -570,7 +570,7 @@ pred_pat
 
 ## Predicted immune compositional trajectories
 
-In **Figure 1**, the predicted proportions and 95% credible intervals are aligned to a common baseline for all 15 immune TME phenotypes. Within each treatment arm and cell type, both response groups are shifted to the mean of their baseline predictions. Columns separate the treatment arms, colours separate the response groups, and asterisks mark difference-in-differences with FDR \< 0.05.
+For **Figure 1**, we aligned both response groups to the mean of their baseline predictions for each treatment arm and cell type. We plot the predicted proportions and 95% credible intervals for all 15 immune TME phenotypes. Columns separate the treatment arms, colours separate the response groups, and asterisks mark difference-in-differences with FDR \< 0.05.
 
 ```{r repro-baseline-aligned}
 #| code-fold: true
@@ -675,7 +675,7 @@ ggplot(pred_main, aes(x = BiopsyPhase, y = aligned_mean, colour = pCR, group = p
 
 ## Change from baseline
 
-For each cell type and treatment arm, we test whether responders and patients with residual disease changed by different amounts from baseline. The heatmap in **Figure 2** gives these contrasts at the on-treatment and post-treatment visits; borders mark FDR \< 0.05.
+For each cell type and treatment arm, we test whether responders and patients with residual disease changed by different amounts from baseline. We plotted these contrasts for the on-treatment and post-treatment visits in **Figure 2**; borders mark FDR \< 0.05.
 
 ```{r fig-did-heatmap}
 #| code-fold: true
@@ -738,7 +738,7 @@ ggplot(did_hm, aes(x = facet_lab, y = cell_group, fill = c_effect)) +
 
 ## M2 macrophage changes by response
 
-The M2 macrophage contrasts are collected in **Figure 3**. Grey points compare pCR with residual disease at a single visit, whereas red points compare their changes from baseline. Points above the dotted line have FDR \< 0.05.
+In **Figure 3**, we compared the visit-specific and change-from-baseline M2 macrophage contrasts. Grey points compare pCR with residual disease at a single visit, whereas red points compare their changes from baseline. Points above the dotted line have FDR \< 0.05.
 
 ```{r fig-volcano}
 #| code-fold: true
@@ -777,7 +777,7 @@ ggplot(m2_volcano, aes(x = c_effect, y = -log10(pmax(c_FDR, 1e-12)))) +
 
 ## Between-patient heterogeneity in M2 Mac
 
-The fixed effects estimate the population trajectories. The patient random intercept shifts a patient's predictions up or down by the same amount at every visit; it does not estimate a separate patient-specific slope. **Figure 4** plots the resulting per-patient M2 macrophage predictions.
+We estimated population trajectories using fixed effects and allowed each patient's predictions to shift up or down using a random intercept. We did not estimate separate patient-specific slopes. We plotted the resulting per-patient M2 macrophage predictions in **Figure 4**.
 
 ```{r fig-patient-heterogeneity}
 #| code-fold: true
@@ -807,9 +807,9 @@ ggplot(pred_pat, aes(x = BiopsyPhase, y = proportion_mean, group = PatientID, co
 
 ## The change on the tissue
 
-**Figure 5** provides a spatial illustration rather than a cohort summary. We selected two responders with large M2 increases (the largest and fourth-largest among 47 responders with paired biopsies), then paired each with a residual-disease patient who had a similar baseline M2 proportion and little subsequent change. The examples therefore make the direction of the contrast visible but should not be read as its typical magnitude.
+For **Figure 5**, we selected four patients to illustrate the spatial changes. We chose two responders with large M2 increases (the largest and fourth-largest among 47 responders with paired biopsies), then paired each with a residual-disease patient who had a similar baseline M2 proportion and little subsequent change. These examples show the direction of the contrast; the cohort estimates above give its magnitude.
 
-Baseline regions are on the left and regions from the surgical specimen are on the right. Because they are different pieces of tissue, the comparison concerns cell-type proportions rather than spatial registration or the number of cells imaged. In these selected examples, the responders gain M2 macrophages and lose PD-L1-positive antigen-presenting cells, whereas the residual-disease patients change little. Magenta marks M2 macrophages, yellow marks PD-L1-positive antigen-presenting cells, and green marks other immune cells.
+Baseline regions are on the left and regions from the surgical specimen are on the right. Because they are different pieces of tissue, we compare cell-type proportions across biopsies. In these selected examples, the responders gain M2 macrophages and lose PD-L1-positive antigen-presenting cells, whereas the residual-disease patients change little. Magenta marks M2 macrophages, yellow marks PD-L1-positive antigen-presenting cells, and green marks other immune cells.
 
 ```{r fig-m2-spatial}
 #| code-fold: true
