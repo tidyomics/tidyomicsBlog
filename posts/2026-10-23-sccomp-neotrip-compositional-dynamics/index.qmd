@@ -350,13 +350,6 @@ long |>
 
 To estimate response-associated changes across treatment arms and biopsy timepoints, we fitted the mixed-effects compositional model specified above.
 
-```{r repro-sccomp-fit-code}
-#| ref.label: repro-sccomp-fit
-#| eval: false
-#| echo: true
-#| code-fold: false
-```
-
 ```{r repro-sccomp-fit}
 #| code-fold: show
 #| code-summary: "Fit and test the model"
